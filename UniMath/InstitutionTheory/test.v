@@ -46,8 +46,6 @@ such that
   Definition sent (I : institution_data) : sents_of (sign I) := pr12 I.
   Definition satisfaction (I : institution_data) : satisfaction_of (sign I) (sent I) (mod I) := pr222 I.
 
-  Variable I : institution_data .
-
   Definition is_institution (I : institution_data) : UU
     :=
       ∏ (Σ Σ' : sign I) (σ : Σ --> Σ'),
@@ -55,4 +53,5 @@ such that
       ∏ φ : pr1 (sent I) Σ,
             satisfaction I Σ' M' (#(pr1 (sent I)) σ φ) = satisfaction I Σ (#(pr1 (mod I)) σ M') φ.
 
+  Definition institution := total2 is_institution .
 End def_Institution.
