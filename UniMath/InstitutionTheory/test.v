@@ -11,21 +11,6 @@ Require Import UniMath.CategoryTheory.All.
 Local Open Scope cat .
 
 Section def_Institution.
-  Variable truth_values : hSet .
-(**
-    sign : category,
-    sent : sign → SET,
-    mod : sign → category,
-    ⊨ : sign -> ob (mod sign) -> sent sign -> truth_values  .
-such that
-    forall (σ : s --> s' : sign)
-           (m' : ob (mod (s')))
-           φ : sent(s),
-
-           m' ⊨ #sent(σ)(φ)  = #mod(σ)(m')  ⊨ φ
-
- **)
-
   Definition sents_of (sign : category) : UU :=
     functor sign type_precat . (** for some reason, sign → SET fails below; do we need it however? **)
 
@@ -33,7 +18,7 @@ such that
     functor (oppositeCategory sign) type_precat .
 
   Definition satisfaction_of (sign : category) (sent : sents_of sign) (mod : oppositeCategory sign ⟶ type_precat) : UU :=
-    ∏ Σ : sign, mod Σ -> (pr1 sent) Σ -> truth_values .
+    ∏ Σ : sign, mod Σ -> (pr1 sent) Σ -> bool .
 
   Definition institution_data : UU
     := ∑ (sign : category), ∑ (sent : sents_of sign), ∑ (mod: mods_of sign), satisfaction_of sign sent mod  .
@@ -54,4 +39,14 @@ such that
             satisfaction I Σ' M' (#(pr1 (sent I)) σ φ) = satisfaction I Σ (#(pr1 (mod I)) σ M') φ.
 
   Definition institution := total2 is_institution .
+
+  Definition institution_to_institution_data (I : institution) : institution_data := pr1 I.
+  Coercion institution_to_institution_data : institution >-> institution_data.
 End def_Institution.
+
+(**
+Section satisfaction .
+
+  Definition satisfies {I:institution} {Σ : sign I} (M : pr1 (mod I) Σ) (φ : Σ) := satisfaction I Σ M φ .
+End satisfaction.
+**)
