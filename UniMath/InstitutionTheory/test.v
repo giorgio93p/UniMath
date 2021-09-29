@@ -57,3 +57,13 @@ M ⊧ φ iff M' ⊧ φ for all Σ-sentences φ. *)
   Definition institution_to_institution_data (I : institution) : institution_data := pr1 I.
   Coercion institution_to_institution_data : institution >-> institution_data.
 End def_Institution.
+
+Section def_Institution_notions .
+  Context {I:institution} .
+
+  Definition sem_consequence {Σ:sign I} (φ1 φ2 : pr1 (sent I) Σ) :=
+    ∏ (M : pr1 (mod I) Σ), satisfies M φ1 = true -> satisfies M φ2 = true .
+
+  Definition sem_equivalence {Σ:sign I} (φ1 φ2 : pr1 (sent I) Σ) :=
+    sem_consequence φ1 φ2 × sem_consequence φ2 φ1 .
+End def_Institution_notions.
