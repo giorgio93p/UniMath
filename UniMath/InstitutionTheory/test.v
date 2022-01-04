@@ -66,3 +66,31 @@ Section def_Institution_notions .
   Definition sem_equivalence {Σ:sign I} (φ1 φ2 : pr1 (sent I) Σ) :=
     sem_consequence φ1 φ2 × sem_consequence φ2 φ1 .
 End def_Institution_notions.
+
+Section example_FOL.
+  Definition vars : hSet := natset .
+
+  (*
+  Search subset .
+Check hsubtype natset .
+Compute hsubtype natset .
+  Search hsubtype.
+  Search subset .
+  Search hSet .
+  Search category .
+*)
+  Definition FOL_signature  := hom SET vars boolset . (* TODO: make this a signature *)
+
+  Compute FOL_signature.
+  Definition FOL_models (Σ : FOL_signature) := Σ . (* TODO: make this a functor *)
+
+  Inductive FOL_sents (Σ : FOL_signature) :=
+    v : Σ -> FOL_sents Σ
+  | AND :  FOL_sents Σ ->  FOL_sents Σ -> FOL_sents Σ
+  | IMPLIES :  FOL_sents Σ ->  FOL_sents Σ -> FOL_sents Σ
+  | OR :  FOL_sents Σ ->  FOL_sents Σ -> FOL_sents Σ
+  | NOT :  FOL_sents Σ -> FOL_sents Σ .
+
+
+
+End example_FOL.
