@@ -43,14 +43,13 @@ Section def_Institution.
 
   Definition is_institution (I : institution_data) : UU
     :=
-      ∏ (Σ Σ' : sign I) (σ : Σ --> Σ'),
-      ∏ (M' : pr1 (mod I) Σ'),
-      ∏ φ : pr1 (sent I) Σ,
-            satisfies M' (#(pr1 (sent I)) σ φ) = satisfies (#(pr1 (mod I)) σ M') φ.
+      ∏ (Σ Σ' : sign I) (σ : Σ --> Σ') (M' : pr1 (mod I) Σ')  (φ : pr1 (sent I) Σ),
+      satisfies M' (#(pr1 (sent I)) σ φ) = satisfies (#(pr1 (mod I)) σ M') φ.
 
   (* Mossakowski: We assume that all institutions are such that satisfaction is
 invariant under model isomorphism, i.e., if Σ-models M, M' are isomorphic, then
 M ⊧ φ iff M' ⊧ φ for all Σ-sentences φ. *)
+  (*  × (∏ (Σ : sign I) (M M' : pr1 (mod I) Σ), are_isomorphic M  M' -> ∏ (φ : pr1 (sent I) Σ), satisfies M φ = satisfies M' φ) *)
 
   Definition institution := total2 is_institution .
 
