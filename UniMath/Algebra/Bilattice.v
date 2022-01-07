@@ -12,10 +12,13 @@ Section bilattices .
   Definition join {X: hSet} (b : bilattice X) : binop X := Lmax (tlattice b) .
   Definition consensus {X : hSet} (b : bilattice X) : binop X := Lmin (klattice b) .
   Definition gullibility {X : hSet} (b : bilattice X) : binop X := Lmax (klattice b) .
+
+  Definition tle {X : hSet} (b : bilattice X) : hrel X := Lle (tlattice b).
+  Definition kle {X : hSet} (b : bilattice X) : hrel X := Lle (klattice b).
+  Definition tge {X : hSet} (b : bilattice X) : hrel X := Lge (tlattice b).
+  Definition kge {X : hSet} (b : bilattice X) : hrel X := Lge (klattice b).
 End bilattices .
 
-
-(** Bounded bilattices *)
 Section bounded_bilattices .
   Definition bounded_bilattice (X : hSet) :=
     bounded_lattice X × bounded_lattice X.
@@ -98,6 +101,25 @@ Section bounded_prod_bilattices.
   Definition make_bounded_prod_bilattice := make_bounded_bilattice (mkbounded_lattice bounded_latticeop_prod_t) (mkbounded_lattice bounded_latticeop_prod_k) .
 End bounded_prod_bilattices.
 
+Section interlaced_bilattices .
+  Definition is_interlaced {X : hSet} (b : bilattice X) : UU :=
+    ∏ x y z : X,
+              (meet b x y = x -> meet b (consensus b x z) (consensus b y z) = consensus b x z)
+                ×
+                (meet b x y = x -> (meet b (gullibility b x z) (gullibility b y z)) = gullibility b x z)
+                ×
+                (consensus b x y = x -> consensus b (meet b x z) (meet b y z) = meet b x z)
+                ×
+                (consensus b x y = x -> consensus b (join b x z) (join b y z) = join b x z) .
+
+  Definition interlaced_bilattice (X : hSet) :=
+    ∑ b : bilattice X,  is_interlaced b.
+
+  Definition interlaced_bilattice_to_bilattice {X : hSet} (b: interlaced_bilattice X) : bilattice X := pr1 b.
+  Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
+End interlaced_bilattices.
+
+
 Section bilattice_FOUR.
   Definition AND : binop boolset :=
     λ b1 b2,
@@ -123,4 +145,19 @@ Section bilattice_FOUR.
   Defined.
 
   Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
+
+  Definition is_interlaced_FOUR : is_interlaced FOUR .
+  Proof.
+    (*
+    unfold is_interlaced; intros x y z; repeat apply make_dirprod; induction x as [x1 x2]; induction x1; induction x2; induction y as [y1 y2]; induction z as [z1 z2]; induction y1; induction y2; induction z1; induction z2; unfold consensus; unfold gullibility; unfold meet; unfold join; unfold FOUR; unfold Lmin; unfold Lmax;  trivial.
+
+    unfold is_interlaced; intros x y z; induction x as [x1 x2]; induction y as [y1 y2]; induction z as [z1 z2]; induction x1; induction x2; induction y1; induction y2; induction z1; induction z2; unfold consensus; unfold gullibility; unfold meet; unfold join; unfold tmin; unfold tmax; unfold kmin; unfold kmax; unfold Lmin; unfold Lmax.
+    - unfold consensus; intro X; induction x1;  simpl .
+
+
+    unfold is_interlaced; unfold consensus; unfold gullibility; unfold meet; unfold join; unfold bool_lattice; intros x y z; apply make_dirprod; unfold FOUR; unfold tmin; unfold tlattice; unfold klattice; simpl.
+    - unfold tle; intro tle_xy; simpl.
+    -
+*)
+  Defined.
 End bilattice_FOUR.
