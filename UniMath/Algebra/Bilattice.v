@@ -13,6 +13,11 @@ Section bilattices .
   Definition consensus {X : hSet} (b : bilattice X) : binop X := Lmin (klattice b) .
   Definition gullibility {X : hSet} (b : bilattice X) : binop X := Lmax (klattice b) .
 
+  Definition iscomm_consensus {X : hSet} (b : bilattice X) : iscomm (consensus b) := iscomm_Lmin (klattice b) .
+  Definition iscomm_gullibility {X : hSet} (b : bilattice X) : iscomm (gullibility b) := iscomm_Lmax (klattice b) .
+  Definition iscomm_meet {X : hSet} (b : bilattice X) : iscomm (meet b) := iscomm_Lmin (tlattice b) .
+  Definition iscomm_join {X : hSet} (b : bilattice X) : iscomm (join b) := iscomm_Lmax (tlattice b) .
+
   Definition tle {X : hSet} (b : bilattice X) : hrel X := Lle (tlattice b).
   Definition kle {X : hSet} (b : bilattice X) : hrel X := Lle (klattice b).
   Definition tge {X : hSet} (b : bilattice X) : hrel X := Lge (tlattice b).
@@ -115,6 +120,8 @@ Section interlaced_bilattices .
   Definition interlaced_bilattice (X : hSet) :=
     ∑ b : bilattice X,  is_interlaced b.
 
+  Definition make_interlaced_bilattice {X : hSet} {b : bilattice X} (is : is_interlaced b) : interlaced_bilattice X := b,,is.
+
   Definition interlaced_bilattice_to_bilattice {X : hSet} (b: interlaced_bilattice X) : bilattice X := pr1 b.
   Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
 End interlaced_bilattices.
@@ -142,11 +149,22 @@ Section distributive_bilattices.
   Definition distributive_bilattice (X : hSet) :=
     ∑ b : bilattice X, is_distributive_bilattice b.
 
-  Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) : interlaced_bilattice X .
-  Proof.
-  Admitted.
+  Definition make_distributive_bilattice {X : hSet} {b : bilattice X} (is : is_distributive_bilattice b) : distributive_bilattice X := b,,is.
 
-  Coercion distributive_bilattices_are_interlaced_bilattices : distributive_bilattice >-> interlaced_bilattice .
+  Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} {b : bilattice X} (p : is_distributive_bilattice b) : is_interlaced b .
+  Proof.
+    unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; destruct p as [p1 [p2 [p3 [p4 [p5 [p6 [p7 [p8 [p9 p10]]]]]]]]]; intro H; [
+      assert (c: consensus b y z = consensus b z y) by (apply iscomm_consensus);
+      rewrite (iscomm_consensus b); rewrite c; rewrite <- p3; rewrite H; trivial
+    | assert (c: gullibility b y z = gullibility b z y) by (apply iscomm_gullibility); rewrite (iscomm_gullibility b); rewrite c; rewrite <- p7; rewrite H; trivial
+    | assert (c: meet b y z = meet b z y) by (apply iscomm_meet); rewrite (iscomm_meet b); rewrite c; rewrite <- p4; rewrite H; trivial
+    | assert (c: join b y z = join b z y) by (apply iscomm_join); rewrite (iscomm_join b); rewrite c; rewrite <- p6; rewrite H; trivial].
+  Defined.
+
+  Definition distributive_bilattices_to_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) :=
+    make_interlaced_bilattice (distributive_bilattices_are_interlaced_bilattices (pr2 b)).
+
+  Coercion distributive_bilattices_to_interlaced_bilattices : distributive_bilattice >-> interlaced_bilattice .
 End distributive_bilattices.
 
 Section bilattice_FOUR.
