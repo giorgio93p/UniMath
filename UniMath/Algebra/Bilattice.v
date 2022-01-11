@@ -119,6 +119,35 @@ Section interlaced_bilattices .
   Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
 End interlaced_bilattices.
 
+Section distributive_bilattices.
+
+  Definition distributivity {X : hSet} (op1 op2 : binop X) :=
+    ∏ x y z : X, op1 x (op2 y z) = op2 (op1 x y) (op1 x z) .
+
+  Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
+    (distributivity (Lmin l) (Lmax l)) × distributivity (Lmax l) (Lmin l) .
+
+  Definition is_distributive_bilattice {X : hSet} (b : bilattice X) :=
+              is_distributive_lattice (klattice b)
+                × is_distributive_lattice (tlattice b)
+                × distributivity (consensus b) (meet b)
+                × distributivity (meet b) (consensus b)
+                × distributivity (consensus b) (join b)
+                × distributivity (join b) (consensus b)
+                × distributivity (gullibility b) (meet b)
+                × distributivity (meet b) (gullibility b)
+                × distributivity (gullibility b) (join b)
+                × distributivity (join b) (gullibility b)
+  .
+  Definition distributive_bilattice (X : hSet) :=
+    ∑ b : bilattice X, is_distributive_bilattice b.
+
+  Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) : interlaced_bilattice X .
+  Proof.
+  Admitted.
+
+  Coercion distributive_bilattices_are_interlaced_bilattices : distributive_bilattice >-> interlaced_bilattice .
+End distributive_bilattices.
 
 Section bilattice_FOUR.
   Definition AND : binop boolset :=
@@ -148,6 +177,6 @@ Section bilattice_FOUR.
 
   Definition is_interlaced_FOUR : is_interlaced FOUR .
   Proof.
-     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; induction x as [x1 x2]; induction y as [y1 y2]; induction z as [z1 z2]; induction x1; induction x2;induction y1; induction y2; induction z1; induction z2; intro H; inversion H; trivial.
+     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; induction x as [x1 x2]; induction y as [y1 y2]; induction z as [z1 z2]; induction x1; induction x2; induction y1; induction y2; induction z1; induction z2; intro H; inversion H; trivial.
   Defined.
 End bilattice_FOUR.
