@@ -148,16 +148,6 @@ Section bilattice_FOUR.
 
   Definition is_interlaced_FOUR : is_interlaced FOUR .
   Proof.
-    (*
-    unfold is_interlaced; intros x y z; repeat apply make_dirprod; induction x as [x1 x2]; induction x1; induction x2; induction y as [y1 y2]; induction z as [z1 z2]; induction y1; induction y2; induction z1; induction z2; unfold consensus; unfold gullibility; unfold meet; unfold join; unfold FOUR; unfold Lmin; unfold Lmax;  trivial.
-
-    unfold is_interlaced; intros x y z; induction x as [x1 x2]; induction y as [y1 y2]; induction z as [z1 z2]; induction x1; induction x2; induction y1; induction y2; induction z1; induction z2; unfold consensus; unfold gullibility; unfold meet; unfold join; unfold tmin; unfold tmax; unfold kmin; unfold kmax; unfold Lmin; unfold Lmax.
-    - unfold consensus; intro X; induction x1;  simpl .
-
-
-    unfold is_interlaced; unfold consensus; unfold gullibility; unfold meet; unfold join; unfold bool_lattice; intros x y z; apply make_dirprod; unfold FOUR; unfold tmin; unfold tlattice; unfold klattice; simpl.
-    - unfold tle; intro tle_xy; simpl.
-    -
-*)
+     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; induction x as [x1 x2]; induction y as [y1 y2]; induction z as [z1 z2]; induction x1; induction x2;induction y1; induction y2; induction z1; induction z2; intro H; inversion H; trivial.
   Defined.
 End bilattice_FOUR.
