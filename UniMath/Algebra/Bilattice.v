@@ -192,8 +192,8 @@ Section bilattice_FOUR.
 
   Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
 
-  Definition is_interlaced_FOUR : is_interlaced FOUR .
+  Definition is_distributive_FOUR : is_distributive_bilattice FOUR .
   Proof.
-     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; induction x as [x1 x2], y as [y1 y2], z as [z1 z2], x1, x2, y1, y2, z1, z2; intro H; inversion H; trivial.
+    unfold is_distributive_bilattice; unfold distributivity; repeat apply make_dirprod; intros x y z; induction x as [x1 x2], y as [y1 y2], z as [z1 z2], x1, x2, y1, y2, z1, z2; trivial.
   Defined.
 End bilattice_FOUR.
