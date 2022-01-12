@@ -86,11 +86,11 @@ Section distributive_bilattices.
 
   Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} {b : bilattice X} (p : is_distributive_bilattice b) : is_interlaced b .
   Proof.
-    unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; destruct p as [p1 [p2 [p3 [p4 [p5 [p6 [p7 [p8 [p9 p10]]]]]]]]]; intro H; [
-     assert (c: consensus b y z = consensus b z y) by (apply iscomm_consensus); rewrite (iscomm_consensus b),  c,  <- p3,  H; trivial
-    | assert (c: gullibility b y z = gullibility b z y) by (apply iscomm_gullibility); rewrite (iscomm_gullibility b), c, <- p7, H; trivial
-    | assert (c: meet b y z = meet b z y) by (apply iscomm_meet); rewrite (iscomm_meet b), c, <- p4, H; trivial
-    | assert (c: join b y z = join b z y) by (apply iscomm_join); rewrite (iscomm_join b), c, <- p6,  H; trivial] .
+    unfold is_interlaced; intros x y z; repeat split; induction p as [p1 [p2 [p3 [p4 [p5 [p6 [p7 [p8 [p9 p10]]]]]]]]]; intro H.
+    - assert (c: consensus b y z = consensus b z y) by (apply iscomm_consensus); rewrite (iscomm_consensus b),  c,  <- p3,  H; trivial.
+    - assert (c: gullibility b y z = gullibility b z y) by (apply iscomm_gullibility); rewrite (iscomm_gullibility b), c, <- p7, H; trivial.
+    - assert (c: meet b y z = meet b z y) by (apply iscomm_meet); rewrite (iscomm_meet b), c, <- p4, H; trivial.
+    - assert (c: join b y z = join b z y) by (apply iscomm_join); rewrite (iscomm_join b), c, <- p6,  H; trivial .
   Defined.
 
   Definition distributive_bilattices_to_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) :=
@@ -116,27 +116,33 @@ Section prod_bilattices .
 
   Definition latticeop_prod_t : latticeop tmin tmax .
   Proof .
-    unfold latticeop; repeat apply make_dirprod; [
-      unfold isassoc; intros a b c; induction a, b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmin | apply isassoc_Lmax]
-    | unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmin | apply iscomm_Lmax]
-    | unfold isassoc; intros a b c; induction a,  b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmax | apply isassoc_Lmin]
-    | unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmax | apply iscomm_Lmin]
-    | intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmin_absorb | apply Lmax_absorb]
-    | intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmax_absorb | apply Lmin_absorb] ].
+    unfold latticeop; repeat apply make_dirprod.
+    -  unfold isassoc; intros a b c; induction a, b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmin | apply isassoc_Lmax].
+    - unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmin | apply iscomm_Lmax] .
+    - unfold isassoc; intros a b c; induction a,  b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmax | apply isassoc_Lmin] .
+    - unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmax | apply iscomm_Lmin ].
+    - intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmin_absorb | apply Lmax_absorb ].
+    - intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmax_absorb | apply Lmin_absorb] .
   Defined .
 
   Definition latticeop_prod_k : latticeop kmin kmax .
   Proof .
-    unfold latticeop; repeat apply make_dirprod; [
-      unfold isassoc; intros a b c; induction a, b, c; unfold kmin; apply dirprod_paths; apply isassoc_Lmin
-    | unfold iscomm; intros a b; induction a, b; unfold kmin; apply dirprod_paths; apply iscomm_Lmin
-    | unfold isassoc; intros a b c; induction a, b, c; unfold kmax; apply dirprod_paths; apply isassoc_Lmax
-    | unfold iscomm; intros a b; induction a, b; unfold kmax; apply dirprod_paths; apply iscomm_Lmax
-    | intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmin_absorb
-    | intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmax_absorb] .
+    unfold latticeop; repeat apply make_dirprod.
+    -  unfold isassoc; intros a b c; induction a, b, c; unfold kmin; apply dirprod_paths; apply isassoc_Lmin.
+    - unfold iscomm; intros a b; induction a, b; unfold kmin; apply dirprod_paths; apply iscomm_Lmin.
+    - unfold isassoc; intros a b c; induction a, b, c; unfold kmax; apply dirprod_paths; apply isassoc_Lmax .
+    - unfold iscomm; intros a b; induction a, b; unfold kmax; apply dirprod_paths; apply iscomm_Lmax .
+    - intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmin_absorb .
+    - intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmax_absorb .
   Defined .
 
   Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
+
+  Definition prod_bilattices_are_interlaced : is_interlaced make_prod_bilattice .
+  Proof.
+    unfold is_interlaced; intros [x1 x2] [y1 y2] [z1 z2]; repeat split; intro H; apply dirprod_paths; unfold make_prod_bilattice,mklattice,tmin,tmax,kmin,kmax,meet in H; cbn in H; cbn.
+  Abort.
+
 End prod_bilattices .
 
 Section bounded_prod_bilattices.
@@ -179,7 +185,7 @@ Section bilattice_FOUR.
   Proof .
     unfold lattice; exists AND,  OR;
       unfold latticeop; repeat apply make_dirprod;
-        try (unfold isassoc; intros a b c; induction a,  b, c; trivial);
+        try (unfold isassoc; intros a b c; induction a, b, c; trivial);
         try (unfold iscomm; intros a b; induction a, b; trivial);
         try (intros a b; induction a, b; trivial) .
   Defined.
@@ -194,6 +200,6 @@ Section bilattice_FOUR.
 
   Definition is_distributive_FOUR : is_distributive_bilattice FOUR .
   Proof.
-    unfold is_distributive_bilattice; unfold distributivity; repeat apply make_dirprod; intros x y z; induction x as [x1 x2], y as [y1 y2], z as [z1 z2], x1, x2, y1, y2, z1, z2; trivial.
+    unfold is_distributive_bilattice; unfold distributivity; repeat apply make_dirprod; intros [x1 x2] [y1 y2] [z1 z2]; induction x1, x2, y1, y2, z1, z2; trivial.
   Defined.
 End bilattice_FOUR.
