@@ -38,73 +38,6 @@ Section bounded_bilattices .
   Definition bot {X: hSet} (b : bounded_bilattice X) : X :=  Lbot (pr2 b) .
   Definition top {X: hSet} (b : bounded_bilattice X) : X :=  Ltop (pr2 b) .
 End bounded_bilattices .
-Section prod_bilattices .
-  Context {X1 X2 : hSet} .
-  Variable l1 : lattice X1 .
-  Variable l2 : lattice X2 .
-
-  Definition prod_bilattice_carrier := setdirprod X1 X2 .
-
-  Definition tmin : binop prod_bilattice_carrier :=
-    λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
-  Definition tmax : binop prod_bilattice_carrier :=
-    λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
-  Definition kmin : binop prod_bilattice_carrier :=
-    λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
-  Definition kmax : binop prod_bilattice_carrier :=
-    λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
-
-  Definition latticeop_prod_t : latticeop tmin tmax .
-  Proof .
-    unfold latticeop; repeat apply make_dirprod; [
-      unfold isassoc; intros a b c; induction a; induction b; induction c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmin | apply isassoc_Lmax]
-    | unfold iscomm; intros a b; induction a; induction b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmin | apply iscomm_Lmax]
-    | unfold isassoc; intros a b c; induction a as [a1 a2]; induction b as [b1 b2]; induction c as [c1 c2]; unfold tmin; apply dirprod_paths; [apply isassoc_Lmax | apply isassoc_Lmin]
-    | unfold iscomm; intros a b; induction a; induction b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmax | apply iscomm_Lmin]
-    | intros a b; induction a; induction b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmin_absorb | apply Lmax_absorb]
-    | intros a b; induction a; induction b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmax_absorb | apply Lmin_absorb] ].
-  Defined .
-
-  Definition latticeop_prod_k : latticeop kmin kmax .
-  Proof .
-    unfold latticeop; repeat apply make_dirprod; [
-      unfold isassoc; intros a b c; induction a; induction b; induction c; unfold kmin; apply dirprod_paths; apply isassoc_Lmin
-    | unfold iscomm; intros a b; induction a; induction b; unfold kmin; apply dirprod_paths; apply iscomm_Lmin
-    | unfold isassoc; intros a b c; induction a as [a1 a2]; induction b as [b1 b2]; induction c as [c1 c2]; unfold kmax; apply dirprod_paths; apply isassoc_Lmax
-    | unfold iscomm; intros a b; induction a; induction b; unfold kmax; apply dirprod_paths; apply iscomm_Lmax
-    | intros a b; induction a; induction b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmin_absorb
-    | intros a b; induction a; induction b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmax_absorb] .
-  Defined .
-
-  Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
-End prod_bilattices .
-
-Section bounded_prod_bilattices.
-  Context {X1 X2 : hSet} .
-  Variable bl1 : bounded_lattice X1 .
-  Variable bl2 : bounded_lattice X2 .
-
-  Definition tbot : prod_bilattice_carrier :=
-    Lbot bl1,, Ltop bl2 .
-  Definition ttop : prod_bilattice_carrier :=
-    Ltop bl1,, Lbot bl2 .
-  Definition kbot : prod_bilattice_carrier :=
-    Lbot bl1,, Lbot bl2 .
-  Definition ktop : prod_bilattice_carrier :=
-    Ltop bl1,, Ltop bl2.
-
-  Definition bounded_latticeop_prod_t : bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) tbot ttop .
-  Proof.
-    unfold bounded_latticeop; unfold islunit; apply make_dirprod; intro x; apply dirprod_paths; [apply islunit_Lmax_Lbot | apply islunit_Lmin_Ltop | apply islunit_Lmin_Ltop | apply islunit_Lmax_Lbot].
-  Defined.
-
-  Definition bounded_latticeop_prod_k : bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) kbot ktop .
-  Proof.
-    unfold bounded_latticeop; unfold islunit; apply make_dirprod; intro x; apply dirprod_paths; [apply islunit_Lmax_Lbot | apply islunit_Lmax_Lbot | apply islunit_Lmin_Ltop | apply islunit_Lmin_Ltop].
-  Defined.
-
-  Definition make_bounded_prod_bilattice := make_bounded_bilattice (mkbounded_lattice bounded_latticeop_prod_t) (mkbounded_lattice bounded_latticeop_prod_k) .
-End bounded_prod_bilattices.
 
 Section interlaced_bilattices .
   Definition is_interlaced {X : hSet} (b : bilattice X) : UU :=
@@ -154,11 +87,10 @@ Section distributive_bilattices.
   Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} {b : bilattice X} (p : is_distributive_bilattice b) : is_interlaced b .
   Proof.
     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; destruct p as [p1 [p2 [p3 [p4 [p5 [p6 [p7 [p8 [p9 p10]]]]]]]]]; intro H; [
-      assert (c: consensus b y z = consensus b z y) by (apply iscomm_consensus);
-      rewrite (iscomm_consensus b); rewrite c; rewrite <- p3; rewrite H; trivial
-    | assert (c: gullibility b y z = gullibility b z y) by (apply iscomm_gullibility); rewrite (iscomm_gullibility b); rewrite c; rewrite <- p7; rewrite H; trivial
-    | assert (c: meet b y z = meet b z y) by (apply iscomm_meet); rewrite (iscomm_meet b); rewrite c; rewrite <- p4; rewrite H; trivial
-    | assert (c: join b y z = join b z y) by (apply iscomm_join); rewrite (iscomm_join b); rewrite c; rewrite <- p6; rewrite H; trivial].
+     assert (c: consensus b y z = consensus b z y) by (apply iscomm_consensus); rewrite (iscomm_consensus b),  c,  <- p3,  H; trivial
+    | assert (c: gullibility b y z = gullibility b z y) by (apply iscomm_gullibility); rewrite (iscomm_gullibility b), c, <- p7, H; trivial
+    | assert (c: meet b y z = meet b z y) by (apply iscomm_meet); rewrite (iscomm_meet b), c, <- p4, H; trivial
+    | assert (c: join b y z = join b z y) by (apply iscomm_join); rewrite (iscomm_join b), c, <- p6,  H; trivial] .
   Defined.
 
   Definition distributive_bilattices_to_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) :=
@@ -166,6 +98,73 @@ Section distributive_bilattices.
 
   Coercion distributive_bilattices_to_interlaced_bilattices : distributive_bilattice >-> interlaced_bilattice .
 End distributive_bilattices.
+Section prod_bilattices .
+  Context {X1 X2 : hSet} .
+  Variable l1 : lattice X1 .
+  Variable l2 : lattice X2 .
+
+  Definition prod_bilattice_carrier := setdirprod X1 X2 .
+
+  Definition tmin : binop prod_bilattice_carrier :=
+    λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
+  Definition tmax : binop prod_bilattice_carrier :=
+    λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
+  Definition kmin : binop prod_bilattice_carrier :=
+    λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
+  Definition kmax : binop prod_bilattice_carrier :=
+    λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
+
+  Definition latticeop_prod_t : latticeop tmin tmax .
+  Proof .
+    unfold latticeop; repeat apply make_dirprod; [
+      unfold isassoc; intros a b c; induction a, b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmin | apply isassoc_Lmax]
+    | unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmin | apply iscomm_Lmax]
+    | unfold isassoc; intros a b c; induction a,  b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmax | apply isassoc_Lmin]
+    | unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmax | apply iscomm_Lmin]
+    | intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmin_absorb | apply Lmax_absorb]
+    | intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmax_absorb | apply Lmin_absorb] ].
+  Defined .
+
+  Definition latticeop_prod_k : latticeop kmin kmax .
+  Proof .
+    unfold latticeop; repeat apply make_dirprod; [
+      unfold isassoc; intros a b c; induction a, b, c; unfold kmin; apply dirprod_paths; apply isassoc_Lmin
+    | unfold iscomm; intros a b; induction a, b; unfold kmin; apply dirprod_paths; apply iscomm_Lmin
+    | unfold isassoc; intros a b c; induction a, b, c; unfold kmax; apply dirprod_paths; apply isassoc_Lmax
+    | unfold iscomm; intros a b; induction a, b; unfold kmax; apply dirprod_paths; apply iscomm_Lmax
+    | intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmin_absorb
+    | intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmax_absorb] .
+  Defined .
+
+  Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
+End prod_bilattices .
+
+Section bounded_prod_bilattices.
+  Context {X1 X2 : hSet} .
+  Variable bl1 : bounded_lattice X1 .
+  Variable bl2 : bounded_lattice X2 .
+
+  Definition tbot : prod_bilattice_carrier :=
+    Lbot bl1,, Ltop bl2 .
+  Definition ttop : prod_bilattice_carrier :=
+    Ltop bl1,, Lbot bl2 .
+  Definition kbot : prod_bilattice_carrier :=
+    Lbot bl1,, Lbot bl2 .
+  Definition ktop : prod_bilattice_carrier :=
+    Ltop bl1,, Ltop bl2.
+
+  Definition bounded_latticeop_prod_t : bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) tbot ttop .
+  Proof.
+    unfold bounded_latticeop, islunit; apply make_dirprod; intro x; apply dirprod_paths; [apply islunit_Lmax_Lbot | apply islunit_Lmin_Ltop | apply islunit_Lmin_Ltop | apply islunit_Lmax_Lbot].
+  Defined.
+
+  Definition bounded_latticeop_prod_k : bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) kbot ktop .
+  Proof.
+    unfold bounded_latticeop, islunit; apply make_dirprod; intro x; apply dirprod_paths; [apply islunit_Lmax_Lbot | apply islunit_Lmax_Lbot | apply islunit_Lmin_Ltop | apply islunit_Lmin_Ltop].
+  Defined.
+
+  Definition make_bounded_prod_bilattice := make_bounded_bilattice (mkbounded_lattice bounded_latticeop_prod_t) (mkbounded_lattice bounded_latticeop_prod_k) .
+End bounded_prod_bilattices.
 
 Section bilattice_FOUR.
   Definition AND : binop boolset :=
@@ -178,23 +177,23 @@ Section bilattice_FOUR.
 
   Definition bool_lattice : lattice boolset .
   Proof .
-    unfold lattice; exists AND; exists OR;
+    unfold lattice; exists AND,  OR;
       unfold latticeop; repeat apply make_dirprod;
-        try (unfold isassoc; intros a b c; induction a; induction b; induction c; trivial);
-        try (unfold iscomm; intros a b; induction a; induction b; trivial);
-        try (intros a b; induction a; induction b; trivial) .
+        try (unfold isassoc; intros a b c; induction a,  b, c; trivial);
+        try (unfold iscomm; intros a b; induction a, b; trivial);
+        try (intros a b; induction a, b; trivial) .
   Defined.
 
   Definition bool_boundedlattice : bounded_lattice boolset .
   Proof.
-    unfold bounded_lattice; exists bool_lattice; exists false; exists true;
-      unfold bounded_latticeop; unfold islunit; apply make_dirprod; unfold bool_lattice; unfold Lmax; trivial .
+    unfold bounded_lattice; exists bool_lattice, false, true;
+      unfold bounded_latticeop, islunit; apply make_dirprod; unfold bool_lattice, Lmax; trivial .
   Defined.
 
   Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
 
   Definition is_interlaced_FOUR : is_interlaced FOUR .
   Proof.
-     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; induction x as [x1 x2]; induction y as [y1 y2]; induction z as [z1 z2]; induction x1; induction x2; induction y1; induction y2; induction z1; induction z2; intro H; inversion H; trivial.
+     unfold is_interlaced; intros x y z; apply make_dirprod; [|apply make_dirprod]; [ | |apply make_dirprod]; induction x as [x1 x2], y as [y1 y2], z as [z1 z2], x1, x2, y1, y2, z1, z2; intro H; inversion H; trivial.
   Defined.
 End bilattice_FOUR.
