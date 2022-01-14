@@ -140,7 +140,12 @@ Section prod_bilattices .
 
   Definition prod_bilattices_are_interlaced : is_interlaced make_prod_bilattice .
   Proof.
-    unfold is_interlaced; intros [x1 x2] [y1 y2] [z1 z2]; repeat split; intro H; apply dirprod_paths; unfold make_prod_bilattice,mklattice,tmin,tmax,kmin,kmax,meet in H; cbn in H; cbn.
+    unfold is_interlaced; intros [x1 x2] [y1 y2] [z1 z2]; repeat split; intro H; apply dirprod_paths; unfold make_prod_bilattice,mklattice,tmin,tmax,kmin,kmax,meet in H; cbn in H; cbn; set (H1 := maponpaths pr1 H); cbn in H1; set (H2 := maponpaths dirprod_pr2 H); cbn in H2.
+
+    - rewrite iscomm_Lmin with (x := x1), isassoc_Lmin, <- isassoc_Lmin with(x := x1), H1, iscomm_Lmin with (x := x1), <- isassoc_Lmin, Lmin_id; trivial .
+    - apply Lmax_ge_eq_l, Lmin_ge_case.
+      -- apply istrans_Lge with (x4 := y2).
+      (* -- exact Lmin_ge_l. *)
   Abort.
 
 End prod_bilattices .
