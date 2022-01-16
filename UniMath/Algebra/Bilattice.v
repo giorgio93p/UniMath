@@ -87,10 +87,10 @@ Section distributive_bilattices.
   Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} {b : bilattice X} (p : is_distributive_bilattice b) : is_interlaced b .
   Proof.
     unfold is_interlaced; intros x y z; repeat split; induction p as [p1 [p2 [p3 [p4 [p5 [p6 [p7 [p8 [p9 p10]]]]]]]]]; intro H.
-    - assert (c: consensus b y z = consensus b z y) by (apply iscomm_consensus); rewrite (iscomm_consensus b),  c,  <- p3,  H; trivial.
-    - assert (c: gullibility b y z = gullibility b z y) by (apply iscomm_gullibility); rewrite (iscomm_gullibility b), c, <- p7, H; trivial.
-    - assert (c: meet b y z = meet b z y) by (apply iscomm_meet); rewrite (iscomm_meet b), c, <- p4, H; trivial.
-    - assert (c: join b y z = join b z y) by (apply iscomm_join); rewrite (iscomm_join b), c, <- p6,  H; trivial .
+    - rewrite iscomm_consensus with (x0 := x), iscomm_consensus with (x0 := y),  <- p3,  H; reflexivity.
+    - rewrite iscomm_gullibility with (x0 := x), iscomm_gullibility with (x0 := y), <- p7, H; reflexivity.
+    - rewrite iscomm_meet with (x0 := x), iscomm_meet with (x0 := y), <- p4, H;  reflexivity.
+    - rewrite iscomm_join with (x0 := x), iscomm_join with (x0 := y), <- p6,  H; reflexivity .
   Defined.
 
   Definition distributive_bilattices_to_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) :=
