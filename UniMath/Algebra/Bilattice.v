@@ -116,24 +116,24 @@ Section prod_bilattices .
 
   Definition latticeop_prod_t : latticeop tmin tmax .
   Proof .
-    unfold latticeop; repeat apply make_dirprod.
-    -  unfold isassoc; intros a b c; induction a, b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmin | apply isassoc_Lmax].
-    - unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmin | apply iscomm_Lmax] .
-    - unfold isassoc; intros a b c; induction a,  b, c; unfold tmin; apply dirprod_paths; [apply isassoc_Lmax | apply isassoc_Lmin] .
-    - unfold iscomm; intros a b; induction a, b; unfold tmin; apply dirprod_paths; [apply iscomm_Lmax | apply iscomm_Lmin ].
-    - intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmin_absorb | apply Lmax_absorb ].
-    - intros a b; induction a, b; unfold tmin; unfold tmax; apply dirprod_paths; [apply Lmax_absorb | apply Lmin_absorb] .
+    unfold latticeop; do 4 (try use make_dirprod).
+    -  unfold isassoc; intros a b c; induction a, b, c; unfold tmin; use dirprod_paths; [use isassoc_Lmin | use isassoc_Lmax].
+    - unfold iscomm; intros a b; induction a, b; unfold tmin; use dirprod_paths; [use iscomm_Lmin | use iscomm_Lmax] .
+    - unfold isassoc; intros a b c; induction a,  b, c; unfold tmin; use dirprod_paths; [use isassoc_Lmax | use isassoc_Lmin] .
+    - unfold iscomm; intros a b; induction a, b; unfold tmin; use dirprod_paths; [use iscomm_Lmax | use iscomm_Lmin ].
+    - intros a b; induction a, b; unfold tmin; unfold tmax; use dirprod_paths; [use Lmin_absorb | use Lmax_absorb ].
+    - intros a b; induction a, b; unfold tmin; unfold tmax; use dirprod_paths; [use Lmax_absorb | use Lmin_absorb] .
   Defined .
 
   Definition latticeop_prod_k : latticeop kmin kmax .
   Proof .
-    unfold latticeop; repeat apply make_dirprod.
-    -  unfold isassoc; intros a b c; induction a, b, c; unfold kmin; apply dirprod_paths; apply isassoc_Lmin.
-    - unfold iscomm; intros a b; induction a, b; unfold kmin; apply dirprod_paths; apply iscomm_Lmin.
-    - unfold isassoc; intros a b c; induction a, b, c; unfold kmax; apply dirprod_paths; apply isassoc_Lmax .
-    - unfold iscomm; intros a b; induction a, b; unfold kmax; apply dirprod_paths; apply iscomm_Lmax .
-    - intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmin_absorb .
-    - intros a b; induction a, b; unfold kmin; unfold kmax; apply dirprod_paths; apply Lmax_absorb .
+    unfold latticeop; do 4 (try use make_dirprod).
+    -  unfold isassoc; intros a b c; induction a, b, c; unfold kmin; use dirprod_paths; use isassoc_Lmin.
+    - unfold iscomm; intros a b; induction a, b; unfold kmin; use dirprod_paths; use iscomm_Lmin.
+    - unfold isassoc; intros a b c; induction a, b, c; unfold kmax; use dirprod_paths; use isassoc_Lmax .
+    - unfold iscomm; intros a b; induction a, b; unfold kmax; use dirprod_paths; use iscomm_Lmax .
+    - intros a b; induction a, b; unfold kmin; unfold kmax; use dirprod_paths; use Lmin_absorb .
+    - intros a b; induction a, b; unfold kmin; unfold kmax; use dirprod_paths; use Lmax_absorb .
   Defined .
 
   Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
