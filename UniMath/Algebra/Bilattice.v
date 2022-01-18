@@ -146,17 +146,11 @@ Section prod_bilattices .
 *)
   Definition Lmax_le_case_ {X : hSet} (is : lattice X) :  ∏ x y z : X, Lle is x z → Lle is y z → Lle is (Lmax is x y) z.
   Proof .
-    intros x y z H1 H2.
-    assert (c : Lmax is (Lmax is x z) (Lmax is y z) = z) .
-    - rewrite <- H1, <- H2,
-      (iscomm_Lmax is (Lmin is x z) z), (iscomm_Lmin is x z), Lmax_absorb,
-      (iscomm_Lmax is (Lmin is y z) z), (iscomm_Lmin is y z), Lmax_absorb,
-      Lmax_id. reflexivity.
-    - assert (d : Lmax is (Lmax is x y) z = z).
-      -- rewrite isassoc_Lmax, Lmax_le_eq_r.
-         --- use Lmax_le_eq_r. exact H2.
-         --- rewrite Lmax_le_eq_r; trivial.
-      -- rewrite <- d. exact (Lmax_le_l is (Lmax is x y) z) .
+    intros x y z <- <-.
+    set (w := Lmax _ (Lmin _ x z) (Lmin _ y z)).
+    assert (c : z = (Lmax is w z)).
+    - unfold w. rewrite isassoc_Lmax, (iscomm_Lmax _ (Lmin _ y z) z), (iscomm_Lmin _ y z), Lmax_absorb, iscomm_Lmax, iscomm_Lmin, Lmax_absorb. reflexivity.
+    - rewrite c. use (Lmin_absorb is).
   Defined.
 
   Definition prod_bilattices_are_interlaced : is_interlaced make_prod_bilattice .
