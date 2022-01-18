@@ -137,16 +137,56 @@ Section prod_bilattices .
   Defined .
 
   Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
+(*
+  Definition Lwhatever {X : hSet} (is : lattice X) : ∏ x y : X, Lmax is x y = x -> Lle is y x.
+  Proof.
+    intros x y H.
+    rewrite <- H. exact (Lmax_le_r is _ _).
+  Defined.
+*)
+  Definition Lmax_le_case_ {X : hSet} (is : lattice X) :  ∏ x y z : X, Lle is x z → Lle is y z → Lle is (Lmax is x y) z.
+  Proof .
+    intros x y z H1 H2.
+    assert (c : Lmax is (Lmax is x z) (Lmax is y z) = z) .
+    - rewrite <- H1, <- H2,
+      (iscomm_Lmax is (Lmin is x z) z), (iscomm_Lmin is x z), Lmax_absorb,
+      (iscomm_Lmax is (Lmin is y z) z), (iscomm_Lmin is y z), Lmax_absorb,
+      Lmax_id. reflexivity.
+    - assert (d : Lmax is (Lmax is x y) z = z).
+      -- rewrite isassoc_Lmax, Lmax_le_eq_r.
+         --- use Lmax_le_eq_r. exact H2.
+         --- rewrite Lmax_le_eq_r; trivial.
+      -- rewrite <- d. exact (Lmax_le_l is (Lmax is x y) z) .
+  Defined.
 
   Definition prod_bilattices_are_interlaced : is_interlaced make_prod_bilattice .
   Proof.
-    unfold is_interlaced; intros [x1 x2] [y1 y2] [z1 z2]; repeat split; intro H; apply dirprod_paths; unfold make_prod_bilattice,mklattice,tmin,tmax,kmin,kmax,meet in H; cbn in H; cbn; set (H1 := maponpaths pr1 H); cbn in H1; set (H2 := maponpaths dirprod_pr2 H); cbn in H2.
-
-    - rewrite iscomm_Lmin with (x := x1), isassoc_Lmin, <- isassoc_Lmin with(x := x1), H1, iscomm_Lmin with (x := x1), <- isassoc_Lmin, Lmin_id; trivial .
-    - apply Lmax_ge_eq_l, Lmin_ge_case.
-      -- apply istrans_Lge with (x4 := y2).
-      (* -- exact Lmin_ge_l. *)
-  Abort.
+    unfold is_interlaced; intros [x1 x2] [y1 y2] [z1 z2]; do 3 (try use make_dirprod); intro H; use dirprod_paths; unfold make_prod_bilattice,mklattice,tmin,tmax,kmin,kmax,meet in H; cbn in H; cbn; set (H1 := maponpaths dirprod_pr1 H); cbn in H1; set (H2 := maponpaths dirprod_pr2 H); cbn in H2.
+    - rewrite (iscomm_Lmin l1 x1 z1), isassoc_Lmin, <- (isassoc_Lmin l1 x1 y1 z1), H1, (iscomm_Lmin l1 x1 z1), <- isassoc_Lmin, Lmin_id; reflexivity .
+    - use Lmax_ge_eq_l; use Lmin_ge_case.
+      -- use (istrans_Lge l2 x2 y2 (Lmin l2 y2 z2)).
+         --- rewrite <- H2; exact (Lmax_ge_r l2 x2 y2).
+         --- exact (Lmin_ge_l l2 y2 z2).
+      -- exact (Lmin_ge_r l2 y2 z2).
+    - use Lmin_ge_eq_l. use Lmax_le_case_.
+      -- use (istrans_Lle l1 x1 y1 (Lmax l1 y1 z1)).
+         --- rewrite <- H1. exact (Lmin_le_r l1 x1 y1).
+         --- exact (Lmax_ge_l l1 y1 z1).
+      -- exact (Lmax_le_r l1 y1 z1).
+    - rewrite (iscomm_Lmax l2 x2 z2), (isassoc_Lmax), <- (isassoc_Lmax l2 x2 y2 z2), H2, (iscomm_Lmax l2 x2 z2), <- isassoc_Lmax, Lmax_id. reflexivity.
+    - rewrite (iscomm_Lmin l1 x1 z1), isassoc_Lmin, <- (isassoc_Lmin l1 x1 y1 z1), H1, (iscomm_Lmin l1 x1 z1), <- isassoc_Lmin, Lmin_id; reflexivity .
+    - use Lmin_ge_eq_l. use Lmax_le_case_.
+      -- use (istrans_Lle l2 x2 y2 (Lmax l2 y2 z2)).
+         --- rewrite <- H2. exact (Lmin_le_r l2 x2 y2).
+         --- exact (Lmax_ge_l l2 y2 z2).
+      -- exact (Lmax_le_r l2 y2 z2).
+    - use Lmin_ge_eq_l. use Lmax_le_case_.
+      -- use (istrans_Lle l1 x1 y1 (Lmax l1 y1 z1)).
+         --- rewrite <- H1. exact (Lmin_le_r l1 x1 y1).
+         --- exact (Lmax_ge_l l1 y1 z1).
+      -- exact (Lmax_le_r l1 y1 z1).
+    - rewrite (iscomm_Lmin l2 x2 z2), isassoc_Lmin, <- (isassoc_Lmin l2 x2 y2 z2), H2, (iscomm_Lmin l2 x2 z2), <- isassoc_Lmin, Lmin_id; reflexivity .
+  Defined.
 
 End prod_bilattices .
 
@@ -166,12 +206,12 @@ Section bounded_prod_bilattices.
 
   Definition bounded_latticeop_prod_t : bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) tbot ttop .
   Proof.
-    unfold bounded_latticeop, islunit; apply make_dirprod; intro x; apply dirprod_paths; [apply islunit_Lmax_Lbot | apply islunit_Lmin_Ltop | apply islunit_Lmin_Ltop | apply islunit_Lmax_Lbot].
+    unfold bounded_latticeop, islunit; use make_dirprod; intro x; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop | use islunit_Lmax_Lbot].
   Defined.
 
   Definition bounded_latticeop_prod_k : bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) kbot ktop .
   Proof.
-    unfold bounded_latticeop, islunit; apply make_dirprod; intro x; apply dirprod_paths; [apply islunit_Lmax_Lbot | apply islunit_Lmax_Lbot | apply islunit_Lmin_Ltop | apply islunit_Lmin_Ltop].
+    unfold bounded_latticeop, islunit; use make_dirprod; intro x; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop].
   Defined.
 
   Definition make_bounded_prod_bilattice := make_bounded_bilattice (mkbounded_lattice bounded_latticeop_prod_t) (mkbounded_lattice bounded_latticeop_prod_k) .
