@@ -137,21 +137,6 @@ Section prod_bilattices .
   Defined .
 
   Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
-(*
-  Definition Lwhatever {X : hSet} (is : lattice X) : ∏ x y : X, Lmax is x y = x -> Lle is y x.
-  Proof.
-    intros x y H.
-    rewrite <- H. exact (Lmax_le_r is _ _).
-  Defined.
-*)
-  Definition Lmax_le_case_ {X : hSet} (is : lattice X) :  ∏ x y z : X, Lle is x z → Lle is y z → Lle is (Lmax is x y) z.
-  Proof .
-    intros x y z <- <-.
-    set (w := Lmax _ (Lmin _ x z) (Lmin _ y z)).
-    assert (c : z = (Lmax is w z)).
-    - unfold w. rewrite isassoc_Lmax, (iscomm_Lmax _ (Lmin _ y z) z), (iscomm_Lmin _ y z), Lmax_absorb, iscomm_Lmax, iscomm_Lmin, Lmax_absorb. reflexivity.
-    - rewrite c. use (Lmin_absorb is).
-  Defined.
 
   Definition prod_bilattices_are_interlaced : is_interlaced make_prod_bilattice .
   Proof.
@@ -162,19 +147,19 @@ Section prod_bilattices .
          --- rewrite <- H2; exact (Lmax_ge_r l2 x2 y2).
          --- exact (Lmin_ge_l l2 y2 z2).
       -- exact (Lmin_ge_r l2 y2 z2).
-    - use Lmin_ge_eq_l. use Lmax_le_case_.
+    - use Lmin_ge_eq_l. use Lmax_le_case.
       -- use (istrans_Lle l1 x1 y1 (Lmax l1 y1 z1)).
          --- rewrite <- H1. exact (Lmin_le_r l1 x1 y1).
          --- exact (Lmax_ge_l l1 y1 z1).
       -- exact (Lmax_le_r l1 y1 z1).
     - rewrite (iscomm_Lmax l2 x2 z2), (isassoc_Lmax), <- (isassoc_Lmax l2 x2 y2 z2), H2, (iscomm_Lmax l2 x2 z2), <- isassoc_Lmax, Lmax_id. reflexivity.
     - rewrite (iscomm_Lmin l1 x1 z1), isassoc_Lmin, <- (isassoc_Lmin l1 x1 y1 z1), H1, (iscomm_Lmin l1 x1 z1), <- isassoc_Lmin, Lmin_id; reflexivity .
-    - use Lmin_ge_eq_l. use Lmax_le_case_.
+    - use Lmin_ge_eq_l. use Lmax_le_case.
       -- use (istrans_Lle l2 x2 y2 (Lmax l2 y2 z2)).
          --- rewrite <- H2. exact (Lmin_le_r l2 x2 y2).
          --- exact (Lmax_ge_l l2 y2 z2).
       -- exact (Lmax_le_r l2 y2 z2).
-    - use Lmin_ge_eq_l. use Lmax_le_case_.
+    - use Lmin_ge_eq_l. use Lmax_le_case.
       -- use (istrans_Lle l1 x1 y1 (Lmax l1 y1 z1)).
          --- rewrite <- H1. exact (Lmin_le_r l1 x1 y1).
          --- exact (Lmax_ge_l l1 y1 z1).
