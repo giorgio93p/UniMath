@@ -20,8 +20,8 @@ Import DispBicat.Notations.
 Require Import UniMath.Bicategories.DisplayedBicats.DispInvertibles.
 Require Import UniMath.Bicategories.DisplayedBicats.DispUnivalence.
 Require Import UniMath.Bicategories.DisplayedBicats.CleavingOfBicat.
+Require Import UniMath.Bicategories.DisplayedBicats.Cartesians.
 Require Import UniMath.Bicategories.DisplayedBicats.Examples.Trivial.
-Require Import UniMath.Bicategories.Colimits.Pullback.
 
 Local Open Scope cat.
 

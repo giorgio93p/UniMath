@@ -1,28 +1,12 @@
-(*********************************************************************
+(*****************************************************************************
 
- Displayed bicategory of Street fibrations
+ Every display map bicategory gives rise to a displayed bicategory
 
- We define the displayed bicategory of Street fibrations over
- arbitrary bicategories such that the projection pseudofunctor gives
- the codomain of a Street fibration.
-
- 1. Definition of the displayed bicategory
- 2. Invertible 2-cells
- 3. Local Univalence
- 4. Adjoint equivalences
- 5. Global univalence
-
- *********************************************************************)
+ *****************************************************************************)
 Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
-Require Import UniMath.CategoryTheory.Core.Isos.
-Require Import UniMath.CategoryTheory.Core.Univalence.
-Require Import UniMath.CategoryTheory.Core.Functors.
-Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
-Require Import UniMath.CategoryTheory.categories.StandardCategories.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
-Require Import UniMath.CategoryTheory.DisplayedCats.Fibrations.
 Require Import UniMath.CategoryTheory.DisplayedCats.StreetFibration.
 Require Import UniMath.Bicategories.Core.Bicat.
 Import Bicat.Notations.
@@ -30,94 +14,150 @@ Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.Core.Unitors.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
-Require Import UniMath.Bicategories.Core.FullyFaithful.
 Require Import UniMath.Bicategories.Core.AdjointUnique.
 Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
+Require Import UniMath.Bicategories.Core.FullyFaithful.
 Require Import UniMath.Bicategories.Core.InternalStreetFibration.
+Require Import UniMath.Bicategories.Core.InternalStreetOpFibration.
+Require Import UniMath.Bicategories.DisplayMapBicat.
 Require Import UniMath.Bicategories.DisplayedBicats.DispBicat.
 Import DispBicat.Notations.
-Require Import UniMath.Bicategories.DisplayedBicats.DispAdjunctions.
-Require Import UniMath.Bicategories.DisplayedBicats.DispInvertibles.
 Require Import UniMath.Bicategories.DisplayedBicats.DispUnivalence.
 Require Import UniMath.Bicategories.DisplayedBicats.Examples.Codomain.
+Require Import UniMath.Bicategories.Colimits.Pullback.
+
 Local Open Scope cat.
 
-Section CodomainStreetFibs.
-  Context (B : bicat).
+Section ArrowSubBicatToDispBicat.
+  Context {B : bicat}
+          (D : arrow_subbicat B).
 
-  Definition transportb_cell_of_internal_sfib_over
-             {e₁ e₂ b₁ b₂ : B}
-             {f g : b₁ --> b₂}
-             {p₁ : e₁ --> b₁}
-             {p₂ : e₂ --> b₂}
-             {α β : f ==> g}
-             (p : α = β)
-             {fe : mor_of_internal_sfib_over p₁ p₂ f}
-             {ge : mor_of_internal_sfib_over p₁ p₂ g}
-             (γ : cell_of_internal_sfib_over β fe ge)
-    : pr1 (transportb
-             (λ α : f ==> g, cell_of_internal_sfib_over α fe ge)
-             p
-             γ)
-      =
-      γ.
-  Proof.
-    induction p.
-    apply idpath.
-  Qed.
+  Definition disp_map_bicat_ob
+             (y : B)
+    : UU
+    := ∑ (x : B) (h : x --> y), pred_ob D h.
 
-  (**
-   1. Definition of the displayed bicategory
-   *)
-  Definition cod_sfibs_disp_cat_ob_mor
+  Definition make_disp_map_bicat_ob
+             {x y : B}
+             (h : x --> y)
+             (H : pred_ob D h)
+    : disp_map_bicat_ob y
+    := (x ,, h ,, H).
+
+  Definition disp_map_bicat_mor
+             {y₁ y₂ : B}
+             (h₁ : disp_map_bicat_ob y₁)
+             (h₂ : disp_map_bicat_ob y₂)
+             (g : y₁ --> y₂)
+    : UU
+    := ∑ (f : pr1 h₁ --> pr1 h₂),
+       pred_mor D (pr12 h₁) (pr12 h₂) f
+       ×
+       invertible_2cell (pr12 h₁ · g) (f · pr12 h₂).
+
+  Definition make_disp_map_bicat_mor
+             {y₁ y₂ : B}
+             {h₁ : disp_map_bicat_ob y₁}
+             {h₂ : disp_map_bicat_ob y₂}
+             (g : y₁ --> y₂)
+             (f : pr1 h₁ --> pr1 h₂)
+             (H : pred_mor D (pr12 h₁) (pr12 h₂) f)
+             (γ : invertible_2cell (pr12 h₁ · g) (f · pr12 h₂))
+    : disp_map_bicat_mor h₁ h₂ g
+    := (f ,, H ,, γ).
+
+  Definition disp_map_bicat_to_disp_cat_ob_mor
     : disp_cat_ob_mor B.
   Proof.
     simple refine (_ ,, _).
-    - exact (λ b, ∑ (x : B) (f : x --> b), internal_sfib f).
-    - exact (λ x y hx hy f, mor_of_internal_sfib_over (pr12 hx) (pr12 hy) f).
+    - exact disp_map_bicat_ob.
+    - exact (λ _ _, disp_map_bicat_mor).
   Defined.
 
-  Definition cod_sfibs_id_comp
-    : disp_cat_id_comp B cod_sfibs_disp_cat_ob_mor.
+  Definition disp_map_bicat_to_disp_cat_id_comp
+    : disp_cat_id_comp B disp_map_bicat_to_disp_cat_ob_mor.
   Proof.
     split.
-    - exact (λ x hx, id_mor_of_internal_sfib_over _).
-    - exact (λ x y z f g hx hy hz hf hg, comp_mor_of_internal_sfib_over hf hg).
+    - intros y h.
+      use make_disp_map_bicat_mor.
+      + exact (id₁ _).
+      + apply id_pred_mor.
+      + exact (comp_of_invertible_2cell
+                 (runitor_invertible_2cell _)
+                 (linvunitor_invertible_2cell _)).
+    - intros y₁ y₂ y₃ g₁ g₂ h₁ h₂ h₃ f₁ f₂.
+      use make_disp_map_bicat_mor.
+      + exact (pr1 f₁ · pr1 f₂).
+      + exact (comp_pred_mor
+                 D
+                 (pr12 f₁) (pr12 f₂)).
+      + exact (comp_of_invertible_2cell
+                 (lassociator_invertible_2cell _ _ _)
+                 (comp_of_invertible_2cell
+                    (rwhisker_of_invertible_2cell _ (pr22 f₁))
+                    (comp_of_invertible_2cell
+                       (rassociator_invertible_2cell _ _ _)
+                       (comp_of_invertible_2cell
+                          (lwhisker_of_invertible_2cell _ (pr22 f₂))
+                          (lassociator_invertible_2cell _ _ _))))).
   Defined.
 
-  Definition cod_sfibs_disp_cat_data
-    : disp_cat_data B.
-  Proof.
-    simple refine (_ ,, _).
-    - exact cod_sfibs_disp_cat_ob_mor.
-    - exact cod_sfibs_id_comp.
-  Defined.
+  Definition disp_map_bicat_to_disp_cat_data
+    : disp_cat_data B
+    := (disp_map_bicat_to_disp_cat_ob_mor ,, disp_map_bicat_to_disp_cat_id_comp).
 
-  Definition cod_sfibs_prebicat_1_id_comp_cells
+  Definition disp_map_bicat_cell
+             {y₁ y₂ : B}
+             {g₁ g₂ : y₁ --> y₂}
+             {h₁ : disp_map_bicat_ob y₁}
+             {h₂ : disp_map_bicat_ob y₂}
+             (f₁ : disp_map_bicat_mor h₁ h₂ g₁)
+             (f₂ : disp_map_bicat_mor h₁ h₂ g₂)
+             (β : g₁ ==> g₂)
+    : UU
+    := ∑ (α : pr1 f₁ ==> pr1 f₂),
+       pr122 f₁ • (α ▹ _)
+       =
+       (_ ◃ β) • pr122 f₂.
+
+  Definition make_disp_map_bicat_cell
+             {y₁ y₂ : B}
+             {g₁ g₂ : y₁ --> y₂}
+             {β : g₁ ==> g₂}
+             {h₁ : disp_map_bicat_ob y₁}
+             {h₂ : disp_map_bicat_ob y₂}
+             {f₁ : disp_map_bicat_mor h₁ h₂ g₁}
+             {f₂ : disp_map_bicat_mor h₁ h₂ g₂}
+             (α : pr1 f₁ ==> pr1 f₂)
+             (p : pr122 f₁ • (α ▹ _)
+                  =
+                  (_ ◃ β) • pr122 f₂)
+    : disp_map_bicat_cell f₁ f₂ β
+    := (α ,, p).
+
+  Definition disp_map_bicat_to_disp_prebicat_1_id_comp_cells
     : disp_prebicat_1_id_comp_cells B.
   Proof.
-    simple refine (_ ,, _).
-    - exact cod_sfibs_disp_cat_data.
-    - exact (λ x y f g γ hx hy hf hg, cell_of_internal_sfib_over γ hf hg).
+    refine (disp_map_bicat_to_disp_cat_data ,, _).
+    exact (λ y₁ y₂ g₁ g₂ β h₁ h₂ f₁ f₂, disp_map_bicat_cell f₁ f₂ β).
   Defined.
 
-  Definition cod_sfibs_prebicat_ops
-    : disp_prebicat_ops cod_sfibs_prebicat_1_id_comp_cells.
+  Definition disp_map_bicat_to_disp_prebicat_ops
+    : disp_prebicat_ops disp_map_bicat_to_disp_prebicat_1_id_comp_cells.
   Proof.
     repeat split.
     - intros x y f hx hy hf ; cbn in *.
-      refine (make_cell_of_internal_sfib_over (id2 _) _).
-      abstract
-        (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-         rewrite id2_rwhisker, lwhisker_id2 ;
-         rewrite id2_left, id2_right ;
-         apply idpath).
+      use make_disp_map_bicat_cell.
+      + exact (id2 _).
+      + abstract
+          (rewrite id2_rwhisker, lwhisker_id2 ;
+           rewrite id2_left, id2_right ;
+           apply idpath).
     - intros x y f hx hy hf ; cbn in *.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       + exact (lunitor _).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite <- rwhisker_vcomp ;
            rewrite !vassocr ;
            rewrite runitor_rwhisker ;
@@ -130,29 +170,27 @@ Section CodomainStreetFibs.
            rewrite linvunitor_lunitor ;
            apply id2_left).
     - intros x y f hx hy hf ; cbn in *.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       + exact (runitor _).
-      +  abstract
-           (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-            cbn ;
-            rewrite <- !lwhisker_vcomp ;
-            rewrite !vassocl ;
-            rewrite runitor_rwhisker ;
-            rewrite lwhisker_vcomp ;
-            rewrite linvunitor_lunitor ;
-            rewrite lwhisker_id2 ;
-            rewrite id2_right ;
-            rewrite runitor_triangle ;
-            rewrite vcomp_runitor ;
-            rewrite !vassocr ;
-            apply maponpaths_2 ;
-            exact (!(left_unit_assoc _ _))).
+      + abstract
+          (cbn ;
+           rewrite <- !lwhisker_vcomp ;
+           rewrite !vassocl ;
+           rewrite runitor_rwhisker ;
+           rewrite lwhisker_vcomp ;
+           rewrite linvunitor_lunitor ;
+           rewrite lwhisker_id2 ;
+           rewrite id2_right ;
+           rewrite runitor_triangle ;
+           rewrite vcomp_runitor ;
+           rewrite !vassocr ;
+           apply maponpaths_2 ;
+           exact (!(left_unit_assoc _ _))).
     - intros x y f hx hy hf ; cbn in *.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       + exact (linvunitor _).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite <- !rwhisker_vcomp ;
            rewrite !vassocl ;
            rewrite !(maponpaths (λ z, _ • z) (vassocr _ _ _)) ;
@@ -173,11 +211,10 @@ Section CodomainStreetFibs.
            rewrite id2_right ;
            apply idpath).
     - intros x y f hx hy hf ; cbn in *.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       + exact (rinvunitor _).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite <- !lwhisker_vcomp ;
            rewrite !vassocl ;
            rewrite !lwhisker_hcomp ;
@@ -198,11 +235,10 @@ Section CodomainStreetFibs.
            rewrite lwhisker_id2 ;
            apply idpath).
     - intros x₁ x₂ x₃ x₄ f g k hx₁ hx₂ hx₃ hx₄ hf hg hk ; cbn in *.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       + exact (rassociator _ _ _).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite <- !lwhisker_vcomp, <- !rwhisker_vcomp ;
            rewrite !vassocl ;
            use vcomp_move_L_pM ; [ is_iso | ] ;
@@ -251,11 +287,10 @@ Section CodomainStreetFibs.
            rewrite id2_rwhisker ;
            apply id2_right).
     - intros x₁ x₂ x₃ x₄ f g k hx₁ hx₂ hx₃ hx₄ hf hg hk ; cbn in *.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       + exact (lassociator _ _ _).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite <- !rwhisker_vcomp, <- !lwhisker_vcomp ;
            rewrite !vassocr ;
            rewrite lassociator_lassociator ;
@@ -296,24 +331,22 @@ Section CodomainStreetFibs.
            rewrite !vassocl ;
            apply idpath).
     - intros x₁ x₂ f g h α β hx₁ hx₂ hf hg hh hα hβ ; cbn in *.
-      use make_cell_of_internal_sfib_over.
-      + exact (hα • hβ).
+      use make_disp_map_bicat_cell.
+      + exact (pr1 hα • pr1 hβ).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot ;
-           cbn ;
+          (cbn ;
            rewrite <- !rwhisker_vcomp ;
            rewrite <- !lwhisker_vcomp ;
            rewrite !vassocr ;
-           rewrite (cell_of_internal_sfib_over_eq hα) ;
+           rewrite (pr2 hα) ;
            rewrite !vassocl ;
-           rewrite (cell_of_internal_sfib_over_eq hβ) ;
+           rewrite (pr2 hβ) ;
            apply idpath).
     - intros x₁ x₂ x₃ f₁ f₂ g α hx₁ hx₂ hx₃ hf₁ hf₂ hg hα ; cbn in *.
-      use make_cell_of_internal_sfib_over.
-      + exact (_ ◃ hα).
+      use make_disp_map_bicat_cell.
+      + exact (_ ◃ pr1 hα).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite !vassocl ;
            rewrite <- rwhisker_lwhisker ;
            rewrite !vassocr ;
@@ -331,13 +364,12 @@ Section CodomainStreetFibs.
            apply maponpaths ;
            rewrite !lwhisker_vcomp ;
            apply maponpaths ;
-           exact (cell_of_internal_sfib_over_eq hα)).
+           exact (pr2 hα)).
     - intros x₁ x₂ x₃ f₁ f₂ g α hx₁ hx₂ hx₃ hf₁ hf₂ hg hα ; cbn in *.
-      use make_cell_of_internal_sfib_over.
-      + exact (hα ▹ _).
+      use make_disp_map_bicat_cell.
+      + exact (pr1 hα ▹ _).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot, mor_of_internal_sfib_over_com ;
-           cbn ;
+          (cbn ;
            rewrite !vassocl ;
            rewrite rwhisker_rwhisker ;
            rewrite !vassocr ;
@@ -354,25 +386,65 @@ Section CodomainStreetFibs.
            apply maponpaths_2 ;
            rewrite !rwhisker_vcomp ;
            apply maponpaths ;
-           exact (cell_of_internal_sfib_over_eq hα)).
+           exact (pr2 hα)).
   Defined.
 
-  Definition cod_sfibs_prebicat_data
-    : disp_prebicat_data B.
+  Definition transportf_disp_map_bicat_cell
+             {y₁ y₂ : B}
+             {g₁ g₂ : y₁ --> y₂}
+             {β₁ β₂ : g₁ ==> g₂}
+             (p : β₁ = β₂)
+             {h₁ : disp_map_bicat_ob y₁}
+             {h₂ : disp_map_bicat_ob y₂}
+             {f₁ : disp_map_bicat_mor h₁ h₂ g₁}
+             {f₂ : disp_map_bicat_mor h₁ h₂ g₂}
+             (γ : disp_map_bicat_cell f₁ f₂ β₁)
+    : pr1 (transportf
+             (λ α, disp_map_bicat_cell f₁ f₂ α)
+             p
+             γ)
+      =
+      pr1 γ.
   Proof.
-    simple refine (_ ,, _).
-    - exact cod_sfibs_prebicat_1_id_comp_cells.
-    - exact cod_sfibs_prebicat_ops.
-  Defined.
+    induction p.
+    apply idpath.
+  Qed.
 
-  Definition cod_sfibs_laws
-    : disp_prebicat_laws cod_sfibs_prebicat_data.
+  Definition transportb_disp_map_bicat_cell
+             {y₁ y₂ : B}
+             {g₁ g₂ : y₁ --> y₂}
+             {β₁ β₂ : g₁ ==> g₂}
+             (p : β₁ = β₂)
+             {h₁ : disp_map_bicat_ob y₁}
+             {h₂ : disp_map_bicat_ob y₂}
+             {f₁ : disp_map_bicat_mor h₁ h₂ g₁}
+             {f₂ : disp_map_bicat_mor h₁ h₂ g₂}
+             (γ : disp_map_bicat_cell f₁ f₂ β₂)
+    : pr1 (transportb
+             (λ α, disp_map_bicat_cell f₁ f₂ α)
+             p
+             γ)
+      =
+      pr1 γ.
+  Proof.
+    induction p.
+    apply idpath.
+  Qed.
+
+  Definition disp_map_bicat_to_disp_prebicat_data
+    : disp_prebicat_data B
+    := (disp_map_bicat_to_disp_prebicat_1_id_comp_cells
+        ,,
+        disp_map_bicat_to_disp_prebicat_ops).
+
+  Definition disp_map_bicat_to_disp_prebicat_laws
+    : disp_prebicat_laws disp_map_bicat_to_disp_prebicat_data.
   Proof.
     repeat split
     ; intro ; intros
     ; cbn in *
     ; (use subtypePath ; [ intro ; apply cellset_property | ]) ; cbn
-    ; rewrite transportb_cell_of_internal_sfib_over ; cbn.
+    ; rewrite transportb_disp_map_bicat_cell ; cbn.
     - apply id2_left.
     - apply id2_right.
     - apply vassocr.
@@ -396,18 +468,17 @@ Section CodomainStreetFibs.
     - apply lassociator_lassociator.
   Qed.
 
-  Definition cod_sfibs_prebicat
-    : disp_prebicat B.
-  Proof.
-    simple refine (_ ,, _).
-    - exact cod_sfibs_prebicat_data.
-    - exact cod_sfibs_laws.
-  Defined.
+  Definition disp_map_bicat_to_disp_prebicat
+    : disp_prebicat B
+    := (disp_map_bicat_to_disp_prebicat_data
+        ,,
+        disp_map_bicat_to_disp_prebicat_laws).
 
-  Definition cod_sfibs_has_disp_cellset
-    : has_disp_cellset cod_sfibs_prebicat.
+  Definition disp_map_bicat_to_disp_bicat
+    : disp_bicat B.
   Proof.
-    intros x y f g γ hx hy hf hg.
+    refine (disp_map_bicat_to_disp_prebicat ,, _).
+    intro ; intros.
     use isaset_total2.
     - apply cellset_property.
     - intro.
@@ -415,89 +486,71 @@ Section CodomainStreetFibs.
       apply cellset_property.
   Defined.
 
-  Definition cod_sfibs
-    : disp_bicat B.
-  Proof.
-    simple refine (_ ,, _).
-    - exact cod_sfibs_prebicat.
-    - exact cod_sfibs_has_disp_cellset.
-  Defined.
-
- (**
-  2. Invertible 2-cells
-  *)
-  Definition invertible_2cell_to_disp_invertible_2cell
+  (** Displayed invertible 2-cells *)
+  Definition is_invertible_to_is_disp_invertible
              {x y : B}
              {f g : x --> y}
-             {γ : f ==> g}
-             (Hγ : is_invertible_2cell γ)
-             {hx : cod_sfibs x}
-             {hy : cod_sfibs y}
+             {α : f ==> g}
+             (Hα : is_invertible_2cell α)
+             {hx : disp_map_bicat_to_disp_bicat x}
+             {hy : disp_map_bicat_to_disp_bicat y}
              {hf : hx -->[ f ] hy}
              {hg : hx -->[ g ] hy}
-             {hγ : hf ==>[ γ ] hg}
-             (Hhγ : is_invertible_2cell (pr1 hγ))
-    : is_disp_invertible_2cell Hγ hγ.
+             (αα : hf ==>[ α ] hg)
+             (Hαα : is_invertible_2cell (pr1 αα))
+    : is_disp_invertible_2cell Hα αα.
   Proof.
-    simple refine (_ ,, (_ ,, _)).
-    - use make_cell_of_internal_sfib_over.
-      + exact (Hhγ^-1).
+    simple refine (_ ,, _ ,, _).
+    - use make_disp_map_bicat_cell.
+      + exact (Hαα^-1).
       + abstract
-          (unfold cell_of_internal_sfib_over_homot ;
-           use vcomp_move_R_Mp ; [ is_iso | ] ;
+          (use vcomp_move_R_Mp ; [ is_iso | ] ; cbn ;
            rewrite !vassocl ;
-           use vcomp_move_L_pM ; [ is_iso | ] ;
-           cbn ;
-           exact (!(cell_of_internal_sfib_over_eq hγ))).
+           rewrite (pr2 αα) ;
+           rewrite !vassocr ;
+           rewrite lwhisker_vcomp ;
+           rewrite vcomp_linv ;
+           rewrite lwhisker_id2 ;
+           rewrite id2_left ;
+           apply idpath).
     - abstract
-        (use subtypePath ; [ intro ; apply cellset_property | ] ;
-         cbn ;
-         rewrite transportb_cell_of_internal_sfib_over ; cbn ;
+        (use subtypePath ; [ intro ; apply cellset_property | ] ; cbn ;
+         rewrite transportb_disp_map_bicat_cell ; cbn ;
          apply vcomp_rinv).
     - abstract
-        (cbn ;
-         use subtypePath ; [ intro ; apply cellset_property | ] ;
-         cbn ;
-         rewrite transportb_cell_of_internal_sfib_over ; cbn ;
+        (use subtypePath ; [ intro ; apply cellset_property | ] ; cbn ;
+         rewrite transportb_disp_map_bicat_cell ; cbn ;
          apply vcomp_linv).
   Defined.
 
-  Definition disp_invertible_2cell_to_invertible_2cell
+  Definition is_disp_invertible_to_is_invertible
              {x y : B}
              {f g : x --> y}
-             {γ : f ==> g}
-             (Hγ : is_invertible_2cell γ)
-             {hx : cod_sfibs x}
-             {hy : cod_sfibs y}
+             {α : f ==> g}
+             (Hα : is_invertible_2cell α)
+             {hx : disp_map_bicat_to_disp_bicat x}
+             {hy : disp_map_bicat_to_disp_bicat y}
              {hf : hx -->[ f ] hy}
              {hg : hx -->[ g ] hy}
-             {hγ : hf ==>[ γ ] hg}
-             (Hhγ : is_disp_invertible_2cell Hγ hγ)
-    : is_invertible_2cell (pr1 hγ).
+             (αα : hf ==>[ α ] hg)
+             (Hαα : is_disp_invertible_2cell Hα αα)
+    : is_invertible_2cell (pr1 αα).
   Proof.
     use make_is_invertible_2cell.
-    - exact (pr11 Hhγ).
+    - exact (pr11 Hαα).
     - abstract
-        (pose (maponpaths pr1 (pr12 Hhγ)) as p ;
-         cbn in p ;
-         rewrite transportb_cell_of_internal_sfib_over in p ;
-         cbn in p ;
-         exact p).
+        (exact (maponpaths pr1 (pr12 Hαα) @ transportb_disp_map_bicat_cell _ _)).
     - abstract
-        (pose (maponpaths pr1 (pr22 Hhγ)) as p ;
-         cbn in p ;
-         rewrite transportb_cell_of_internal_sfib_over in p ;
-         cbn in p ;
-         exact p).
+        (exact (maponpaths pr1 (pr22 Hαα) @ transportb_disp_map_bicat_cell _ _)).
   Defined.
 
-  Definition make_cod_sfibs_disp_invertible_2cell
+  Definition make_disp_map_disp_invertible_2cell
              {x y : B}
              {f g : x --> y}
              {γ : f ==> g}
              (Hγ : is_invertible_2cell γ)
-             {hx : cod_sfibs x}
-             {hy : cod_sfibs y}
+             {hx : disp_map_bicat_to_disp_bicat x}
+             {hy : disp_map_bicat_to_disp_bicat y}
              {hf : hx -->[ f ] hy}
              {hg : hx -->[ g ] hy}
              (hγ : hf ==>[ γ ] hg)
@@ -505,49 +558,49 @@ Section CodomainStreetFibs.
     : disp_invertible_2cell (make_invertible_2cell Hγ) hf hg.
   Proof.
     refine (hγ ,, _).
-    use invertible_2cell_to_disp_invertible_2cell.
+    use is_invertible_to_is_disp_invertible.
     exact Hhγ.
   Defined.
 
-  Definition inv_2cell_to_disp_invertible_2cell
+  Definition disp_map_inv_2cell_to_disp_invertible_2cell
              {x y : B}
              {f g : x --> y}
              {γ : invertible_2cell f g}
-             {hx : cod_sfibs x}
-             {hy : cod_sfibs y}
+             {hx : disp_map_bicat_to_disp_bicat x}
+             {hy : disp_map_bicat_to_disp_bicat y}
              {hf : hx -->[ f ] hy}
              {hg : hx -->[ g ] hy}
              (α : ∑ (hγ : hf ==>[ γ ] hg), is_invertible_2cell (pr1 hγ))
     : disp_invertible_2cell γ hf hg.
   Proof.
-    use make_cod_sfibs_disp_invertible_2cell.
+    use make_disp_map_disp_invertible_2cell.
     - exact (pr1 α).
     - exact (pr2 α).
   Defined.
 
-  Definition disp_invertible_2cell_to_inv_2cell
+  Definition disp_map_disp_invertible_2cell_to_inv_2cell
              {x y : B}
              {f g : x --> y}
              {γ : invertible_2cell f g}
-             {hx : cod_sfibs x}
-             {hy : cod_sfibs y}
+             {hx : disp_map_bicat_to_disp_bicat x}
+             {hy : disp_map_bicat_to_disp_bicat y}
              {hf : hx -->[ f ] hy}
              {hg : hx -->[ g ] hy}
              (α : disp_invertible_2cell γ hf hg)
-    : ∑ (hγ : hf ==>[ γ] hg), is_invertible_2cell (pr1 hγ).
+    : ∑ (hγ : hf ==>[ γ ] hg), is_invertible_2cell (pr1 hγ).
   Proof.
     refine (pr1 α ,, _).
-    use disp_invertible_2cell_to_invertible_2cell.
+    use is_disp_invertible_to_is_invertible.
     - exact (pr2 γ).
     - exact (pr2 α).
   Defined.
 
-  Definition inv_2cell_weq_disp_invertible_2cell
+  Definition disp_map_inv_2cell_weq_disp_invertible_2cell
              {x y : B}
              {f g : x --> y}
              (γ : invertible_2cell f g)
-             {hx : cod_sfibs x}
-             {hy : cod_sfibs y}
+             {hx : disp_map_bicat_to_disp_bicat x}
+             {hy : disp_map_bicat_to_disp_bicat y}
              (hf : hx -->[ f ] hy)
              (hg : hx -->[ g ] hy)
     : (∑ (hγ : hf ==>[ γ ] hg), is_invertible_2cell (pr1 hγ))
@@ -555,9 +608,9 @@ Section CodomainStreetFibs.
       disp_invertible_2cell γ hf hg.
   Proof.
     use make_weq.
-    - exact inv_2cell_to_disp_invertible_2cell.
+    - exact disp_map_inv_2cell_to_disp_invertible_2cell.
     - use gradth.
-      + exact disp_invertible_2cell_to_inv_2cell.
+      + exact disp_map_disp_invertible_2cell_to_inv_2cell.
       + abstract
           (intro α ;
            use subtypePath ; [ intro ; apply isaprop_is_invertible_2cell | ] ;
@@ -575,12 +628,12 @@ Section CodomainStreetFibs.
         {x y : B}
         {f g : x --> y}
         (γ : invertible_2cell f g)
-        {hx : cod_sfibs x}
-        {hy : cod_sfibs y}
+        {hx : disp_map_bicat_to_disp_bicat x}
+        {hy : disp_map_bicat_to_disp_bicat y}
         (hf : hx -->[ f ] hy)
         (hg : hx -->[ g ] hy)
     : (∑ (γe : invertible_2cell (pr1 hf) (pr1 hg)),
-       cell_of_internal_sfib_over_homot γ γe)
+       pr122 hf • (γe ▹ pr12 hy) = (pr12 hx ◃ γ) • pr122 hg)
       ≃
       ∑ (hγ : hf ==>[ γ ] hg), is_invertible_2cell (pr1 hγ).
   Proof.
@@ -593,23 +646,26 @@ Section CodomainStreetFibs.
   Defined.
 
   Local Definition weq_on_fam
+        (HD : arrow_subbicat_props D)
         {x y : B}
         {f : x --> y}
-        {hx : cod_sfibs x}
-        {hy : cod_sfibs y}
+        {hx : disp_map_bicat_to_disp_bicat x}
+        {hy : disp_map_bicat_to_disp_bicat y}
         (hf hg : hx -->[ f] hy)
         (p : pr1 hf = pr1 hg)
     : (transportf
-        (λ z,
-         mor_preserves_cartesian (pr12 hx) (pr12 hy) z
-         ×
-         invertible_2cell (pr12 hx · f) (z · pr12 hy)) p (pr2 hf)
+         (λ z,
+          pred_mor D (pr12 hx) (pr12 hy) z
+          ×
+          invertible_2cell (pr12 hx · f) (z · pr12 hy))
+         p
+         (pr2 hf)
        =
        pr2 hg)
       ≃
-      cell_of_internal_sfib_over_homot
-        (id2_invertible_2cell f)
-        (idtoiso_2_1 (pr1 hf) (pr1 hg) p).
+      (pr122 hf • (idtoiso_2_1 (pr1 hf) (pr1 hg) p ▹ pr12 hy)
+       =
+       (pr12 hx ◃ id₂ f) • pr122 hg).
   Proof.
     induction hf as [ hf₁ hf₂ ].
     induction hg as [ hg₁ hg₂ ].
@@ -618,16 +674,12 @@ Section CodomainStreetFibs.
     use weqimplimpl.
     - intro p.
       induction p.
-      unfold cell_of_internal_sfib_over_homot.
       rewrite id2_rwhisker, lwhisker_id2, id2_left, id2_right.
       apply idpath.
-    - unfold cell_of_internal_sfib_over_homot.
-      intro p.
+    - intro p.
       use pathsdirprod.
-      + apply isaprop_mor_preserves_cartesian.
+      + apply (pr2 HD).
       + rewrite id2_rwhisker, lwhisker_id2, id2_left, id2_right in p.
-        unfold mor_of_internal_sfib_over_com in p.
-        cbn in p.
         use subtypePath.
         {
           intro ; apply isaprop_is_invertible_2cell.
@@ -635,24 +687,26 @@ Section CodomainStreetFibs.
         exact p.
     - use isasetdirprod.
       + apply isasetaprop.
-        apply isaprop_mor_preserves_cartesian.
+        apply (pr2 HD).
       + apply isaset_invertible_2cell.
     - apply cellset_property.
   Qed.
 
-  Definition cod_sfibs_disp_univalent_2_1
+  Definition disp_map_disp_univalent_2_1
+             (HD : arrow_subbicat_props D)
              (HB_2_1 : is_univalent_2_1 B)
-    : disp_univalent_2_1 cod_sfibs.
+    : disp_univalent_2_1 disp_map_bicat_to_disp_bicat.
   Proof.
     intros x y f g p hx hy hf hg.
     induction p.
     use weqhomot.
-    - exact (inv_2cell_weq_disp_invertible_2cell _ _ _
+    - refine (disp_map_inv_2cell_weq_disp_invertible_2cell _ _ _
              ∘ refactor_weq _ _ _
              ∘ weqtotal2
                  (make_weq _ (HB_2_1 _ _ _ _))
-                 (weq_on_fam _ _)
+                 _
              ∘ total2_paths_equiv _ _ _)%weq.
+      exact (weq_on_fam HD _ _).
     - abstract
         (intro p ;
          induction p ;
@@ -666,26 +720,20 @@ Section CodomainStreetFibs.
    4. Adjoint equivalences
    *)
   Section AdjEquivToDispAdjEquiv.
-    Context (HB_2_0 : is_univalent_2_0 B)
-            (HB_2_1 : is_univalent_2_1 B)
+    Context (HB : is_univalent_2 B)
             {x : B}
-            {hx hy : cod_sfibs x}
+            {hx hy : disp_map_bicat_to_disp_bicat x}
             (e : adjoint_equivalence (pr1 hx) (pr1 hy))
             (com : invertible_2cell (pr12 hx) (e · pr12 hy)).
 
     Local Definition adj_equiv_to_disp_adj_equiv_left_adj
       : hx -->[ internal_adjoint_equivalence_identity x] hy.
     Proof.
-      use make_mor_of_internal_sfib_over.
+      use make_disp_map_bicat_mor.
       - exact e.
-      - exact (equivalence_preserves_cartesian
-                 (pr12 hx)
-                 (pr12 hy)
-                 e
-                 com
-                 (pr2 e)
-                 HB_2_0
-                 HB_2_1).
+      - apply (arrow_subbicat_contains_equiv_over_id HB D).
+        + exact e.
+        + exact com.
       - exact (comp_of_invertible_2cell
                  (runitor_invertible_2cell _)
                  com).
@@ -696,28 +744,23 @@ Section CodomainStreetFibs.
     Local Definition adj_equiv_to_disp_adj_equiv_right_adj
       : hy -->[ internal_adjoint_equivalence_identity x] hx.
     Proof.
-      use make_mor_of_internal_sfib_over.
+      use make_disp_map_bicat_mor.
       - exact (left_adjoint_right_adjoint e).
       - pose (einv := inv_adjequiv e).
-        use (equivalence_preserves_cartesian
-               (pr12 hy)
-               (pr12 hx)
-               einv
-               _
-               (pr2 einv)
-               HB_2_0
-               HB_2_1).
-        exact (comp_of_invertible_2cell
-                 (linvunitor_invertible_2cell _)
-                 (comp_of_invertible_2cell
-                    (rwhisker_of_invertible_2cell
-                       _
-                       (left_equivalence_unit_iso einv))
-                    (comp_of_invertible_2cell
-                       (rassociator_invertible_2cell _ _ _)
-                       (lwhisker_of_invertible_2cell
-                          _
-                          (inv_of_invertible_2cell com))))).
+        apply (arrow_subbicat_contains_equiv_over_id
+                 HB D).
+        + exact (pr2 einv).
+        + exact (comp_of_invertible_2cell
+                   (linvunitor_invertible_2cell _)
+                   (comp_of_invertible_2cell
+                      (rwhisker_of_invertible_2cell
+                         _
+                         (left_equivalence_unit_iso einv))
+                      (comp_of_invertible_2cell
+                         (rassociator_invertible_2cell _ _ _)
+                         (lwhisker_of_invertible_2cell
+                            _
+                            (inv_of_invertible_2cell com))))).
       - refine (runitor _
                 • linvunitor _
                 • ((left_equivalence_counit_iso e)^-1 ▹ _)
@@ -729,15 +772,12 @@ Section CodomainStreetFibs.
     Local Notation "'R'" := adj_equiv_to_disp_adj_equiv_right_adj.
 
     Local Lemma adj_equiv_to_disp_adj_equiv_unit_coh
-      : @cell_of_internal_sfib_over_homot
-          _ _ _ _ _ _ _
-          (linvunitor (id₁ x))
-          _ _
-          (id_mor_of_internal_sfib_over (pr12 hx))
-          (comp_mor_of_internal_sfib_over L R)
-          (left_adjoint_unit (pr12 e)).
+      : pr122 (id_disp hx) • (left_adjoint_unit e ▹ pr12 hx)
+        =
+        (pr12 hx ◃ left_adjoint_unit (internal_adjoint_equivalence_identity x))
+        • pr122 (L ;; R)%mor_disp.
     Proof.
-      unfold cell_of_internal_sfib_over_homot ; cbn.
+      cbn.
       rewrite !vassocr.
       refine (!_).
       etrans.
@@ -800,7 +840,6 @@ Section CodomainStreetFibs.
       }
       cbn.
       refine (!_).
-
       rewrite linvunitor_assoc.
       rewrite !vassocl.
       rewrite <- rwhisker_rwhisker_alt.
@@ -875,7 +914,7 @@ Section CodomainStreetFibs.
         ==>[ left_adjoint_unit (internal_adjoint_equivalence_identity x) ]
         L ;; R.
     Proof.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       - exact (left_adjoint_unit e).
       - exact adj_equiv_to_disp_adj_equiv_unit_coh.
     Defined.
@@ -883,15 +922,13 @@ Section CodomainStreetFibs.
     Local Notation "'η'" := adj_equiv_to_disp_adj_equiv_unit.
 
     Local Lemma adj_equiv_to_disp_adj_equiv_counit_coh
-      : @cell_of_internal_sfib_over_homot
-          _ _ _ _ _ _ _
-          (lunitor (id₁ x))
-          _ _
-          (comp_mor_of_internal_sfib_over R L)
-          (id_mor_of_internal_sfib_over (pr12 hy))
-          (left_adjoint_counit (pr12 e)).
+      : pr122 (R ;; L)%mor_disp
+        • (left_adjoint_counit e ▹ pr12 hy)
+        =
+        (pr12 hy ◃ left_adjoint_counit (internal_adjoint_equivalence_identity x))
+        • pr122 (id_disp hy).
     Proof.
-      unfold cell_of_internal_sfib_over_homot ; cbn.
+      cbn.
       rewrite !vassocl.
       rewrite <- rwhisker_vcomp.
       rewrite !vassocr.
@@ -976,7 +1013,7 @@ Section CodomainStreetFibs.
         ==>[ left_adjoint_counit (internal_adjoint_equivalence_identity x) ]
         id_disp hy.
     Proof.
-      use make_cell_of_internal_sfib_over.
+      use make_disp_map_bicat_cell.
       - exact (left_adjoint_counit e).
       - exact adj_equiv_to_disp_adj_equiv_counit_coh.
     Defined.
@@ -985,7 +1022,8 @@ Section CodomainStreetFibs.
 
     Local Definition adj_equiv_to_disp_adj_equiv_data
       : @disp_left_adjoint_data
-          B cod_sfibs
+          B
+          disp_map_bicat_to_disp_bicat
           _ _
           (internal_adjoint_equivalence_identity x)
           (internal_adjoint_equivalence_identity x)
@@ -998,11 +1036,24 @@ Section CodomainStreetFibs.
           (internal_adjoint_equivalence_identity x)
           adj_equiv_to_disp_adj_equiv_data.
     Proof.
-      split ;
-        simpl ;
-        (use subtypePath ; [ intro ; apply cellset_property | ]) ;
-        rewrite transportb_cell_of_internal_sfib_over ;
-        cbn ;
+      split.
+      - simpl.
+        use subtypePath.
+        {
+          intro.
+          apply cellset_property.
+        }
+        rewrite transportb_disp_map_bicat_cell.
+        cbn.
+        apply (pr2 e).
+      - simpl.
+        use subtypePath.
+        {
+          intro.
+          apply cellset_property.
+        }
+        rewrite transportb_disp_map_bicat_cell.
+        cbn.
         apply (pr2 e).
     Qed.
 
@@ -1011,10 +1062,14 @@ Section CodomainStreetFibs.
           (internal_adjoint_equivalence_identity x)
           adj_equiv_to_disp_adj_equiv_data.
     Proof.
-      split ; apply invertible_2cell_to_disp_invertible_2cell ; apply (pr2 e).
+      split.
+      - apply is_invertible_to_is_disp_invertible.
+        apply (pr2 e).
+      - apply is_invertible_to_is_disp_invertible.
+        apply (pr2 e).
     Defined.
 
-    Definition adj_equiv_to_disp_adj_equiv
+    Definition disp_map_bicat_adj_equiv_to_disp_adj_equiv
       : disp_adjoint_equivalence (internal_adjoint_equivalence_identity x) hx hy.
     Proof.
       simple refine (L ,, (_ ,, (_ ,, _))).
@@ -1026,7 +1081,7 @@ Section CodomainStreetFibs.
 
   Section DispAdjEquivToAdjEquiv.
     Context {x : B}
-            {hx hy : cod_sfibs x}
+            {hx hy : disp_map_bicat_to_disp_bicat x}
             (e : disp_adjoint_equivalence
                    (internal_adjoint_equivalence_identity x)
                    hx hy).
@@ -1041,11 +1096,11 @@ Section CodomainStreetFibs.
       split.
       - pose (maponpaths pr1 (pr1 (pr122 e))) as p.
         cbn in p.
-        rewrite transportb_cell_of_internal_sfib_over in p.
+        rewrite transportb_disp_map_bicat_cell in p.
         exact p.
       - pose (maponpaths pr1 (pr2 (pr122 e))) as p.
         cbn in p.
-        rewrite transportb_cell_of_internal_sfib_over in p.
+        rewrite transportb_disp_map_bicat_cell in p.
         exact p.
     Qed.
 
@@ -1053,8 +1108,8 @@ Section CodomainStreetFibs.
       : left_equivalence_axioms disp_adj_equiv_to_left_adj_data.
     Proof.
       split.
-      - exact (disp_invertible_2cell_to_invertible_2cell _ (pr1 (pr222 e))).
-      - exact (disp_invertible_2cell_to_invertible_2cell _ (pr2 (pr222 e))).
+      - exact (is_disp_invertible_to_is_invertible _ _ (pr1 (pr222 e))).
+      - exact (is_disp_invertible_to_is_invertible _ _ (pr2 (pr222 e))).
     Defined.
 
     Local Definition disp_adj_equiv_to_left_adj_equiv
@@ -1078,7 +1133,7 @@ Section CodomainStreetFibs.
            (rinvunitor_invertible_2cell _)
            (pr221 e).
 
-    Definition disp_adj_equiv_to_adj_equiv_pair
+    Definition disp_map_bicat_disp_adj_equiv_to_adj_equiv_pair
       : ∑ (e : adjoint_equivalence (pr1 hx) (pr1 hy)),
         invertible_2cell
           (pr12 hx)
@@ -1089,15 +1144,14 @@ Section CodomainStreetFibs.
   End DispAdjEquivToAdjEquiv.
 
   Definition adj_equiv_to_disp_adj_equiv_to_adj_equiv
-             (HB_2_0 : is_univalent_2_0 B)
-             (HB_2_1 : is_univalent_2_1 B)
+             (HB : is_univalent_2 B)
              {x : B}
-             {hx hy : cod_sfibs x}
+             {hx hy : disp_map_bicat_to_disp_bicat x}
              (z : ∑ (e : adjoint_equivalence (pr1 hx) (pr1 hy)),
                   invertible_2cell (pr12 hx) (pr1 e · pr12 hy))
-    : disp_adj_equiv_to_adj_equiv_pair
-        (adj_equiv_to_disp_adj_equiv
-           HB_2_0 HB_2_1 (pr1 z) (pr2 z))
+    : disp_map_bicat_disp_adj_equiv_to_adj_equiv_pair
+        (disp_map_bicat_adj_equiv_to_disp_adj_equiv
+           HB (pr1 z) (pr2 z))
       =
       z.
   Proof.
@@ -1106,7 +1160,7 @@ Section CodomainStreetFibs.
       use subtypePath.
       {
         intro ; apply isaprop_left_adjoint_equivalence.
-        exact HB_2_1.
+        exact (pr2 HB).
       }
       apply idpath.
     - use subtypePath.
@@ -1131,15 +1185,15 @@ Section CodomainStreetFibs.
   Qed.
 
   Definition disp_adj_equiv_to_adj_equiv_to_disp_adj_equiv
-             (HB_2_0 : is_univalent_2_0 B)
-             (HB_2_1 : is_univalent_2_1 B)
+             (HB : is_univalent_2 B)
+             (HD : arrow_subbicat_props D)
              {x : B}
-             {hx hy : cod_sfibs x}
+             {hx hy : disp_map_bicat_to_disp_bicat x}
              (z : disp_adjoint_equivalence
                     (internal_adjoint_equivalence_identity x)
                     hx hy)
-    : adj_equiv_to_disp_adj_equiv
-        HB_2_0 HB_2_1
+    : disp_map_bicat_adj_equiv_to_disp_adj_equiv
+        HB
         (disp_adj_equiv_to_adj_equiv z)
         (disp_adj_equiv_to_adj_equiv_comm z)
       =
@@ -1149,14 +1203,15 @@ Section CodomainStreetFibs.
     {
       intro.
       use isaprop_disp_left_adjoint_equivalence.
-      - exact HB_2_1.
-      - apply cod_sfibs_disp_univalent_2_1.
-        exact HB_2_1.
+      - exact (pr2 HB).
+      - apply disp_map_disp_univalent_2_1.
+        + exact HD.
+        + exact (pr2 HB).
     }
     cbn.
     refine (maponpaths (λ z, _ ,, z) _).
     use pathsdirprod.
-    - apply isaprop_mor_preserves_cartesian.
+    - apply HD.
     - use subtypePath.
       {
         intro ; apply isaprop_is_invertible_2cell.
@@ -1168,21 +1223,21 @@ Section CodomainStreetFibs.
   Qed.
 
   Definition adj_equiv_weq_disp_adj_equiv
-             (HB_2_0 : is_univalent_2_0 B)
-             (HB_2_1 : is_univalent_2_1 B)
+             (HB : is_univalent_2 B)
+             (HD : arrow_subbicat_props D)
              {x : B}
-             (hx hy : cod_sfibs x)
+             (hx hy : disp_map_bicat_to_disp_bicat x)
     : (∑ (e : adjoint_equivalence (pr1 hx) (pr1 hy)),
        invertible_2cell (pr12 hx) (e · pr12 hy))
       ≃
       disp_adjoint_equivalence (internal_adjoint_equivalence_identity x) hx hy.
   Proof.
     use make_weq.
-    - exact (λ e, adj_equiv_to_disp_adj_equiv HB_2_0 HB_2_1 (pr1 e) (pr2 e)).
+    - exact (λ e, disp_map_bicat_adj_equiv_to_disp_adj_equiv HB (pr1 e) (pr2 e)).
     - use gradth.
-      + exact disp_adj_equiv_to_adj_equiv_pair.
-      + exact (adj_equiv_to_disp_adj_equiv_to_adj_equiv HB_2_0 HB_2_1).
-      + exact (disp_adj_equiv_to_adj_equiv_to_disp_adj_equiv HB_2_0 HB_2_1).
+      + exact disp_map_bicat_disp_adj_equiv_to_adj_equiv_pair.
+      + exact (adj_equiv_to_disp_adj_equiv_to_adj_equiv HB).
+      + exact (disp_adj_equiv_to_adj_equiv_to_disp_adj_equiv HB HD).
   Defined.
 
   (**
@@ -1190,43 +1245,45 @@ Section CodomainStreetFibs.
    *)
   Definition weq_fam_global
              (HB_2_1 : is_univalent_2_1 B)
+             (HD : arrow_subbicat_props D)
              {x : B}
-             (hx hy : ∑ (y : B) (f : y --> x ), internal_sfib f)
+             (hx hy : disp_map_bicat_to_disp_bicat x)
              (p : pr1 hx = pr1 hy)
     : (transportf
-         (λ x1 : B, ∑ f : B ⟦ x1, x ⟧, internal_sfib f)
+         (λ z, ∑ (h : z --> x), pred_ob D h)
          p
          (pr2 hx)
        =
        pr2 hy)
       ≃
-      invertible_2cell (pr12 hx) (idtoiso_2_0 _ _ p · pr12 hy).
+      invertible_2cell
+        (pr12 hx)
+        (pr1 (idtoiso_2_0 (pr1 hx) (pr1 hy) p) · pr12 hy).
   Proof.
     induction hx as [ hx₁ [ hx₂ hx₃ ] ].
     induction hy as [ hy₁ [ hy₂ hy₃ ] ].
     cbn in *.
     induction p ; cbn.
     refine (_ ∘ path_sigma_hprop _ _ _ _)%weq.
-    - apply isaprop_internal_sfib.
-      exact HB_2_1.
+    - apply HD.
     - exact (cod_1cell_path_help hx₂ hy₂
              ∘ make_weq
                  _
                  (HB_2_1 _ _ _ _))%weq.
   Defined.
 
-  Definition cod_sfibs_disp_univalent_2_0
-             (HB_2_1 : is_univalent_2_1 B)
-             (HB_2_0 : is_univalent_2_0 B)
-    : disp_univalent_2_0 cod_sfibs.
+  Definition disp_map_bicat_disp_univalent_2_0
+             (HB : is_univalent_2 B)
+             (HD : arrow_subbicat_props D)
+    : disp_univalent_2_0 disp_map_bicat_to_disp_bicat.
   Proof.
     use fiberwise_univalent_2_0_to_disp_univalent_2_0.
     intros x hx hy.
     use weqhomot.
-    - exact (adj_equiv_weq_disp_adj_equiv HB_2_0 HB_2_1 hx hy
+    - exact (adj_equiv_weq_disp_adj_equiv HB HD hx hy
              ∘ weqtotal2
-                 (make_weq _ (HB_2_0 _ _))
-                 (weq_fam_global HB_2_1 hx hy)
+                 (make_weq _ (pr1 HB _ _))
+                 (weq_fam_global (pr2 HB) HD _ _)
              ∘ total2_paths_equiv _ _ _)%weq.
     - intro p.
       cbn in p.
@@ -1235,14 +1292,15 @@ Section CodomainStreetFibs.
       {
         intro.
         use isaprop_disp_left_adjoint_equivalence.
-        - exact HB_2_1.
-        - apply cod_sfibs_disp_univalent_2_1.
-          exact HB_2_1.
+        - exact (pr2 HB).
+        - apply disp_map_disp_univalent_2_1.
+          + exact HD.
+          + exact (pr2 HB).
       }
       cbn.
       refine (maponpaths (λ z, _ ,, z) _).
       use pathsdirprod.
-      + apply isaprop_mor_preserves_cartesian.
+      + apply HD.
       + use subtypePath.
         {
           intro ; apply isaprop_is_invertible_2cell.
@@ -1251,4 +1309,28 @@ Section CodomainStreetFibs.
         rewrite id2_left.
         apply idpath.
   Qed.
-End CodomainStreetFibs.
+
+  Definition disp_map_bicat_disp_univalent_2
+             (HB : is_univalent_2 B)
+             (HD : arrow_subbicat_props D)
+    : disp_univalent_2 disp_map_bicat_to_disp_bicat.
+  Proof.
+    split.
+    - apply disp_map_bicat_disp_univalent_2_0.
+      + exact HB.
+      + exact HD.
+    - apply disp_map_disp_univalent_2_1.
+      + exact HD.
+      + exact (pr2 HB).
+  Defined.
+End ArrowSubBicatToDispBicat.
+
+Definition cod_sfibs
+           (B : bicat)
+  : disp_bicat B
+  := disp_map_bicat_to_disp_bicat (sfib_subbicat B).
+
+Definition cod_sopfibs
+           (B : bicat)
+  : disp_bicat B
+  := disp_map_bicat_to_disp_bicat (sopfib_subbicat B).
