@@ -57,6 +57,8 @@ Section interlaced_bilattices .
 
   Definition interlaced_bilattice_to_bilattice {X : hSet} (b: interlaced_bilattice X) : bilattice X := pr1 b.
   Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
+
+  Definition interlacing_of_bilattice {X : hSet} (b : interlaced_bilattice X) := pr1 b .
 End interlaced_bilattices.
 
 Section distributive_bilattices.
@@ -82,7 +84,13 @@ Section distributive_bilattices.
   Definition distributive_bilattice (X : hSet) :=
     ∑ b : bilattice X, is_distributive_bilattice b.
 
-  Definition make_distributive_bilattice {X : hSet} {b : bilattice X} (is : is_distributive_bilattice b) : distributive_bilattice X := b,,is.
+  Definition distributive_bilattices_to_bilattices {X : hSet} (b : distributive_bilattice X) : bilattice X := pr1 b.
+
+  Coercion distributive_bilattices_to_bilattices : distributive_bilattice >-> bilattice .
+
+  Definition make_distributive_bilattice {X : hSet} {b : bilattice X} (is : is_distributive_bilattice b) : distributive_bilattice X := b,,is .
+
+  Definition distributivity_of_bilattice {X : hSet} (b : distributive_bilattice X) : is_distributive_bilattice b := pr2 b.
 
   Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} {b : bilattice X} (p : is_distributive_bilattice b) : is_interlaced b .
   Proof.
@@ -94,27 +102,24 @@ Section distributive_bilattices.
   Defined.
 
   Definition distributive_bilattices_to_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) :=
-    make_interlaced_bilattice (distributive_bilattices_are_interlaced_bilattices (pr2 b)).
+    make_interlaced_bilattice (distributive_bilattices_are_interlaced_bilattices (distributivity_of_bilattice b)).
 
   Coercion distributive_bilattices_to_interlaced_bilattices : distributive_bilattice >-> interlaced_bilattice .
 End distributive_bilattices.
+
 Section prod_bilattices .
-  Context {X1 X2 : hSet} .
-  Variable l1 : lattice X1 .
-  Variable l2 : lattice X2 .
+  Definition prod_bilattice_carrier (X1 X2 : hSet) := setdirprod X1 X2 .
 
-  Definition prod_bilattice_carrier := setdirprod X1 X2 .
-
-  Definition tmin : binop prod_bilattice_carrier :=
+  Definition tmin {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
     λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
-  Definition tmax : binop prod_bilattice_carrier :=
+  Definition tmax  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
     λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
-  Definition kmin : binop prod_bilattice_carrier :=
+  Definition kmin  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
     λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
-  Definition kmax : binop prod_bilattice_carrier :=
+  Definition kmax  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
     λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
 
-  Definition latticeop_prod_t : latticeop tmin tmax .
+  Definition latticeop_prod_t {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : latticeop (tmin l1 l2) (tmax l1 l2) .
   Proof .
     unfold latticeop; do 4 (try use make_dirprod).
     -  unfold isassoc; intros a b c; induction a, b, c; unfold tmin; use dirprod_paths; [use isassoc_Lmin | use isassoc_Lmax].
@@ -125,7 +130,7 @@ Section prod_bilattices .
     - intros a b; induction a, b; unfold tmin; unfold tmax; use dirprod_paths; [use Lmax_absorb | use Lmin_absorb] .
   Defined .
 
-  Definition latticeop_prod_k : latticeop kmin kmax .
+  Definition latticeop_prod_k {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : latticeop (kmin l1 l2) (kmax l1 l2) .
   Proof .
     unfold latticeop; do 4 (try use make_dirprod).
     -  unfold isassoc; intros a b c; induction a, b, c; unfold kmin; use dirprod_paths; use isassoc_Lmin.
@@ -136,9 +141,9 @@ Section prod_bilattices .
     - intros a b; induction a, b; unfold kmin; unfold kmax; use dirprod_paths; use Lmax_absorb .
   Defined .
 
-  Definition make_prod_bilattice := make_bilattice (mklattice latticeop_prod_t) (mklattice latticeop_prod_k) .
+  Definition make_prod_bilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) := make_bilattice (mklattice (latticeop_prod_t l1 l2)) (mklattice (latticeop_prod_k l1 l2)) .
 
-  Definition prod_bilattices_are_interlaced : is_interlaced make_prod_bilattice .
+  Definition prod_bilattices_are_interlaced {X1 X2 : hSet} {l1 : lattice X1} {l2 : lattice X2} : is_interlaced (make_prod_bilattice l1 l2) .
   Proof.
     unfold is_interlaced; intros [x1 x2] [y1 y2] [z1 z2]; do 3 (try use make_dirprod); intro H; use dirprod_paths; unfold make_prod_bilattice,mklattice,tmin,tmax,kmin,kmax,meet in H; cbn in H; cbn; set (H1 := maponpaths dirprod_pr1 H); cbn in H1; set (H2 := maponpaths dirprod_pr2 H); cbn in H2.
     - rewrite (iscomm_Lmin l1 x1 z1), isassoc_Lmin, <- (isassoc_Lmin l1 x1 y1 z1), H1, (iscomm_Lmin l1 x1 z1), <- isassoc_Lmin, Lmin_id; reflexivity .
@@ -170,30 +175,26 @@ Section prod_bilattices .
 End prod_bilattices .
 
 Section bounded_prod_bilattices.
-  Context {X1 X2 : hSet} .
-  Variable bl1 : bounded_lattice X1 .
-  Variable bl2 : bounded_lattice X2 .
-
-  Definition tbot : prod_bilattice_carrier :=
+  Definition tbot {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2) :=
     Lbot bl1,, Ltop bl2 .
-  Definition ttop : prod_bilattice_carrier :=
+  Definition ttop  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2) :=
     Ltop bl1,, Lbot bl2 .
-  Definition kbot : prod_bilattice_carrier :=
+  Definition kbot {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2):=
     Lbot bl1,, Lbot bl2 .
-  Definition ktop : prod_bilattice_carrier :=
-    Ltop bl1,, Ltop bl2.
+  Definition ktop {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2) :=  Ltop bl1,, Ltop bl2.
 
-  Definition bounded_latticeop_prod_t : bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) tbot ttop .
+  Definition bounded_latticeop_prod_t  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) (tbot bl1 bl2) (ttop bl1 bl2) .
   Proof.
     unfold bounded_latticeop, islunit; use make_dirprod; intro x; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop | use islunit_Lmax_Lbot].
   Defined.
 
-  Definition bounded_latticeop_prod_k : bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) kbot ktop .
+  Definition bounded_latticeop_prod_k  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) (kbot bl1 bl2) (ktop bl1 bl2) .
   Proof.
     unfold bounded_latticeop, islunit; use make_dirprod; intro x; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop].
   Defined.
 
-  Definition make_bounded_prod_bilattice := make_bounded_bilattice (mkbounded_lattice bounded_latticeop_prod_t) (mkbounded_lattice bounded_latticeop_prod_k) .
+  Definition make_bounded_prod_bilattice  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) := make_bounded_bilattice (mkbounded_lattice (bounded_latticeop_prod_t bl1 bl2)) (mkbounded_lattice (bounded_latticeop_prod_k bl1 bl2)) .
+
 End bounded_prod_bilattices.
 
 Section bilattice_FOUR.
@@ -221,6 +222,8 @@ Section bilattice_FOUR.
   Defined.
 
   Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
+
+  Check prod_bilattices_are_interlaced : is_interlaced FOUR .
 
   Definition is_distributive_FOUR : is_distributive_bilattice FOUR .
   Proof.
