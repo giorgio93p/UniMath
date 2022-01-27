@@ -73,19 +73,6 @@ Section interlaced_bilattices .
   Definition interlaced_bilattice_to_bilattice {X : hSet} (b: interlaced_bilattice X) : bilattice X := pr1 b.
   Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
 
-  Definition dual_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (dual_bilattice b).
-  Proof.
-    destruct b as [? [? [? [? ?]]]] . do 3 (try split); assumption .
-  Defined.
-
-  Definition opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (opp_bilattice b).
-  Proof.
-    destruct b as [? [i1 [i2 [i3 i4]]]].
-    do 3 (try split); intros ? ? ? H;
-    [set (i := i2) | set (i := i1) | set (i := i4) | set (i := i3)];
-    use (Lmax_le_eq_l _ _ _ (i _ _ _ (Lmax_le_eq_l _ _ _ H))).
-  Defined.
-
   Definition interlacing_consensus_t {X : hSet} (b : interlaced_bilattice X) : interlacing (consensus b) (tle b) := pr1 (pr2 b) .
   Definition interlacing_gullibility_t {X : hSet} (b : interlaced_bilattice X) : interlacing (gullibility b) (tle b):= pr1 (pr2 (pr2 b)) .
   Definition interlacing_meet_k {X : hSet} (b : interlaced_bilattice X) :  interlacing (meet b) (kle b) := pr1 (pr2 (pr2 (pr2 b))) .
@@ -97,6 +84,26 @@ Section interlaced_bilattices .
     - use i. exact p.
     - rewrite (c y z), (c y w). use i . exact q.
   Defined.
+
+  Definition dual_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (dual_bilattice b).
+  Proof.
+    destruct b as [? [? [? [? ?]]]] . do 3 (try split); assumption .
+  Defined.
+
+  Definition opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (opp_bilattice b).
+  Proof.
+    do 3 (try split); intros ? ? ? H;
+    [set (i := (interlacing_gullibility_t b)) | set (i := interlacing_consensus_t b) | set (i := interlacing_join_k b) | set (i := interlacing_meet_k b)];
+    use (Lmax_le_eq_l _ _ _ (i _ _ _ (Lmax_le_eq_l _ _ _ H))).
+  Defined.
+(*
+  Definition t_opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (t_opp_bilattice b).
+  Proof.
+    do 3 (try split); intros ? ? ? H;
+    [set (i := (interlacing_gullibility_t b)) | set (i := interlacing_consensus_t b) | set (i := interlacing_meet_k b) | set (i := interlacing_join_k b)].
+    - use (Lmax_le_eq_l _ _ _ (i _ _ _  H)).
+  Defined.
+*)
 
 End interlaced_bilattices.
 
@@ -315,10 +322,15 @@ Section representation_theorems.
     - intros ? ? H. rewrite iscomm_join, iscomm_consensus. exact H.
   Defined.
 
-(*
 
   Definition rightRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (meet b x y) (consensus b x y)  .
+(*
+  Definition isEq_rightRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (rightRel b).
+  Proof.
 
+  Defined.
+*)
+(*
   Print setquotfun2.
 
   Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
