@@ -211,12 +211,12 @@ Section bounded_prod_bilattices.
 
   Definition bounded_latticeop_prod_t  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) (tbot bl1 bl2) (ttop bl1 bl2) .
   Proof.
-    use make_dirprod; intro x; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop | use islunit_Lmax_Lbot].
+    use make_dirprod; intro; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop | use islunit_Lmax_Lbot].
   Defined.
 
   Definition bounded_latticeop_prod_k  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) (kbot bl1 bl2) (ktop bl1 bl2) .
   Proof.
-    use make_dirprod; intro x; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop].
+    use make_dirprod; intro; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop].
   Defined.
 
   Definition make_bounded_prod_bilattice  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) := make_bounded_bilattice (mkbounded_lattice (bounded_latticeop_prod_t bl1 bl2)) (mkbounded_lattice (bounded_latticeop_prod_k bl1 bl2)) .
