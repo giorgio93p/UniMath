@@ -78,12 +78,17 @@ Section interlaced_bilattices .
   Definition interlacing_meet_k {X : hSet} (b : interlaced_bilattice X) :  interlacing (meet b) (kle b) := pr1 (pr2 (pr2 (pr2 b))) .
   Definition interlacing_join_k {X : hSet} (b : interlaced_bilattice X) :  interlacing (join b) (kle b) := pr2 (pr2 (pr2 (pr2 b))) .
 
-  Definition iterated_interlacing {X : hSet} {op : binop X} {R : hrel X} (i : interlacing op R) (a : istrans R) (c : iscomm op) {x y z w : X} (p : R x y) (q : R z w) : R (op x z) (op y w).
+  Definition double_interlacing {X : hSet} {op : binop X} {R : hrel X} (i : interlacing op R) (a : istrans R) (c : iscomm op) {x y z w : X} (p : R x y) (q : R z w) : R (op x z) (op y w).
   Proof.
     use (a (op x z) (op y z)).
     - use i. exact p.
     - rewrite (c y z), (c y w). use i . exact q.
   Defined.
+
+  Definition double_interlacing_gullibility_t {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : tle b x y) (q : tle b z w) : tle b (gullibility b x z) (gullibility b y w) := double_interlacing (interlacing_gullibility_t _) (istrans_Lle (tlattice _)) (iscomm_Lmax (klattice _)) p q.
+  Definition double_interlacing_consensus_t {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : tle b x y) (q : tle b z w) : tle b (consensus b x z) (consensus b y w) := double_interlacing (interlacing_consensus_t _) (istrans_Lle (tlattice _)) (iscomm_Lmin (klattice _)) p q.
+  Definition double_interlacing_meet_k {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : kle b x y) (q : kle b z w) : kle b (meet b x z) (meet b y w) := double_interlacing (interlacing_meet_k _) (istrans_Lle (klattice _)) (iscomm_Lmin (tlattice _)) p q.
+  Definition double_interlacing_join_k {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : kle b x y) (q : kle b z w) : kle b (join b x z) (join b y w) := double_interlacing (interlacing_join_k _) (istrans_Lle (klattice _)) (iscomm_Lmax (tlattice _)) p q.
 
   Definition dual_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (dual_bilattice b).
   Proof.
@@ -114,7 +119,6 @@ Section interlaced_bilattices .
 End interlaced_bilattices.
 
 Section distributive_bilattices.
-
   Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
     (isldistr (Lmin l) (Lmax l)) × isldistr (Lmax l) (Lmin l) .
 
@@ -300,7 +304,6 @@ Section representation_theorems.
       use (property2 (make_interlaced_bilattice (dual_bilattice_is_interlaced b'))).
     }
 
-    unfold iseqrel, ispreorder, iscomm, leftRel, istrans, isrefl, isantisymm.
     do 2 (try split).
     - intros x y z H1 H2. use (isantisymm_Lle (tlattice b)).
       -- use Lmax_le_case.
@@ -323,33 +326,59 @@ Section representation_theorems.
              }
              use (property2 _ _ _ (_,,r1,,r2)).
       -- rewrite <- (Lmin_id (klattice b) (join _ x z)).
-         use (iterated_interlacing (interlacing_consensus_t _) (istrans_Lle _) (iscomm_Lmin _) (Lmax_le_l _ _ _)  (Lmax_le_r _ _ _)).
-    - intro. unfold consensus. rewrite Lmin_id. unfold join. rewrite Lmax_id. reflexivity.
-    - intros ? ? H. rewrite iscomm_join, iscomm_consensus. exact H.
+         use (double_interlacing_consensus_t (Lmax_le_l _ x z)  (Lmax_le_r _ x z)).
+    - intro. unfold leftRel, consensus. rewrite Lmin_id. unfold join. rewrite Lmax_id. reflexivity.
+    - intros ? ? H. unfold leftRel. rewrite iscomm_join, iscomm_consensus. exact H.
   Defined.
-
 
   Definition rightRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (meet b x y) (consensus b x y)  .
-(*
-  Definition isEq_rightRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (rightRel b).
+
+  Definition isEq_rightRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (rightRel b) :=
+    isEq_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+
+  Definition iscomp_consensus_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftRel b) (leftRel b) (consensus b).
   Proof.
-
+    intros x y w z H1 H2.
+    use (isantisymm_Lle (klattice b) (join _ (consensus _ x w) (consensus _ y z)) ((consensus _ (consensus _ x w) (consensus _ y z)))).
+    - rewrite (isassoc_consensus _ x w (consensus _ y z)),
+        (iscomm_consensus _ y z),
+        <- (isassoc_consensus _ w z y),
+        (iscomm_consensus _ (consensus _ w z) y),
+        <- (isassoc_consensus _ x y (consensus _ w z)).
+      use Lmin_le_case.
+      -- rewrite <- H1.
+         use (double_interlacing_join_k (Lmin_le_l _ x w) (Lmin_le_r _ z y)).
+      -- rewrite <- H2.
+         use (double_interlacing_join_k (Lmin_le_r _ x w) (Lmin_le_l _ z y)).
+    - rewrite <- (Lmax_id (tlattice b) (consensus _ (consensus _ x w) (consensus _ y z))).
+      use (double_interlacing_join_k (Lmin_le_l _ (consensus _ x w) (consensus _ y z)) (Lmin_le_r _ (consensus _ x w) (consensus _ y z))).
   Defined.
-*)
-(*
-  Print setquotfun2.
 
+  (*
+  Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftRel b) (leftRel b) (gullibility b).
+  Proof.
+    intros x y z w H1 H2.
+  Defined.
+  *)
+
+  Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightRel b) (rightRel b) (consensus b) :=
+    iscomp_consensus_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+
+  (*
   Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
   Proof.
-    unfold lattice. exists (setquotfun2 (leftRel b) (leftRel b) (consensus b)). (setquotfun2 X X leftRel leftRel (gullibility b)).
+    exists (setquotfun2 (leftRel b)  (make_eqrel (leftRel b) (isEq_leftRel b)) (consensus b) (iscomp_consensus_leftRel b)).
+
+    exists (setquotfun2 (leftRel b) (make_eqrel (leftRel b) (isEq_leftRel _)) (consensus b)). (setquotfun2 X X leftRel leftRel (gullibility b)).
 
   Defined.
+   *)
 
-
+(*
   Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (p : X = prod_bilattice_carrier X1 X2),  make_prod_bilattice l1 l2 = transportf interlaced_bilattice p b .
   Proof.
-    Search setquot.
-    exists (setquotinset (leftRel b)), (setquotinset (rightRel b)), make_lattice.
+    exists (setquotinset (leftRel b)), (setquotinset (rightRel b)).
+    make_lattice.
 
 
   Defined.
