@@ -96,15 +96,21 @@ Section interlaced_bilattices .
     [set (i := (interlacing_gullibility_t b)) | set (i := interlacing_consensus_t b) | set (i := interlacing_join_k b) | set (i := interlacing_meet_k b)];
     use (Lmax_le_eq_l _ _ _ (i _ _ _ (Lmax_le_eq_l _ _ _ H))).
   Defined.
-(*
+
   Definition t_opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (t_opp_bilattice b).
   Proof.
-    do 3 (try split); intros ? ? ? H;
-    [set (i := (interlacing_gullibility_t b)) | set (i := interlacing_consensus_t b) | set (i := interlacing_meet_k b) | set (i := interlacing_join_k b)].
-    - use (Lmax_le_eq_l _ _ _ (i _ _ _  H)).
+    do 3 (try split); intros ? ? ? H.
+    - use (Lmax_le_eq_l _ _ _ (interlacing_consensus_t _ _ _ _ (Lmax_le_eq_l _ _ _ H))).
+    - use (Lmax_le_eq_l _ _ _ (interlacing_gullibility_t _ _ _ _ (Lmax_le_eq_l _ _ _ H))).
+    - use (interlacing_join_k _ _ _ _ H).
+    - use (interlacing_meet_k _ _ _ _ H).
   Defined.
-*)
 
+  Definition k_opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (k_opp_bilattice b).
+  Proof.
+    destruct (t_opp_bilattice_is_interlaced (make_interlaced_bilattice (dual_bilattice_is_interlaced b))) as [? [? [? ?]]].
+    do 3 (try split); assumption.
+  Defined.
 End interlaced_bilattices.
 
 Section distributive_bilattices.
