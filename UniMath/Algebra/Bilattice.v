@@ -270,33 +270,36 @@ Section representation_theorems.
     - rewrite (iscomm_Lmin _ x2 z2), (isassoc_Lmin), <- (isassoc_Lmin _ x2 y2 z2), H2, (iscomm_Lmin _ x2 z2), <- isassoc_Lmin, Lmin_id. reflexivity.
   Defined.
 
-  Definition leftRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
-  Definition isEq_leftRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (leftRel b).
-  Proof.
-    assert (property1 : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x)).
-    {
+    Lemma property1 {X : hSet} : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
+    Proof.
       intros ? x y [? [p1 p2]].
       set (w := (meet _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
       use (interlacing_meet_k _ _ _ _ p2).
-    }
-    assert (property1_dual : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x)).
-    {
+    Defined.
+
+    Lemma property1_dual {X:hSet}: ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
+    Proof.
       intro b'.
       use (property1 (make_interlaced_bilattice (dual_bilattice_is_interlaced b'))).
-    }
+    Defined.
+
+    Lemma property2 {X : hSet} : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
+    Proof.
+      intros b' ? ? [? [p1 p2]].
+      set (pp := property1 _ _ _ (_,,p1,,p2)).
+      rewrite (iscomm_meet) in pp.
+      use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
+    Defined.
+
+  Definition leftRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
+  Definition isEq_leftRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (leftRel b).
+  Proof.
     assert (property1_op : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b r x × kle b y r) -> kle b (join b y x) x).
     {
       intros b' ? ? [? [p1 p2]].
       set (bop := make_interlaced_bilattice (opp_bilattice_is_interlaced b')).
       set (H := property1 bop _ _ (_,,(Lmax_le_eq_l _ _ _ p1),, (Lmax_le_eq_l _ _ _ p2))).
       use (Lmax_le_eq_l _ _ _ H).
-    }
-    assert (property2 : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x)).
-    {
-      intros b' ? ? [? [p1 p2]].
-      set (pp := property1 _ _ _ (_,,p1,,p2)).
-      rewrite (iscomm_meet) in pp.
-      use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
     }
     assert (property2_dual : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> kle b x (meet b y x)).
     {
@@ -354,25 +357,54 @@ Section representation_theorems.
       use (double_interlacing_join_k (Lmin_le_l _ (consensus _ x w) (consensus _ y z)) (Lmin_le_r _ (consensus _ x w) (consensus _ y z))).
   Defined.
 
-  (*
+(*
   Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftRel b) (leftRel b) (gullibility b).
   Proof.
-    intros x y z w H1 H2.
+    intros x y w z H1 H2.
+    use (isantisymm_Lle (tlattice b) (join _ (gullibility _ x w) (gullibility _ y z)) ((consensus _ (gullibility _ x w) (gullibility _ y z)))).
+    - use Lmax_le_case.
+      -- rewrite iscomm_consensus.
+         use (property2 _ (gullibility _ x w) (gullibility _ y z)).
+         exists (gullibility b (join b x y) (join b w z)).
+         split.
+         ---use (double_interlacing_gullibility_t (Lmax_le_l _ x y) (Lmax_le_l _ w z)).
+         --- rewrite H1, H2.
+             use Lmax_le_case.
+             ---- use (istrans_Lle _ _ y _).
+                  ----- use Lmin_le_r.
+                  ----- use Lmax_le_l.
+             ---- use (istrans_Lle _ _ z _).
+                  ----- use Lmin_le_r.
+                  ----- use Lmax_le_r.
+      -- use (property2 _ (gullibility _ y z) (gullibility _ x w)).
+         exists (gullibility b (join b x y) (join b w z)).
+         split.
+         --- use (double_interlacing_gullibility_t (Lmax_le_r _ _ _) (Lmax_le_r _ _ _)).
+         --- rewrite H1, H2.
+             use Lmax_le_case.
+             ---- use (istrans_Lle _ _ x _).
+                  ----- use Lmin_le_l.
+                  ----- use Lmax_le_l.
+             ---- use (istrans_Lle _ _ w _).
+                  ----- use Lmin_le_l.
+                  ----- use Lmax_le_r.
+    - rewrite <- (Lmin_id (klattice b) (join _ _ _)).
+      apply (double_interlacing_consensus_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
   Defined.
-  *)
+*)
 
   Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightRel b) (rightRel b) (consensus b) :=
     iscomp_consensus_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
 
-  (*
+(*
   Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
   Proof.
-    exists (setquotfun2 (leftRel b)  (make_eqrel (leftRel b) (isEq_leftRel b)) (consensus b) (iscomp_consensus_leftRel b)).
+    exists (setquotfun2 (leftRel b) (make_eqrel (leftRel b) (isEq_leftRel b)) (consensus b) (iscomp_consensus_leftRel b)).
 
-    exists (setquotfun2 (leftRel b) (make_eqrel (leftRel b) (isEq_leftRel _)) (consensus b)). (setquotfun2 X X leftRel leftRel (gullibility b)).
+    exists (setquotfun2 (leftRel b) (make_eqrel (leftRel b) (isEq_leftRel b)) (gullibility b)) (iscomp_gullibility_leftRel b).
 
   Defined.
-   *)
+*)
 
 (*
   Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (p : X = prod_bilattice_carrier X1 X2),  make_prod_bilattice l1 l2 = transportf interlaced_bilattice p b .
