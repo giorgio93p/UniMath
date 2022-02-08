@@ -357,7 +357,6 @@ Section representation_theorems.
       use (double_interlacing_join_k (Lmin_le_l _ (consensus _ x w) (consensus _ y z)) (Lmin_le_r _ (consensus _ x w) (consensus _ y z))).
   Defined.
 
-(*
   Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftRel b) (leftRel b) (gullibility b).
   Proof.
     intros x y w z H1 H2.
@@ -389,19 +388,23 @@ Section representation_theorems.
                   ----- use Lmin_le_l.
                   ----- use Lmax_le_r.
     - rewrite <- (Lmin_id (klattice b) (join _ _ _)).
-      apply (double_interlacing_consensus_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
+      apply (double_interlacing_consensus_t (Lmax_le_l _ _ _) (Lmax_le_r _ _ _)).
   Defined.
-*)
 
   Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightRel b) (rightRel b) (consensus b) :=
     iscomp_consensus_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+  Definition iscomp_gullibility_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightRel b) (rightRel b) (gullibility b) :=
+    iscomp_gullibility_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
 
 (*
   Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
   Proof.
-    exists (setquotfun2 (leftRel b) (make_eqrel (leftRel b) (isEq_leftRel b)) (consensus b) (iscomp_consensus_leftRel b)).
-
-    exists (setquotfun2 (leftRel b) (make_eqrel (leftRel b) (isEq_leftRel b)) (gullibility b)) (iscomp_gullibility_leftRel b).
+    set (L := make_eqrel (leftRel b) (isEq_leftRel b)).
+    set (iscc := iscomp_consensus_leftRel b).
+    set (iscg := iscomp_gullibility_leftRel b).
+    exists (setquotfun2 L L (consensus b) iscc), (setquotfun2 L L (gullibility b) iscg).
+    do 4 (try split).
+    - intros x y z.
 
   Defined.
 *)
