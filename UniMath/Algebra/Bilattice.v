@@ -27,6 +27,11 @@ Section bilattices .
   Definition iscomm_meet {X : hSet} (b : bilattice X) : iscomm (meet b) := iscomm_Lmin (tlattice b) .
   Definition iscomm_join {X : hSet} (b : bilattice X) : iscomm (join b) := iscomm_Lmax (tlattice b) .
 
+  Definition consensus_gullibility_absorb {X : hSet} (b : bilattice X) (x y : X) : consensus b x (gullibility b x y) = x :=
+    Lmin_absorb (klattice b) x y.
+  Definition gullibility_consensus_absorb {X : hSet} (b : bilattice X) (x y : X) : gullibility b x (consensus b x y) = x :=
+    Lmax_absorb (klattice b) x y.
+
   Definition tle {X : hSet} (b : bilattice X) : hrel X := Lle (tlattice b).
   Definition kle {X : hSet} (b : bilattice X) : hrel X := Lle (klattice b).
   Definition tge {X : hSet} (b : bilattice X) : hrel X := Lge (tlattice b).
@@ -404,20 +409,22 @@ Section representation_theorems.
   Proof.
     use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
     intros x y.
-    simpl.
-    rewrite setquotfun2comm, p, <-  (setquotfun2comm _ _ _ is).
+    cbn.
+    rewrite p.
     reflexivity.
   Defined.
 
-  (*
   Definition isassocsetquotfun2 {X : hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : isassoc f) : isassoc (setquotfun2 R R f is).
   Proof.
-    use (setquotuniv2prop _ (λ x y, @eqset (setquotinset _) ()).
-
+    set (ff := setquotfun2 _ _ _ is).
+    intros x0 y0 z0.
+    use (setquotuniv3prop _ (λ x y z, @eqset (setquotinset _) (ff (ff z x) y) (ff z (ff x y)))).
+    intros x y z.
+    cbn.
+    rewrite p.
+    reflexivity.
   Defined.
-  *)
 
-  (*
   Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
   Proof.
     set (iscc := iscomp_consensus_leftRel b).
@@ -426,12 +433,24 @@ Section representation_theorems.
     set (gg := setquotfun2 (leftEq b) (leftEq b) (gullibility b) iscg).
     exists cc, gg.
     do 4 (try split).
-    - admit.
+    - use (isassocsetquotfun2 (consensus b) iscc (isassoc_Lmin (klattice b))).
     - use (iscommsetquotfun2 (consensus b) iscc (iscomm_consensus b)).
-    -
+    - use (isassocsetquotfun2 (gullibility b) iscg (isassoc_Lmax (klattice b))).
+    - use (iscommsetquotfun2 (gullibility b) iscg (iscomm_gullibility b)).
+    - use (setquotuniv2prop _ (λ x y, @eqset (setquotinset _) (cc x (gg x y)) x)).
+      intros x y.
+      cbn.
+      rewrite (consensus_gullibility_absorb b).
+      reflexivity.
+    -  use (setquotuniv2prop _ (λ x y, @eqset (setquotinset _) (gg x (cc x y)) x)).
+      intros x y.
+      cbn.
+      rewrite (gullibility_consensus_absorb b).
+      reflexivity.
   Defined.
-*)
 
+  Definition rightLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (rightRel b)) :=
+    leftLattice (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
 
 (*
   Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (p : X = prod_bilattice_carrier X1 X2),  make_prod_bilattice l1 l2 = transportf interlaced_bilattice p b .
