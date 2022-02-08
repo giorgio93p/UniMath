@@ -334,12 +334,16 @@ Section representation_theorems.
     - intros ? ? H. unfold leftRel. rewrite iscomm_join, iscomm_consensus. exact H.
   Defined.
 
+  Definition leftEq {X : hSet} (b : interlaced_bilattice X) : eqrel X := make_eqrel (leftRel b) (isEq_leftRel b).
+
   Definition rightRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (meet b x y) (consensus b x y)  .
 
   Definition isEq_rightRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (rightRel b) :=
     isEq_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
 
-  Definition iscomp_consensus_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftRel b) (leftRel b) (consensus b).
+  Definition rightEq {X : hSet} (b : interlaced_bilattice X) : eqrel X := make_eqrel (rightRel b) (isEq_rightRel b).
+
+  Definition iscomp_consensus_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (consensus b).
   Proof.
     intros x y w z H1 H2.
     use (isantisymm_Lle (klattice b) (join _ (consensus _ x w) (consensus _ y z)) ((consensus _ (consensus _ x w) (consensus _ y z)))).
@@ -357,7 +361,7 @@ Section representation_theorems.
       use (double_interlacing_join_k (Lmin_le_l _ (consensus _ x w) (consensus _ y z)) (Lmin_le_r _ (consensus _ x w) (consensus _ y z))).
   Defined.
 
-  Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftRel b) (leftRel b) (gullibility b).
+  Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (gullibility b).
   Proof.
     intros x y w z H1 H2.
     use (isantisymm_Lle (tlattice b) (join _ (gullibility _ x w) (gullibility _ y z)) ((consensus _ (gullibility _ x w) (gullibility _ y z)))).
@@ -391,23 +395,43 @@ Section representation_theorems.
       apply (double_interlacing_consensus_t (Lmax_le_l _ _ _) (Lmax_le_r _ _ _)).
   Defined.
 
-  Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightRel b) (rightRel b) (consensus b) :=
+  Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (consensus b) :=
     iscomp_consensus_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
-  Definition iscomp_gullibility_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightRel b) (rightRel b) (gullibility b) :=
+  Definition iscomp_gullibility_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (gullibility b) :=
     iscomp_gullibility_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
 
-(*
-  Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
+  Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
   Proof.
-    set (L := make_eqrel (leftRel b) (isEq_leftRel b)).
-    set (iscc := iscomp_consensus_leftRel b).
-    set (iscg := iscomp_gullibility_leftRel b).
-    exists (setquotfun2 L L (consensus b) iscc), (setquotfun2 L L (gullibility b) iscg).
-    do 4 (try split).
-    - intros x y z.
+    use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
+    intros x y.
+    simpl.
+    rewrite setquotfun2comm, p, <-  (setquotfun2comm _ _ _ is).
+    reflexivity.
+  Defined.
+
+  (*
+  Definition isassocsetquotfun2 {X : hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : isassoc f) : isassoc (setquotfun2 R R f is).
+  Proof.
+    use (setquotuniv2prop _ (λ x y, @eqset (setquotinset _) ()).
 
   Defined.
+  *)
+
+  (*
+  Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
+  Proof.
+    set (iscc := iscomp_consensus_leftRel b).
+    set (iscg := iscomp_gullibility_leftRel b).
+    set (cc := setquotfun2 (leftEq b) (leftEq b) (consensus b) iscc).
+    set (gg := setquotfun2 (leftEq b) (leftEq b) (gullibility b) iscg).
+    exists cc, gg.
+    do 4 (try split).
+    - admit.
+    - use (iscommsetquotfun2 (consensus b) iscc (iscomm_consensus b)).
+    -
+  Defined.
 *)
+
 
 (*
   Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (p : X = prod_bilattice_carrier X1 X2),  make_prod_bilattice l1 l2 = transportf interlaced_bilattice p b .
