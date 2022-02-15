@@ -297,6 +297,27 @@ Section representation_theorems.
       use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
     Defined.
 
+    (*
+    Lemma property2_opp_t {X : hSet} : ∏ (b : interlaced_bilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
+    Proof.
+      intros b x y [r [p1 p2]].
+      assert (p1' :  tle (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x r).
+      {
+        rewrite <- p1, iscomm_Lmin.
+        use Lmax_absorb.
+      }
+      assert (p2' :  kle (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) r y).
+      {
+        exact p2.
+      }
+      cbn.
+      set (c := property2 (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x y (r,,p1',,p2')).
+      cbn in c.
+
+
+    Defined.
+     *)
+
   Definition leftRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
   Definition isEq_leftRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (leftRel b).
   Proof.
@@ -451,6 +472,18 @@ Section representation_theorems.
   Definition rightRel_join_consensus {X : hSet} (b : interlaced_bilattice X) (x y : X) : rightRel b (join b x y) (consensus b x y)
     := leftRel_meet_consensus (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x y.
 
+  (*
+  Definition rightRel_meet_gullibility {X : hSet} (b : interlaced_bilattice X) (x y : X) : rightRel b (meet b x y) (gullibility b x y).
+  Proof.
+    use (isantisymm_Lle (tlattice b)).
+    - rewrite <- (Lmin_id (klattice b) (meet b (meet b _ _) (gullibility b _ _))).
+      use (double_interlacing_consensus_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
+    - use Lmin_le_case.
+      --
+
+  Defined.
+   *)
+
   Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
   Proof.
     use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
@@ -498,27 +531,70 @@ Section representation_theorems.
   Definition rightLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (rightRel b)) :=
     leftLattice (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
 
-(*
+  Definition leftAndRightIsId {X : hSet} (b : interlaced_bilattice X) (x y : X) (p1 : leftRel b x y) (p2 : rightRel b x y) : x = y.
+  Proof.
+    set (p := p1 @ !p2).
+    use (isantisymm_Lle (tlattice b)).
+    - use (istrans_Lle (tlattice _) x (join b x y) y (Lmax_le_l _ _ _)).
+      rewrite p.
+      use Lmin_le_r.
+    - use (istrans_Lle (tlattice _) y (join b x y) x (Lmax_le_r _ _ _)).
+      rewrite p.
+      use Lmin_le_l.
+  Defined.
+
+  (*
   Definition XisLeftCrossRight {X : hSet} (b : interlaced_bilattice X) : weq X (prod_bilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))) .
   Proof.
     exists (λ x, setquotpr (leftEq b) x,, setquotpr (rightEq b) x).
-    intro y; destruct y as [y1 y2].
-    set (iscc := iscomp_consensus_leftRel b).
-    set (iscg := iscomp_gullibility_leftRel b).
-    set (iscm := iscomp_meet_leftRel b).
-    set (iscj := iscomp_join_leftRel b).
-    set (cc := setquotfun2 (leftEq b) (leftEq b) (consensus b) iscc).
-    set (gg := setquotfun2 (leftEq b) (leftEq b) (gullibility b) iscg).
-    set (mm := setquotfun2 (leftEq b) (leftEq b) (meet b) iscm).
-    set (jj := setquotfun2 (leftEq b) (leftEq b) (join b) iscj).
-    unfold iscontr, hfiber.
-    Check (mm ).
-    set (c := cc (mm y1 (gg y1 y2)) (jj y2 (gg y1 y2))).
-    unfold setquotinset,make_hSet,setquot,hsubtype,iseqclass,ishinh in y1, y2.
-    use (setquotuniv2prop _ (λ x y, @eqset (setquotinset _) <- )).
-Locate "  ∥ A ∥".
+    intro y; destruct y as [yL yR].
+    set (TL := λ yL, λ yR : setquotinset (rightRel b), hfiber (λ x : X, setquotpr (leftEq b) x,, setquotpr (rightEq b) x) (yL,, yR)).
+    use (setquotunivprop (leftEq b) (λ yL, make_hProp (iscontr (TL yL yR)) (isapropiscontr (TL yL yR)))).
+    intro y1.
+    set (TR := λ yR, TL (setquotpr (leftEq b) y1) yR).
+    use (setquotunivprop (rightEq b) (λ yR, make_hProp (iscontr (TR yR)) (isapropiscontr (TR yR)))).
+    intro y2.
+
+    set (c := consensus b (meet b y1 (gullibility b y1 y2)) (join b y2 (gullibility b y1 y2))).
+    assert (HL : setquotpr (leftEq b) c = setquotpr (leftEq b) y1).
+    {
+      use (weqpathsinsetquot _ _ _).
+      use (eqreltrans _ _ (meet b (meet b y1 (gullibility b y1 y2)) (join b y2 (gullibility b y1 y2))) _ ).
+      - use eqrelsymm.
+        use leftRel_meet_consensus.
+      - Check (leftRel_join_gullibility b y1 y2).
+
+        Check (iscomp_meet_leftRel b).
+
+        Check (leftRel_meet_consensus b).
+      Check (leftRel_meet_consensus _ (meet _ _ _) (join _ _ _)).
+      admit.
+    }
+    assert (HR : setquotpr (rightEq b) c = setquotpr (rightEq b) y2).
+    {
+      use (weqpathsinsetquot _ _ _).
+      admit.
+    }
+    assert(cntr : TR (setquotpr (rightEq b) y2) ).
+    {
+      exists c.
+      use (pathsdirprod HL HR).
+    }
+    assert (H : ∏ t : TR (setquotpr (rightEq b) y2), t = cntr ).
+    {
+      intro t.
+      unfold TR, TL, hfiber in cntr, t.
+
+      set (tL := maponpaths pr1 (pr2 t)).
+      set (tR := maponpaths dirprod_pr2 (pr2 t)).
+
+      set (e := leftAndRightIsId _ _ _ (invmap (weqpathsinsetquot _ _ _) (HL @ ! tL))  (invmap (weqpathsinsetquot _ _ _) (HR @ ! tR))).
+      use total2_paths_f.
+      - use e.
+    }
   Defined.
-*)
+   *)
+
 (*
   Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (p : X = prod_bilattice_carrier X1 X2),  make_prod_bilattice l1 l2 = transportf interlaced_bilattice p b .
   Proof.
