@@ -600,13 +600,8 @@ Section representation_theorems.
       use Lmin_le_l.
   Defined.
 
-  Definition test : ∑ x : boolset, x = true × x != false.
-  Proof.
-    exists true.
-    split.
-    - reflexivity.
-      - use truetonegfalse. reflexivity.
-  Defined.
+  Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) , bilattice (prod_bilattice_carrier X1 X2) :=
+    setquotinset (leftRel b),, setquotinset (rightRel b),, make_prod_bilattice (leftLattice b) (rightLattice b).
 
   Definition XisLeftCrossRight {X : hSet} (b : interlaced_bilattice X) : weq X (prod_bilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))) .
   Proof.
@@ -624,7 +619,7 @@ Section representation_theorems.
     set (c := consensus b (meet b y1 (gullibility b y1 y2)) (join b y2 (gullibility b y1 y2))).
     assert (HL : setquotpr (leftEq b) c = setquotpr (leftEq b) y1).
     {
-      use (weqpathsinsetquot _ _ _).
+      use weqpathsinsetquot.
       use (eqreltrans _ _ (meet b (meet b y1 (gullibility b y1 y2)) (join b y2 (gullibility b y1 y2))) _ ).
       {
         use eqrelsymm.
@@ -651,7 +646,7 @@ Section representation_theorems.
     }
     assert (HR : setquotpr (rightEq b) c = setquotpr (rightEq b) y2).
     {
-      use (weqpathsinsetquot _ _ _).
+      use weqpathsinsetquot.
       use (eqreltrans _ _ (join b (meet b y1 (gullibility b y1 y2)) (join b y2 (gullibility b y1 y2))) _ ).
       {
         use eqrelsymm.
@@ -678,25 +673,22 @@ Section representation_theorems.
         join_meet_absorb.
       use eqrelrefl.
     }
+    exists (c,,pathsdirprod HL HR).
 
     (** and prove that it is a center of contraction **)
-    exists (c,,pathsdirprod HL HR).
     intro t.
-    set (tL := maponpaths pr1 (pr2 t)).
-    set (tR := maponpaths dirprod_pr2 (pr2 t)).
     use total2_paths_f.
-    - use (! leftAndRightIsId _ _ _ (invmap (weqpathsinsetquot _ _ _) (HL @ ! tL))  (invmap (weqpathsinsetquot _ _ _) (HR @ ! tR))).
-    - use (proofirrelevance_hProp (@eqset (make_hSet _ (isaset_dirprod (isasetsetquot (leftEq b)) (isasetsetquot (rightEq b)))) (setquotpr (leftEq b) c,, setquotpr (rightEq b) c) (setquotpr (leftEq b) y1,, setquotpr (rightEq b) y2))).
+    - use (! leftAndRightIsId _ _ _
+             (invmap (weqpathsinsetquot _ _ _) (HL @ ! (maponpaths pr1 (pr2 t))))
+             (invmap (weqpathsinsetquot _ _ _) (HR @ ! (maponpaths dirprod_pr2 (pr2 t))))
+          ).
+    - use (proofirrelevance_hProp (
+               @eqset
+                 (make_hSet _ (isaset_dirprod (isasetsetquot (leftEq b)) (isasetsetquot (rightEq b))))
+                 (setquotpr (leftEq b) c,, setquotpr (rightEq b) c)
+                 (setquotpr (leftEq b) y1,, setquotpr (rightEq b) y2)
+          )).
   Defined.
-
-(*
-  Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (p : X = prod_bilattice_carrier X1 X2),  make_prod_bilattice l1 l2 = transportf interlaced_bilattice p b .
-  Proof.
-    exists (setquotinset (leftRel b)), (setquotinset (rightRel b)), (leftLattice b), (rightLattice b).
-
-
-  Defined.
-*)
 End representation_theorems.
 
 Section bilattice_FOUR.
@@ -723,4 +715,5 @@ Section bilattice_FOUR.
   Proof.
     repeat apply make_dirprod; intros [x1 x2] [y1 y2] [z1 z2]; induction x1, x2, y1, y2, z1, z2; trivial.
   Defined.
+
 End bilattice_FOUR.
