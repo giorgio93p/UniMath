@@ -689,6 +689,10 @@ Section representation_theorems.
                  (setquotpr (leftEq b) y1,, setquotpr (rightEq b) y2)
           )).
   Defined.
+  (*
+  Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_bilattice X) (∑ (X1 X2 : hSet) , bilattice (prod_bilattice_carrier X1 X2)).
+   *)
+
 End representation_theorems.
 
 Section bilattice_FOUR.
