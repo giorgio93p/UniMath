@@ -680,7 +680,7 @@ Section representation_theorems.
     }
 
     (** and prove that it is a center of contraction **)
-    exists (c,,pathsdirprod HL HR : TR (setquotpr (rightEq b) y2)).
+    exists (c,,pathsdirprod HL HR).
     intro t.
     set (tL := maponpaths pr1 (pr2 t)).
     set (tR := maponpaths dirprod_pr2 (pr2 t)).
@@ -700,17 +700,9 @@ Section representation_theorems.
 End representation_theorems.
 
 Section bilattice_FOUR.
-  Definition AND : binop boolset :=
-    λ b1 b2,
-    match b1 with true => b2 | false => b1 end.
-
-  Definition OR : binop boolset :=
-    λ b1 b2,
-    match b1 with true => b1 | false => b2 end.
-
   Definition bool_lattice : lattice boolset .
-  Proof .
-    exists AND, OR.
+  Proof.
+    exists (λ b1 b2 : boolset, if b1 then b2 else false), (λ b1 b2 : boolset, if b1 then true else b2).
     repeat apply make_dirprod;
         try (intros a b c; induction a, b, c; trivial);
         try (intros a b; induction a, b; trivial) .
