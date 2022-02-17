@@ -2,6 +2,62 @@ Require Import UniMath.Algebra.Lattice.
 Require Import UniMath.MoreFoundations.Subtypes.
 Require Import UniMath.MoreFoundations.Equivalences.
 
+Section equivalences.
+  Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
+  Proof.
+    use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
+    intros x y.
+    cbn.
+    rewrite p.
+    reflexivity.
+  Defined.
+
+  Definition isassocsetquotfun2 {X : hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : isassoc f) : isassoc (setquotfun2 R R f is).
+  Proof.
+    set (ff := setquotfun2 _ _ _ is).
+    intros x0 y0 z0.
+    use (setquotuniv3prop _ (λ x y z, @eqset (setquotinset _) (ff (ff z x) y) (ff z (ff x y)))).
+    intros x y z.
+    cbn.
+    rewrite p.
+    reflexivity.
+  Defined.
+End equivalences.
+
+Section lattices.
+  Definition isaprop_latticeop {X : hSet} {min max : binop X} : isaprop (latticeop min max).
+  Proof.
+    intros x y.
+    do 3 (try use isapropdirprod).
+    - exact(isapropisassoc min).
+    - exact(isapropiscomm min).
+    - exact(isapropisassoc max).
+    - exact(isapropiscomm max).
+    - do 2 (use impred; intro).
+      use (setproperty X).
+    - do 2 (use impred; intro).
+      use (setproperty X).
+  Defined.
+
+  Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
+    (isldistr (Lmin l) (Lmax l)) × isldistr (Lmax l) (Lmin l) .
+
+  Definition bool_lattice : lattice boolset .
+  Proof.
+    exists (λ b1 b2 : boolset, if b1 then b2 else false), (λ b1 b2 : boolset, if b1 then true else b2).
+    repeat apply make_dirprod;
+        try (intros a b c; induction a, b, c; trivial);
+        try (intros a b; induction a, b; trivial) .
+  Defined.
+
+  Definition bool_boundedlattice : bounded_lattice boolset .
+  Proof.
+    exists bool_lattice, false, true.
+    unfold bounded_latticeop, islunit.
+    apply make_dirprod; trivial .
+  Defined.
+End lattices.
+
 Section bilattices .
   Definition bilattice (X : hSet) := lattice X × lattice X .
 
@@ -71,6 +127,12 @@ Section interlaced_bilattices .
   Definition interlacing {X : hSet} (op : binop X) (R : hrel X) :=
     ∏ x y z : X, R x y -> R (op x z) (op y z).
 
+  Definition isaprop_interlacing {X : hSet} (op : binop X) (R : hrel X) : isaprop (interlacing op R).
+  Proof.
+    do 4 (use impred; intro).
+    use propproperty.
+  Defined.
+
   Definition is_interlaced {X : hSet} (b : bilattice X) : UU :=
     interlacing (consensus b) (tle b)
                 ×
@@ -79,6 +141,11 @@ Section interlaced_bilattices .
                 interlacing (meet b) (kle b)
                 ×
                 interlacing (join b) (kle b).
+
+  Definition isaprop_is_interlaced {X : hSet} {b : bilattice X} : isaprop (is_interlaced b).
+  Proof.
+    do 3 (try use (isapropdirprod)); use isaprop_interlacing.
+  Defined.
 
   Definition interlaced_bilattice (X : hSet) :=
     ∑ b : bilattice X,  is_interlaced b.
@@ -176,9 +243,6 @@ Section interlaced_bilattices .
 End interlaced_bilattices.
 
 Section distributive_bilattices.
-  Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
-    (isldistr (Lmin l) (Lmax l)) × isldistr (Lmax l) (Lmin l) .
-
   Definition is_distributive_bilattice {X : hSet} (b : bilattice X) :=
               is_distributive_lattice (klattice b)
                 × is_distributive_lattice (tlattice b)
@@ -191,6 +255,12 @@ Section distributive_bilattices.
                 × isldistr (gullibility b) (join b)
                 × isldistr (join b) (gullibility b)
   .
+
+  Definition isaprop_is_distributive {X : hSet} {b : bilattice X} : isaprop (is_distributive_bilattice b).
+  Proof.
+    do 9 (try use (isapropdirprod)); use isapropisldistr.
+  Defined.
+
   Definition distributive_bilattice (X : hSet) :=
     ∑ b : bilattice X, is_distributive_bilattice b.
 
@@ -276,6 +346,13 @@ Section prod_bilattices .
   Definition make_prod_bilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : prod_bilattice X1 X2 l1 l2 :=
     latticeop_prod_t l1 l2,,latticeop_prod_k l1 l2.
 
+  Definition iscontr_prod_bilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : iscontr (prod_bilattice X1 X2 l1 l2).
+  Proof.
+    use iscontraprop1.
+    - use isapropdirprod; use isaprop_latticeop.
+    - exact (make_prod_bilattice l1 l2).
+  Defined.
+
   Definition prod_bilattices_to_bilattices {X1 X2 : hSet} {l1 : lattice X1} {l2 : lattice X2} (b : prod_bilattice X1 X2 l1 l2) : bilattice (prod_bilattice_carrier X1 X2) :=  make_bilattice (mklattice (pr1 b)) (mklattice (pr2 b)) .
 
   Coercion prod_bilattices_to_bilattices : prod_bilattice >-> bilattice .
@@ -305,6 +382,13 @@ Section bounded_prod_bilattices.
   Defined.
 
   Definition make_bounded_prod_bilattice  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_prod_bilattice X1 X2 bl1 bl2 := bounded_latticeop_prod_t bl1 bl2,,bounded_latticeop_prod_k bl1 bl2 .
+
+  Definition iscontr_bounded_prod_bilattice {X1 X2 : hSet} (l1 : bounded_lattice X1) (l2 : bounded_lattice X2) : iscontr (bounded_prod_bilattice X1 X2 l1 l2).
+  Proof.
+    use iscontraprop1.
+    - do 2 (use isapropdirprod); use isapropislunit.
+    - exact (make_bounded_prod_bilattice l1 l2).
+  Defined.
 
   Definition bounded_prod_bilattices_to_prod_bilattices {X1 X2 : hSet} {bl1 : bounded_lattice X1} {bl2 : bounded_lattice X2} (b : bounded_prod_bilattice X1 X2 bl1 bl2) : prod_bilattice X1 X2 bl1 bl2 := pr221 (mkbounded_lattice (pr1 b)),, pr221 (mkbounded_lattice (pr2 b)).
 
@@ -560,26 +644,6 @@ Section representation_theorems.
   Definition leftRel_join_gullibility {X : hSet} (b : interlaced_bilattice X) (x y : X) : leftRel b (join b x y) (gullibility b x y) :=
     rightRel_meet_gullibility (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x y.
 
-  Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
-  Proof.
-    use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
-    intros x y.
-    cbn.
-    rewrite p.
-    reflexivity.
-  Defined.
-
-  Definition isassocsetquotfun2 {X : hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : isassoc f) : isassoc (setquotfun2 R R f is).
-  Proof.
-    set (ff := setquotfun2 _ _ _ is).
-    intros x0 y0 z0.
-    use (setquotuniv3prop _ (λ x y z, @eqset (setquotinset _) (ff (ff z x) y) (ff z (ff x y)))).
-    intros x y z.
-    cbn.
-    rewrite p.
-    reflexivity.
-  Defined.
-
   Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
   Proof.
     set (iscc := iscomp_consensus_leftRel b).
@@ -719,27 +783,13 @@ Section representation_theorems.
     - intro b.
       exists (prod_bilattice_carrier (pr1 b) (pr1 (pr2 b))).
       exact (make_interlaced_bilattice (prod_bilattices_are_interlaced (pr2 (pr2 (pr2 (pr2 b)))))).
-    -
+    - intro b.
+      cbn.
   Defined.
-*)
+   *)
 End representation_theorems.
 
 Section bilattice_FOUR.
-  Definition bool_lattice : lattice boolset .
-  Proof.
-    exists (λ b1 b2 : boolset, if b1 then b2 else false), (λ b1 b2 : boolset, if b1 then true else b2).
-    repeat apply make_dirprod;
-        try (intros a b c; induction a, b, c; trivial);
-        try (intros a b; induction a, b; trivial) .
-  Defined.
-
-  Definition bool_boundedlattice : bounded_lattice boolset .
-  Proof.
-    exists bool_lattice, false, true.
-    unfold bounded_latticeop, islunit.
-    apply make_dirprod; trivial .
-  Defined.
-
   Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
 
   Check prod_bilattices_are_interlaced FOUR : is_interlaced FOUR .
