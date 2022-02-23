@@ -6,21 +6,19 @@ Section equivalences.
   Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
   Proof.
     use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
-    intros x y.
+    intros.
     cbn.
-    rewrite p.
-    reflexivity.
+    now rewrite p.
   Defined.
 
   Definition isassocsetquotfun2 {X : hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : isassoc f) : isassoc (setquotfun2 R R f is).
   Proof.
     set (ff := setquotfun2 _ _ _ is).
-    intros x0 y0 z0.
+    intros ? ? ?.
     use (setquotuniv3prop _ (λ x y z, @eqset (setquotinset _) (ff (ff z x) y) (ff z (ff x y)))).
-    intros x y z.
+    intros.
     cbn.
-    rewrite p.
-    reflexivity.
+    now rewrite p.
   Defined.
 End equivalences.
 
@@ -78,6 +76,35 @@ Section bilattices .
   Definition consensus {X : hSet} (b : bilattice X) : binop X := Lmin (klattice b) .
   Definition gullibility {X : hSet} (b : bilattice X) : binop X := Lmax (klattice b) .
 
+  Definition bilattice_transportf {X1 X2 : hSet} (b1 : bilattice X1) (b2 : bilattice X2) (p : X1 = X2)
+             (m : meet (transportf bilattice p b1) ~ meet b2)
+             (j : join (transportf bilattice p b1) ~ join b2)
+             (c : consensus (transportf bilattice p b1) ~ consensus b2)
+             (g : gullibility (transportf bilattice p b1) ~ gullibility b2)
+    : transportf bilattice p b1 = b2.
+  Proof.
+    use dirprodeq.
+    - use total2_paths_f.
+      -- use weqfunextsec. use m.
+      -- use total2_paths_f.
+         --- use weqfunextsec.
+             rewrite transportf_total2_const.
+             use j.
+         --- apply isaprop_latticeop.
+    - use total2_paths_f.
+      -- use weqfunextsec. use c.
+      -- use total2_paths_f.
+         --- use weqfunextsec.
+             rewrite transportf_total2_const.
+             use g.
+         --- apply isaprop_latticeop.
+  Defined.
+
+  Definition bilattice_eq {X : hSet} (b1 : bilattice X) (b2 : bilattice X) (m : meet b1 ~ meet b2) (j : join b1 ~ join b2) (c : consensus b1 ~ consensus b2) (g : gullibility b1 ~ gullibility b2): b1 = b2.
+  Proof.
+    use (@bilattice_transportf X X b1 b2 (idpath X)); now rewrite idpath_transportf.
+  Defined.
+
   Definition isassoc_consensus {X : hSet} (b : bilattice X) : isassoc (consensus b) := isassoc_Lmin (klattice b) .
   Definition isassoc_join {X : hSet} (b : bilattice X) : isassoc (join b) := isassoc_Lmax (tlattice b) .
   Definition isassoc_meet {X : hSet} (b : bilattice X) : isassoc (meet b) := isassoc_Lmin (tlattice b) .
@@ -94,9 +121,8 @@ Section bilattices .
     Lmax_absorb (klattice b) x y.
   Definition meet_join_absorb {X : hSet} (b : bilattice X) (x y : X) : meet b x (join b x y) = x :=
     Lmin_absorb (tlattice b) x y.
-    Definition join_meet_absorb {X : hSet} (b : bilattice X) (x y : X) : join b x (meet b x y) = x :=
+  Definition join_meet_absorb {X : hSet} (b : bilattice X) (x y : X) : join b x (meet b x y) = x :=
     Lmax_absorb (tlattice b) x y.
-
 
   Definition tle {X : hSet} (b : bilattice X) : hrel X := Lle (tlattice b).
   Definition kle {X : hSet} (b : bilattice X) : hrel X := Lle (klattice b).
@@ -154,6 +180,31 @@ Section interlaced_bilattices .
 
   Definition interlaced_bilattice_to_bilattice {X : hSet} (b: interlaced_bilattice X) : bilattice X := pr1 b.
   Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
+
+  Definition interlaced_bilattice_eq {X : hSet} (b1 : interlaced_bilattice X) (b2 : interlaced_bilattice X) (m : meet b1 ~ meet b2) (j : join b1 ~ join b2) (c : consensus b1 ~ consensus b2) (g : gullibility b1 ~ gullibility b2): b1 = b2.
+  Proof.
+    use total2_paths_f.
+    - use (bilattice_eq b1 b2 m j c g).
+    - apply isaprop_is_interlaced.
+  Defined.
+
+  Definition interlaced_bilattice_transportf {X1 X2 : hSet} (b1 : interlaced_bilattice X1) (b2 : interlaced_bilattice X2) (p : X1 = X2)
+             (m : meet (transportf interlaced_bilattice p b1) ~ meet b2)
+             (j : join (transportf interlaced_bilattice p b1) ~ join b2)
+             (c : consensus (transportf interlaced_bilattice p b1) ~ consensus b2)
+             (g : gullibility (transportf interlaced_bilattice p b1) ~ gullibility b2)
+    : transportf interlaced_bilattice p b1 = b2.
+  Proof.
+    use total2_paths_f.
+    - unfold interlaced_bilattice.
+      rewrite (pr1_transportf p b1).
+      use bilattice_transportf; [set (i := m) | set (i := j) | set (i := c) | set (i := g)];
+        use (homotcomp _ i);
+        induction p;
+        rewrite idpath_transportf, idpath_transportf;
+        use homotrefl.
+    - apply isaprop_is_interlaced.
+  Defined.
 
   Definition interlacing_consensus_t {X : hSet} (b : interlaced_bilattice X) : interlacing (consensus b) (tle b) := pr1 (pr2 b) .
   Definition interlacing_gullibility_t {X : hSet} (b : interlaced_bilattice X) : interlacing (gullibility b) (tle b):= pr1 (pr2 (pr2 b)) .
@@ -772,21 +823,85 @@ Section representation_theorems.
                  (setquotpr (leftEq b) y1,, setquotpr (rightEq b) y2)
           )).
   Defined.
-
-  (*
+(*
   Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_bilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2).
   Proof.
+    set (f := λ b , interlaced_bilattices_are_prod (pr2 b)).
+    set (g := λ b : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2, prod_bilattice_carrier (pr1 b) (pr12 b),, (make_interlaced_bilattice (prod_bilattices_are_interlaced (pr222 (pr2 b))))).
     use (Equivalence_to_weq).
     use (makeEquivalence).
+    - exact f.
+    - exact g.
     - intro b.
-      exact (interlaced_bilattices_are_prod (pr2 b)).
+      use total2_paths_f.
+      {
+        cbn.
+        admit.
+      }
+      use total2_paths_f.
+      {
+        admit.
+      }
+      use total2_paths_f.
+      {
+        admit.
+      }
+      use total2_paths_f.
+      {
+        admit.
+      }
+      use total2_paths_f.
+      {
+        admit.
+      }
+      admit.
     - intro b.
-      exists (prod_bilattice_carrier (pr1 b) (pr1 (pr2 b))).
-      exact (make_interlaced_bilattice (prod_bilattices_are_interlaced (pr2 (pr2 (pr2 (pr2 b)))))).
+      use total2_paths_f.
+      -- cbn.
+         rewrite (weqtopaths (hSet_univalence _ _)).
+         use (invweq (XisLeftCrossRight _)).
+      -- use interlaced_bilattice_transportf; intro x; use weqfunextsec; intro y.
+         --- unfold meet, tlattice.  cbn.
+             set (X' := prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b)))).
+             set (c := ! (invweq (hSet_univalence (pr1 b) X') ((XisLeftCrossRight (pr2 b))))).
+
+             Check (pr1_transportf c).
+
+             Check (@pr1_transportf ).
+             set (b' :=  g (f b)).
+
+             Check (pr1 b').
+             Check (pr1 (pr2 b')).
+
+             unfold interlaced_bilattice in b'.
+
+             Check (transportf bilattice c (pr12 b')).
+             Check ( (make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b)))).
+
+
+             rewrite (pr1_transportf c b').
+
+             Check (weqtopaths (hSet_univalence (pr1 b) ( prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b)))) (XisLeftCrossRight (pr2 b)))).
+             Check (@pr1_transportf hSet bilattice _ _ _ (weqtopaths (XisLeftCrossRight (pr2 b)))).
+             Check (pr1_transportf (invweq (XisLeftCrossRight (pr2 b)))).
+             Check (@pr1_transportf ).
+             rewrite (pr1_transportf ( (internal_paths_rew_r UU
+             (prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b))) = pr1 b)
+             (setquot (leftRel (pr2 b)) × setquot (rightRel (pr2 b)) ≃ pr1 b) (λ u : UU, u)
+             (invweq (XisLeftCrossRight (pr2 b)))
+             (weqtopaths
+                (hSet_univalence
+                   (prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b))))
+                   (pr1 b))))) ((make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b))))).
+             admit.
+         --- admit.
+         --- admit.
+         --- admit.
     - intro b.
       cbn.
+      admit.
   Defined.
-   *)
+*)
 End representation_theorems.
 
 Section bilattice_FOUR.
