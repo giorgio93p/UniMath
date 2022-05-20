@@ -27,17 +27,39 @@ Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.Core.Unitors.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
-Require Import UniMath.Bicategories.Core.FullyFaithful.
-Require Import UniMath.Bicategories.Core.InternalStreetFibration.
-Require Import UniMath.Bicategories.Core.InternalStreetOpFibration.
+Require Import UniMath.Bicategories.Morphisms.FullyFaithful.
+Require Import UniMath.Bicategories.Morphisms.InternalStreetFibration.
+Require Import UniMath.Bicategories.Morphisms.InternalStreetOpFibration.
 Require Import UniMath.Bicategories.DisplayMapBicat.
 Require Import UniMath.Bicategories.DisplayedBicats.DispBicat.
 Import DispBicat.Notations.
 Require Import UniMath.Bicategories.DisplayedBicats.CleavingOfBicat.
 Require Import UniMath.Bicategories.DisplayedBicats.Examples.DisplayMapBicatToDispBicat.
-Require Import UniMath.Bicategories.Colimits.Pullback.
+Require Import UniMath.Bicategories.Limits.Pullbacks.
 
 Local Open Scope cat.
+
+Definition arrow_subbicat_local_iso_cleaving
+           {B : bicat}
+           (D : arrow_subbicat B)
+  : local_iso_cleaving (disp_map_bicat_to_disp_bicat D).
+Proof.
+  intros x y f g hx hy hf α.
+  simple refine (_ ,, _).
+  - refine (pr1 hf ,, pr12 hf ,, _) ; cbn.
+    exact (comp_of_invertible_2cell
+             (lwhisker_of_invertible_2cell
+                _
+                α)
+             (pr22 hf)).
+  - simple refine ((id2 _ ,, _) ,, _) ; cbn.
+    + abstract
+        (rewrite id2_rwhisker, id2_right ;
+         apply idpath).
+    + use is_invertible_to_is_disp_invertible.
+      cbn.
+      is_iso.
+Defined.
 
 Section DispMapBicatCleaving.
   Context {B : bicat}
@@ -869,6 +891,14 @@ Section DispMapBicatCleaving.
     Defined.
   End LocalCleaving.
 
+  Definition contravariant_disp_map_bicat_local_iso_cleaving
+             (HD : is_contravariant_disp_map_bicat D)
+    : local_iso_cleaving DD.
+  Proof.
+    apply local_cleaving_to_local_iso_cleaving.
+    exact (local_cleaving_of_disp_map_bicat HD).
+  Defined.
+
   Definition lwhisker_cartesian_disp_map_bicat
              (HD : is_contravariant_disp_map_bicat D)
     : lwhisker_cartesian DD.
@@ -991,6 +1021,14 @@ Section DispMapBicatCleaving.
         apply internal_sopfib_opcleaving_is_opcartesian.
     Defined.
   End LocalOpCleaving.
+
+  Definition covariant_disp_map_bicat_local_iso_cleaving
+             (HD : is_covariant_disp_map_bicat D)
+    : local_iso_cleaving DD.
+  Proof.
+    apply local_opcleaving_to_local_iso_cleaving.
+    exact (local_opcleaving_of_disp_map_bicat HD).
+  Defined.
 
   Definition lwhisker_opcartesian_disp_map_bicat
              (HD : is_covariant_disp_map_bicat D)

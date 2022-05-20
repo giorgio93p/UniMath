@@ -12,6 +12,7 @@ Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.CategoryTheory.DisplayedCats.Isos.
 Require Import UniMath.Bicategories.DisplayedBicats.DispBicat. Import DispBicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
 Require Import UniMath.Bicategories.Core.Univalence.
@@ -1071,7 +1072,7 @@ Definition disp_hom_disp_iso_to_invertible_2cell
                     _
                     (disp_hom xx yy)
                     _ _
-                    (α ,, is_inv2cell_to_is_iso _ _ _ Hα)
+                    (α ,, is_inv2cell_to_is_iso _ Hα)
                     _ _
                     αα)
   : is_disp_invertible_2cell Hα αα.
@@ -1122,7 +1123,7 @@ Definition disp_hom_disp_invertible_2cell_to_iso
       _
       (disp_hom xx yy)
       _ _
-      (α ,, is_inv2cell_to_is_iso _ _ _ Hα)
+      (α ,, is_inv2cell_to_is_iso _ Hα)
       _ _
       αα.
 Proof.
@@ -1174,7 +1175,7 @@ Definition disp_hom_disp_iso_weq_invertible_2cell
        _
        (disp_hom xx yy)
        _ _
-       (α ,, is_inv2cell_to_is_iso _ _ _ Hα)
+       (α ,, is_inv2cell_to_is_iso _ Hα)
        _ _
        αα)
       ≃
