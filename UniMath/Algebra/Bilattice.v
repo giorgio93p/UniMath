@@ -40,6 +40,8 @@ Section lattices.
   Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
     (isldistr (Lmin l) (Lmax l)) × isldistr (Lmax l) (Lmin l) .
 
+  Definition dual_lattice {X : hSet} (l : lattice X) : lattice X := mklattice (((isassoc_Lmax l),, (iscomm_Lmax l)),, ((isassoc_Lmin l),,(iscomm_Lmin l)),,(Lmax_absorb l),,(Lmin_absorb l)).
+
   Definition bool_lattice : lattice boolset .
   Proof.
     exists (λ b1 b2 : boolset, if b1 then b2 else false), (λ b1 b2 : boolset, if b1 then true else b2).
@@ -63,8 +65,6 @@ Section prebilattices .
 
   Definition tlattice {X : hSet} (b : prebilattice X) : lattice X := pr1 b .
   Definition klattice {X : hSet} (b : prebilattice X) : lattice X := pr2 b .
-
-  Definition dual_lattice {X : hSet} (l : lattice X) : lattice X := mklattice (((isassoc_Lmax l),, (iscomm_Lmax l)),, ((isassoc_Lmin l),,(iscomm_Lmin l)),,(Lmax_absorb l),,(Lmin_absorb l)).
 
   Definition dual_prebilattice {X : hSet} (b : prebilattice X) := make_prebilattice (klattice b)  (tlattice b) .
   Definition t_opp_prebilattice {X : hSet} (b : prebilattice X) := make_prebilattice (dual_lattice (tlattice b)) (klattice b) .
