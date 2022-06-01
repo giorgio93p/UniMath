@@ -56,32 +56,32 @@ Section lattices.
   Defined.
 End lattices.
 
-Section bilattices .
-  Definition bilattice (X : hSet) := lattice X × lattice X .
+Section prebilattices .
+  Definition prebilattice (X : hSet) := lattice X × lattice X .
 
-  Definition make_bilattice {X : hSet} (tLattice kLattice: lattice X) : bilattice X := tLattice,, kLattice.
+  Definition make_prebilattice {X : hSet} (tLattice kLattice: lattice X) : prebilattice X := tLattice,, kLattice.
 
-  Definition tlattice {X : hSet} (b : bilattice X) : lattice X := pr1 b .
-  Definition klattice {X : hSet} (b : bilattice X) : lattice X := pr2 b .
+  Definition tlattice {X : hSet} (b : prebilattice X) : lattice X := pr1 b .
+  Definition klattice {X : hSet} (b : prebilattice X) : lattice X := pr2 b .
 
   Definition dual_lattice {X : hSet} (l : lattice X) : lattice X := mklattice (((isassoc_Lmax l),, (iscomm_Lmax l)),, ((isassoc_Lmin l),,(iscomm_Lmin l)),,(Lmax_absorb l),,(Lmin_absorb l)).
 
-  Definition dual_bilattice {X : hSet} (b : bilattice X) := make_bilattice (klattice b)  (tlattice b) .
-  Definition t_opp_bilattice {X : hSet} (b : bilattice X) := make_bilattice (dual_lattice (tlattice b)) (klattice b) .
-  Definition k_opp_bilattice {X : hSet} (b : bilattice X) := dual_bilattice (t_opp_bilattice (dual_bilattice b)).
-  Definition opp_bilattice {X : hSet} (b : bilattice X) := make_bilattice (dual_lattice (tlattice b)) (dual_lattice (klattice b)) .
+  Definition dual_prebilattice {X : hSet} (b : prebilattice X) := make_prebilattice (klattice b)  (tlattice b) .
+  Definition t_opp_prebilattice {X : hSet} (b : prebilattice X) := make_prebilattice (dual_lattice (tlattice b)) (klattice b) .
+  Definition k_opp_prebilattice {X : hSet} (b : prebilattice X) := dual_prebilattice (t_opp_prebilattice (dual_prebilattice b)).
+  Definition opp_prebilattice {X : hSet} (b : prebilattice X) := make_prebilattice (dual_lattice (tlattice b)) (dual_lattice (klattice b)) .
 
-  Definition meet {X : hSet} (b : bilattice X) : binop X := Lmin (tlattice b) .
-  Definition join {X: hSet} (b : bilattice X) : binop X := Lmax (tlattice b) .
-  Definition consensus {X : hSet} (b : bilattice X) : binop X := Lmin (klattice b) .
-  Definition gullibility {X : hSet} (b : bilattice X) : binop X := Lmax (klattice b) .
+  Definition meet {X : hSet} (b : prebilattice X) : binop X := Lmin (tlattice b) .
+  Definition join {X: hSet} (b : prebilattice X) : binop X := Lmax (tlattice b) .
+  Definition consensus {X : hSet} (b : prebilattice X) : binop X := Lmin (klattice b) .
+  Definition gullibility {X : hSet} (b : prebilattice X) : binop X := Lmax (klattice b) .
 
-  Definition bilattice_transportf {X1 X2 : hSet} (b1 : bilattice X1) (b2 : bilattice X2) (p : X1 = X2)
-             (m : meet (transportf bilattice p b1) ~ meet b2)
-             (j : join (transportf bilattice p b1) ~ join b2)
-             (c : consensus (transportf bilattice p b1) ~ consensus b2)
-             (g : gullibility (transportf bilattice p b1) ~ gullibility b2)
-    : transportf bilattice p b1 = b2.
+  Definition prebilattice_transportf {X1 X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (p : X1 = X2)
+             (m : meet (transportf prebilattice p b1) ~ meet b2)
+             (j : join (transportf prebilattice p b1) ~ join b2)
+             (c : consensus (transportf prebilattice p b1) ~ consensus b2)
+             (g : gullibility (transportf prebilattice p b1) ~ gullibility b2)
+    : transportf prebilattice p b1 = b2.
   Proof.
     use dirprodeq.
     - use total2_paths_f.
@@ -100,55 +100,55 @@ Section bilattices .
          --- apply isaprop_latticeop.
   Defined.
 
-  Definition bilattice_eq {X : hSet} (b1 : bilattice X) (b2 : bilattice X) (m : meet b1 ~ meet b2) (j : join b1 ~ join b2) (c : consensus b1 ~ consensus b2) (g : gullibility b1 ~ gullibility b2): b1 = b2.
+  Definition prebilattice_eq {X : hSet} (b1 : prebilattice X) (b2 : prebilattice X) (m : meet b1 ~ meet b2) (j : join b1 ~ join b2) (c : consensus b1 ~ consensus b2) (g : gullibility b1 ~ gullibility b2): b1 = b2.
   Proof.
-    use (@bilattice_transportf X X b1 b2 (idpath X)); now rewrite idpath_transportf.
+    use (@prebilattice_transportf X X b1 b2 (idpath X)); now rewrite idpath_transportf.
   Defined.
 
-  Definition isassoc_consensus {X : hSet} (b : bilattice X) : isassoc (consensus b) := isassoc_Lmin (klattice b) .
-  Definition isassoc_join {X : hSet} (b : bilattice X) : isassoc (join b) := isassoc_Lmax (tlattice b) .
-  Definition isassoc_meet {X : hSet} (b : bilattice X) : isassoc (meet b) := isassoc_Lmin (tlattice b) .
-  Definition iscomm_consensus {X : hSet} (b : bilattice X) : iscomm (consensus b) := iscomm_Lmin (klattice b) .
-  Definition iscomm_gullibility {X : hSet} (b : bilattice X) : iscomm (gullibility b) := iscomm_Lmax (klattice b) .
-  Definition iscomm_meet {X : hSet} (b : bilattice X) : iscomm (meet b) := iscomm_Lmin (tlattice b) .
-  Definition iscomm_join {X : hSet} (b : bilattice X) : iscomm (join b) := iscomm_Lmax (tlattice b) .
-  Definition join_id {X : hSet} (b : bilattice X) (x : X) : join b x x = x := Lmax_id (tlattice b) x.
-  Definition meet_id {X : hSet} (b : bilattice X) (x : X) : meet b x x = x := Lmin_id (tlattice b) x.
+  Definition isassoc_consensus {X : hSet} (b : prebilattice X) : isassoc (consensus b) := isassoc_Lmin (klattice b) .
+  Definition isassoc_join {X : hSet} (b : prebilattice X) : isassoc (join b) := isassoc_Lmax (tlattice b) .
+  Definition isassoc_meet {X : hSet} (b : prebilattice X) : isassoc (meet b) := isassoc_Lmin (tlattice b) .
+  Definition iscomm_consensus {X : hSet} (b : prebilattice X) : iscomm (consensus b) := iscomm_Lmin (klattice b) .
+  Definition iscomm_gullibility {X : hSet} (b : prebilattice X) : iscomm (gullibility b) := iscomm_Lmax (klattice b) .
+  Definition iscomm_meet {X : hSet} (b : prebilattice X) : iscomm (meet b) := iscomm_Lmin (tlattice b) .
+  Definition iscomm_join {X : hSet} (b : prebilattice X) : iscomm (join b) := iscomm_Lmax (tlattice b) .
+  Definition join_id {X : hSet} (b : prebilattice X) (x : X) : join b x x = x := Lmax_id (tlattice b) x.
+  Definition meet_id {X : hSet} (b : prebilattice X) (x : X) : meet b x x = x := Lmin_id (tlattice b) x.
 
-  Definition consensus_gullibility_absorb {X : hSet} (b : bilattice X) (x y : X) : consensus b x (gullibility b x y) = x :=
+  Definition consensus_gullibility_absorb {X : hSet} (b : prebilattice X) (x y : X) : consensus b x (gullibility b x y) = x :=
     Lmin_absorb (klattice b) x y.
-  Definition gullibility_consensus_absorb {X : hSet} (b : bilattice X) (x y : X) : gullibility b x (consensus b x y) = x :=
+  Definition gullibility_consensus_absorb {X : hSet} (b : prebilattice X) (x y : X) : gullibility b x (consensus b x y) = x :=
     Lmax_absorb (klattice b) x y.
-  Definition meet_join_absorb {X : hSet} (b : bilattice X) (x y : X) : meet b x (join b x y) = x :=
+  Definition meet_join_absorb {X : hSet} (b : prebilattice X) (x y : X) : meet b x (join b x y) = x :=
     Lmin_absorb (tlattice b) x y.
-  Definition join_meet_absorb {X : hSet} (b : bilattice X) (x y : X) : join b x (meet b x y) = x :=
+  Definition join_meet_absorb {X : hSet} (b : prebilattice X) (x y : X) : join b x (meet b x y) = x :=
     Lmax_absorb (tlattice b) x y.
 
-  Definition tle {X : hSet} (b : bilattice X) : hrel X := Lle (tlattice b).
-  Definition kle {X : hSet} (b : bilattice X) : hrel X := Lle (klattice b).
-  Definition tge {X : hSet} (b : bilattice X) : hrel X := Lge (tlattice b).
-  Definition kge {X : hSet} (b : bilattice X) : hrel X := Lge (klattice b).
+  Definition tle {X : hSet} (b : prebilattice X) : hrel X := Lle (tlattice b).
+  Definition kle {X : hSet} (b : prebilattice X) : hrel X := Lle (klattice b).
+  Definition tge {X : hSet} (b : prebilattice X) : hrel X := Lge (tlattice b).
+  Definition kge {X : hSet} (b : prebilattice X) : hrel X := Lge (klattice b).
 
-  Definition istrans_tle {X : hSet} (b : bilattice X) : istrans (tle b) := istrans_Lle (tlattice b).
-  Definition istrans_kle {X : hSet} (b : bilattice X) : istrans (kle b) := istrans_Lle (klattice b).
-End bilattices .
+  Definition istrans_tle {X : hSet} (b : prebilattice X) : istrans (tle b) := istrans_Lle (tlattice b).
+  Definition istrans_kle {X : hSet} (b : prebilattice X) : istrans (kle b) := istrans_Lle (klattice b).
+End prebilattices .
 
-Section bounded_bilattices .
-  Definition bounded_bilattice (X : hSet) :=
+Section bounded_prebilattices .
+  Definition bounded_prebilattice (X : hSet) :=
     bounded_lattice X × bounded_lattice X.
 
-  Definition make_bounded_bilattice {X : hSet} (tLattice kLattice : bounded_lattice X) : bounded_bilattice X := tLattice,, kLattice.
+  Definition make_bounded_prebilattice {X : hSet} (tLattice kLattice : bounded_lattice X) : bounded_prebilattice X := tLattice,, kLattice.
 
-  Definition bounded_bilattice_to_bilattice X (b : bounded_bilattice X) : bilattice X := make_bilattice (pr1 b) (pr2 b) .
-  Coercion bounded_bilattice_to_bilattice : bounded_bilattice >-> bilattice.
+  Definition bounded_prebilattice_to_prebilattice X (b : bounded_prebilattice X) : prebilattice X := make_prebilattice (pr1 b) (pr2 b) .
+  Coercion bounded_prebilattice_to_prebilattice : bounded_prebilattice >-> prebilattice.
 
-  Definition fls {X : hSet} (b : bounded_bilattice X) : X :=  Lbot (pr1 b).
-  Definition tru {X : hSet} (b : bounded_bilattice X) : X :=  Ltop (pr1 b).
-  Definition bot {X: hSet} (b : bounded_bilattice X) : X :=  Lbot (pr2 b) .
-  Definition top {X: hSet} (b : bounded_bilattice X) : X :=  Ltop (pr2 b) .
-End bounded_bilattices .
+  Definition fls {X : hSet} (b : bounded_prebilattice X) : X :=  Lbot (pr1 b).
+  Definition tru {X : hSet} (b : bounded_prebilattice X) : X :=  Ltop (pr1 b).
+  Definition bot {X: hSet} (b : bounded_prebilattice X) : X :=  Lbot (pr2 b) .
+  Definition top {X: hSet} (b : bounded_prebilattice X) : X :=  Ltop (pr2 b) .
+End bounded_prebilattices .
 
-Section interlaced_bilattices .
+Section interlaced_prebilattices .
 
   Definition interlacing {X : hSet} (op : binop X) (R : hrel X) :=
     ∏ x y z : X, R x y -> R (op x z) (op y z).
@@ -159,7 +159,7 @@ Section interlaced_bilattices .
     use propproperty.
   Defined.
 
-  Definition is_interlaced {X : hSet} (b : bilattice X) : UU :=
+  Definition is_interlaced {X : hSet} (b : prebilattice X) : UU :=
     interlacing (consensus b) (tle b)
                 ×
                 interlacing (gullibility b) (tle b)
@@ -168,37 +168,37 @@ Section interlaced_bilattices .
                 ×
                 interlacing (join b) (kle b).
 
-  Definition isaprop_is_interlaced {X : hSet} {b : bilattice X} : isaprop (is_interlaced b).
+  Definition isaprop_is_interlaced {X : hSet} {b : prebilattice X} : isaprop (is_interlaced b).
   Proof.
     do 3 (try use (isapropdirprod)); use isaprop_interlacing.
   Defined.
 
-  Definition interlaced_bilattice (X : hSet) :=
-    ∑ b : bilattice X,  is_interlaced b.
+  Definition interlaced_prebilattice (X : hSet) :=
+    ∑ b : prebilattice X,  is_interlaced b.
 
-  Definition make_interlaced_bilattice {X : hSet} {b : bilattice X} (is : is_interlaced b) : interlaced_bilattice X := b,,is.
+  Definition make_interlaced_prebilattice {X : hSet} {b : prebilattice X} (is : is_interlaced b) : interlaced_prebilattice X := b,,is.
 
-  Definition interlaced_bilattice_to_bilattice {X : hSet} (b: interlaced_bilattice X) : bilattice X := pr1 b.
-  Coercion interlaced_bilattice_to_bilattice : interlaced_bilattice >-> bilattice .
+  Definition interlaced_prebilattice_to_prebilattice {X : hSet} (b: interlaced_prebilattice X) : prebilattice X := pr1 b.
+  Coercion interlaced_prebilattice_to_prebilattice : interlaced_prebilattice >-> prebilattice .
 
-  Definition interlaced_bilattice_eq {X : hSet} (b1 : interlaced_bilattice X) (b2 : interlaced_bilattice X) (m : meet b1 ~ meet b2) (j : join b1 ~ join b2) (c : consensus b1 ~ consensus b2) (g : gullibility b1 ~ gullibility b2): b1 = b2.
+  Definition interlaced_prebilattice_eq {X : hSet} (b1 : interlaced_prebilattice X) (b2 : interlaced_prebilattice X) (m : meet b1 ~ meet b2) (j : join b1 ~ join b2) (c : consensus b1 ~ consensus b2) (g : gullibility b1 ~ gullibility b2): b1 = b2.
   Proof.
     use total2_paths_f.
-    - use (bilattice_eq b1 b2 m j c g).
+    - use (prebilattice_eq b1 b2 m j c g).
     - apply isaprop_is_interlaced.
   Defined.
 
-  Definition interlaced_bilattice_transportf {X1 X2 : hSet} (b1 : interlaced_bilattice X1) (b2 : interlaced_bilattice X2) (p : X1 = X2)
-             (m : meet (transportf interlaced_bilattice p b1) ~ meet b2)
-             (j : join (transportf interlaced_bilattice p b1) ~ join b2)
-             (c : consensus (transportf interlaced_bilattice p b1) ~ consensus b2)
-             (g : gullibility (transportf interlaced_bilattice p b1) ~ gullibility b2)
-    : transportf interlaced_bilattice p b1 = b2.
+  Definition interlaced_prebilattice_transportf {X1 X2 : hSet} (b1 : interlaced_prebilattice X1) (b2 : interlaced_prebilattice X2) (p : X1 = X2)
+             (m : meet (transportf interlaced_prebilattice p b1) ~ meet b2)
+             (j : join (transportf interlaced_prebilattice p b1) ~ join b2)
+             (c : consensus (transportf interlaced_prebilattice p b1) ~ consensus b2)
+             (g : gullibility (transportf interlaced_prebilattice p b1) ~ gullibility b2)
+    : transportf interlaced_prebilattice p b1 = b2.
   Proof.
     use total2_paths_f.
-    - unfold interlaced_bilattice.
+    - unfold interlaced_prebilattice.
       rewrite (pr1_transportf p b1).
-      use bilattice_transportf; [set (i := m) | set (i := j) | set (i := c) | set (i := g)];
+      use prebilattice_transportf; [set (i := m) | set (i := j) | set (i := c) | set (i := g)];
         use (homotcomp _ i);
         induction p;
         rewrite idpath_transportf, idpath_transportf;
@@ -206,10 +206,10 @@ Section interlaced_bilattices .
     - apply isaprop_is_interlaced.
   Defined.
 
-  Definition interlacing_consensus_t {X : hSet} (b : interlaced_bilattice X) : interlacing (consensus b) (tle b) := pr1 (pr2 b) .
-  Definition interlacing_gullibility_t {X : hSet} (b : interlaced_bilattice X) : interlacing (gullibility b) (tle b):= pr1 (pr2 (pr2 b)) .
-  Definition interlacing_meet_k {X : hSet} (b : interlaced_bilattice X) :  interlacing (meet b) (kle b) := pr1 (pr2 (pr2 (pr2 b))) .
-  Definition interlacing_join_k {X : hSet} (b : interlaced_bilattice X) :  interlacing (join b) (kle b) := pr2 (pr2 (pr2 (pr2 b))) .
+  Definition interlacing_consensus_t {X : hSet} (b : interlaced_prebilattice X) : interlacing (consensus b) (tle b) := pr1 (pr2 b) .
+  Definition interlacing_gullibility_t {X : hSet} (b : interlaced_prebilattice X) : interlacing (gullibility b) (tle b):= pr1 (pr2 (pr2 b)) .
+  Definition interlacing_meet_k {X : hSet} (b : interlaced_prebilattice X) :  interlacing (meet b) (kle b) := pr1 (pr2 (pr2 (pr2 b))) .
+  Definition interlacing_join_k {X : hSet} (b : interlaced_prebilattice X) :  interlacing (join b) (kle b) := pr2 (pr2 (pr2 (pr2 b))) .
 
   Definition double_interlacing {X : hSet} {op : binop X} {R : hrel X} (i : interlacing op R) (a : istrans R) (c : iscomm op) {x y z w : X} (p : R x y) (q : R z w) : R (op x z) (op y w).
   Proof.
@@ -218,66 +218,66 @@ Section interlaced_bilattices .
     - rewrite (c y z), (c y w). use i . exact q.
   Defined.
 
-  Definition double_interlacing_gullibility_t {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : tle b x y) (q : tle b z w) : tle b (gullibility b x z) (gullibility b y w) := double_interlacing (interlacing_gullibility_t _) (istrans_Lle (tlattice _)) (iscomm_Lmax (klattice _)) p q.
-  Definition double_interlacing_consensus_t {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : tle b x y) (q : tle b z w) : tle b (consensus b x z) (consensus b y w) := double_interlacing (interlacing_consensus_t _) (istrans_Lle (tlattice _)) (iscomm_Lmin (klattice _)) p q.
-  Definition double_interlacing_meet_k {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : kle b x y) (q : kle b z w) : kle b (meet b x z) (meet b y w) := double_interlacing (interlacing_meet_k _) (istrans_Lle (klattice _)) (iscomm_Lmin (tlattice _)) p q.
-  Definition double_interlacing_join_k {X : hSet} {b : interlaced_bilattice X} {x y z w : X} (p : kle b x y) (q : kle b z w) : kle b (join b x z) (join b y w) := double_interlacing (interlacing_join_k _) (istrans_Lle (klattice _)) (iscomm_Lmax (tlattice _)) p q.
+  Definition double_interlacing_gullibility_t {X : hSet} {b : interlaced_prebilattice X} {x y z w : X} (p : tle b x y) (q : tle b z w) : tle b (gullibility b x z) (gullibility b y w) := double_interlacing (interlacing_gullibility_t _) (istrans_Lle (tlattice _)) (iscomm_Lmax (klattice _)) p q.
+  Definition double_interlacing_consensus_t {X : hSet} {b : interlaced_prebilattice X} {x y z w : X} (p : tle b x y) (q : tle b z w) : tle b (consensus b x z) (consensus b y w) := double_interlacing (interlacing_consensus_t _) (istrans_Lle (tlattice _)) (iscomm_Lmin (klattice _)) p q.
+  Definition double_interlacing_meet_k {X : hSet} {b : interlaced_prebilattice X} {x y z w : X} (p : kle b x y) (q : kle b z w) : kle b (meet b x z) (meet b y w) := double_interlacing (interlacing_meet_k _) (istrans_Lle (klattice _)) (iscomm_Lmin (tlattice _)) p q.
+  Definition double_interlacing_join_k {X : hSet} {b : interlaced_prebilattice X} {x y z w : X} (p : kle b x y) (q : kle b z w) : kle b (join b x z) (join b y w) := double_interlacing (interlacing_join_k _) (istrans_Lle (klattice _)) (iscomm_Lmax (tlattice _)) p q.
 
-  Definition top_interlacing_gullibility_t {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : tle b x z) (q : tle b y z) : tle b (gullibility b x y) z.
+  Definition top_interlacing_gullibility_t {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : tle b x z) (q : tle b y z) : tle b (gullibility b x y) z.
   Proof.
     rewrite <- (Lmax_id (klattice b) z).
     use (double_interlacing_gullibility_t p q).
   Defined.
-  Definition top_interlacing_consensus_t {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : tle b x z) (q : tle b y z) : tle b (consensus b x y) z.
+  Definition top_interlacing_consensus_t {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : tle b x z) (q : tle b y z) : tle b (consensus b x y) z.
   Proof.
     rewrite <- (Lmin_id (klattice b) z).
     use (double_interlacing_consensus_t p q).
   Defined.
-  Definition top_interlacing_join_k {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : kle b x z) (q : kle b y z) : kle b (join b x y) z.
+  Definition top_interlacing_join_k {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : kle b x z) (q : kle b y z) : kle b (join b x y) z.
   Proof.
     rewrite <- (Lmax_id (tlattice b) z).
     use (double_interlacing_join_k p q).
   Defined.
-  Definition top_interlacing_meet_k {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : kle b x z) (q : kle b y z) : kle b (meet b x y) z.
+  Definition top_interlacing_meet_k {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : kle b x z) (q : kle b y z) : kle b (meet b x y) z.
   Proof.
     rewrite <- (Lmin_id (tlattice b) z).
     use (double_interlacing_meet_k p q).
   Defined.
 
-  Definition bottom_interlacing_join_k {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : kle b z x) (q : kle b z y) : kle b z (join b x y).
+  Definition bottom_interlacing_join_k {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : kle b z x) (q : kle b z y) : kle b z (join b x y).
   Proof.
     rewrite <- (Lmax_id (tlattice b) z).
     use (double_interlacing_join_k p q).
   Defined.
-  Definition bottom_interlacing_meet_k {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : kle b z x) (q : kle b z y) : kle b z (meet b x y).
+  Definition bottom_interlacing_meet_k {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : kle b z x) (q : kle b z y) : kle b z (meet b x y).
   Proof.
     rewrite <- (Lmin_id (tlattice b) z).
     use (double_interlacing_meet_k p q).
   Defined.
-  Definition bottom_interlacing_gullibility_t {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : tle b z x) (q : tle b z y) : tle b z (gullibility b x y).
+  Definition bottom_interlacing_gullibility_t {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : tle b z x) (q : tle b z y) : tle b z (gullibility b x y).
   Proof.
     rewrite <- (Lmax_id (klattice b) z).
     use (double_interlacing_gullibility_t p q).
   Defined.
-  Definition bottom_interlacing_consensus_t {X : hSet} {b : interlaced_bilattice X} {x y z : X} (p : tle b z x) (q : tle b z y) : tle b z (consensus b x y).
+  Definition bottom_interlacing_consensus_t {X : hSet} {b : interlaced_prebilattice X} {x y z : X} (p : tle b z x) (q : tle b z y) : tle b z (consensus b x y).
   Proof.
     rewrite <- (Lmin_id (klattice b) z).
     use (double_interlacing_consensus_t p q).
   Defined.
 
-  Definition dual_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (dual_bilattice b).
+  Definition dual_prebilattice_is_interlaced {X : hSet} (b : interlaced_prebilattice X) : is_interlaced (dual_prebilattice b).
   Proof.
     destruct b as [? [? [? [? ?]]]] . do 3 (try split); assumption .
   Defined.
 
-  Definition opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (opp_bilattice b).
+  Definition opp_prebilattice_is_interlaced {X : hSet} (b : interlaced_prebilattice X) : is_interlaced (opp_prebilattice b).
   Proof.
     do 3 (try split); intros ? ? ? H;
     [set (i := (interlacing_gullibility_t b)) | set (i := interlacing_consensus_t b) | set (i := interlacing_join_k b) | set (i := interlacing_meet_k b)];
     use (Lmax_le_eq_l _ _ _ (i _ _ _ (Lmax_le_eq_l _ _ _ H))).
   Defined.
 
-  Definition t_opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (t_opp_bilattice b).
+  Definition t_opp_prebilattice_is_interlaced {X : hSet} (b : interlaced_prebilattice X) : is_interlaced (t_opp_prebilattice b).
   Proof.
     do 3 (try split); intros ? ? ? H.
     - use (Lmax_le_eq_l _ _ _ (interlacing_consensus_t _ _ _ _ (Lmax_le_eq_l _ _ _ H))).
@@ -286,15 +286,15 @@ Section interlaced_bilattices .
     - use (interlacing_meet_k _ _ _ _ H).
   Defined.
 
-  Definition k_opp_bilattice_is_interlaced {X : hSet} (b : interlaced_bilattice X) : is_interlaced (k_opp_bilattice b).
+  Definition k_opp_prebilattice_is_interlaced {X : hSet} (b : interlaced_prebilattice X) : is_interlaced (k_opp_prebilattice b).
   Proof.
-    destruct (t_opp_bilattice_is_interlaced (make_interlaced_bilattice (dual_bilattice_is_interlaced b))) as [? [? [? ?]]].
+    destruct (t_opp_prebilattice_is_interlaced (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b))) as [? [? [? ?]]].
     do 3 (try split); assumption.
   Defined.
-End interlaced_bilattices.
+End interlaced_prebilattices.
 
-Section distributive_bilattices.
-  Definition is_distributive_bilattice {X : hSet} (b : bilattice X) :=
+Section distributive_prebilattices.
+  Definition is_distributive_prebilattice {X : hSet} (b : prebilattice X) :=
               is_distributive_lattice (klattice b)
                 × is_distributive_lattice (tlattice b)
                 × isldistr (consensus b) (meet b)
@@ -307,35 +307,35 @@ Section distributive_bilattices.
                 × isldistr (join b) (gullibility b)
   .
 
-  Definition isaprop_is_distributive {X : hSet} {b : bilattice X} : isaprop (is_distributive_bilattice b).
+  Definition isaprop_is_distributive {X : hSet} {b : prebilattice X} : isaprop (is_distributive_prebilattice b).
   Proof.
     do 9 (try use (isapropdirprod)); use isapropisldistr.
   Defined.
 
-  Definition distributive_bilattice (X : hSet) :=
-    ∑ b : bilattice X, is_distributive_bilattice b.
+  Definition distributive_prebilattice (X : hSet) :=
+    ∑ b : prebilattice X, is_distributive_prebilattice b.
 
-  Definition distributive_bilattices_to_bilattices {X : hSet} (b : distributive_bilattice X) : bilattice X := pr1 b.
+  Definition distributive_prebilattices_to_prebilattices {X : hSet} (b : distributive_prebilattice X) : prebilattice X := pr1 b.
 
-  Coercion distributive_bilattices_to_bilattices : distributive_bilattice >-> bilattice .
+  Coercion distributive_prebilattices_to_prebilattices : distributive_prebilattice >-> prebilattice .
 
-  Definition distributive_consensus_gullibility {X : hSet} (b : distributive_bilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr1 (pr2 b)) .
-  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_bilattice X) : isldistr (gullibility b) (consensus b) := pr2 (pr1 (pr2 b)) .
-  Definition distributive_meet_join {X : hSet} (b : distributive_bilattice X) : isldistr (meet b) (join b) := pr1 (pr1 (pr2 (pr2 b))) .
-  Definition distributive_join_meet {X : hSet} (b : distributive_bilattice X) : isldistr (join b) (meet b) := pr2 (pr1 (pr2 (pr2 b))) .
-  Definition distributive_consensus_meet {X : hSet} (b : distributive_bilattice X) : isldistr (consensus b) (meet b) := pr1 (pr2 (pr2 (pr2 b))) .
-  Definition distributive_meet_consensus {X : hSet} (b : distributive_bilattice X) : isldistr (meet b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 b)))) .
-  Definition distributive_consensus_join {X : hSet} (b : distributive_bilattice X) : isldistr (consensus b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 b))))) .
-  Definition distributive_join_consensus {X : hSet} (b : distributive_bilattice X) : isldistr (join b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))) .
-  Definition distributive_gullibility_meet {X : hSet} (b : distributive_bilattice X) : isldistr (gullibility b) (meet b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))) .
-  Definition distributive_meet_gullibility {X : hSet} (b : distributive_bilattice X) : isldistr (meet b) (gullibility b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))))) .
-  Definition distributive_gullibility_join {X : hSet} (b : distributive_bilattice X) : isldistr (gullibility b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
-  Definition distributive_join_gullibility {X : hSet} (b : distributive_bilattice X) : isldistr (join b) (gullibility b) := pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
+  Definition distributive_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr1 (pr2 b)) .
+  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := pr2 (pr1 (pr2 b)) .
+  Definition distributive_meet_join {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (join b) := pr1 (pr1 (pr2 (pr2 b))) .
+  Definition distributive_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := pr2 (pr1 (pr2 (pr2 b))) .
+  Definition distributive_consensus_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (meet b) := pr1 (pr2 (pr2 (pr2 b))) .
+  Definition distributive_meet_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 b)))) .
+  Definition distributive_consensus_join {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 b))))) .
+  Definition distributive_join_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))) .
+  Definition distributive_gullibility_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (meet b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))) .
+  Definition distributive_meet_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (gullibility b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))))) .
+  Definition distributive_gullibility_join {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
+  Definition distributive_join_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (gullibility b) := pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
 
 
-  Definition make_distributive_bilattice {X : hSet} {b : bilattice X} (is : is_distributive_bilattice b) : distributive_bilattice X := b,,is .
+  Definition make_distributive_prebilattice {X : hSet} {b : prebilattice X} (is : is_distributive_prebilattice b) : distributive_prebilattice X := b,,is .
 
-  Theorem distributive_bilattices_are_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) : is_interlaced b .
+  Theorem distributive_prebilattices_are_interlaced_prebilattices {X : hSet} (b : distributive_prebilattice X) : is_interlaced b .
   Proof.
     repeat split; intros x y z H.
     - rewrite (iscomm_consensus _ x z), (iscomm_consensus _ y z).
@@ -352,25 +352,25 @@ Section distributive_bilattices.
       rewrite <- d, H; reflexivity .
   Defined.
 
-  Definition distributive_bilattices_to_interlaced_bilattices {X : hSet} (b : distributive_bilattice X) : interlaced_bilattice X :=
-    make_interlaced_bilattice (distributive_bilattices_are_interlaced_bilattices b).
+  Definition distributive_prebilattices_to_interlaced_prebilattices {X : hSet} (b : distributive_prebilattice X) : interlaced_prebilattice X :=
+    make_interlaced_prebilattice (distributive_prebilattices_are_interlaced_prebilattices b).
 
-  Coercion distributive_bilattices_to_interlaced_bilattices : distributive_bilattice >-> interlaced_bilattice .
-End distributive_bilattices.
+  Coercion distributive_prebilattices_to_interlaced_prebilattices : distributive_prebilattice >-> interlaced_prebilattice .
+End distributive_prebilattices.
 
-Section prod_bilattices .
-  Definition prod_bilattice_carrier (X1 X2 : hSet) := setdirprod X1 X2 .
+Section prod_prebilattices .
+  Definition prod_prebilattice_carrier (X1 X2 : hSet) := setdirprod X1 X2 .
 
-  Definition tmin {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
+  Definition tmin {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_prebilattice_carrier X1 X2) :=
     λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
-  Definition tmax  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
+  Definition tmax  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_prebilattice_carrier X1 X2) :=
     λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
-  Definition kmin  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
+  Definition kmin  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_prebilattice_carrier X1 X2) :=
     λ x y, (((Lmin l1) (pr1 x) (pr1 y)),, (Lmin l2) (pr2 x) (pr2 y)) .
-  Definition kmax  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_bilattice_carrier X1 X2) :=
+  Definition kmax  {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : binop (prod_prebilattice_carrier X1 X2) :=
     λ x y, (((Lmax l1) (pr1 x) (pr1 y)),, (Lmax l2) (pr2 x) (pr2 y)) .
 
-  Definition prod_bilattice (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) := (latticeop (tmin l1 l2) (tmax l1 l2)) × (latticeop (kmin l1 l2) (kmax l1 l2)).
+  Definition prod_prebilattice (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) := (latticeop (tmin l1 l2) (tmax l1 l2)) × (latticeop (kmin l1 l2) (kmax l1 l2)).
 
   Definition latticeop_prod_t {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : latticeop (tmin l1 l2) (tmax l1 l2) .
   Proof .
@@ -394,31 +394,31 @@ Section prod_bilattices .
     - intros a b; induction a, b. use dirprod_paths; use Lmax_absorb .
   Defined .
 
-  Definition make_prod_bilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : prod_bilattice X1 X2 l1 l2 :=
+  Definition make_prod_prebilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : prod_prebilattice X1 X2 l1 l2 :=
     latticeop_prod_t l1 l2,,latticeop_prod_k l1 l2.
 
-  Definition iscontr_prod_bilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : iscontr (prod_bilattice X1 X2 l1 l2).
+  Definition iscontr_prod_prebilattice {X1 X2 : hSet} (l1 : lattice X1) (l2 : lattice X2) : iscontr (prod_prebilattice X1 X2 l1 l2).
   Proof.
     use iscontraprop1.
     - use isapropdirprod; use isaprop_latticeop.
-    - exact (make_prod_bilattice l1 l2).
+    - exact (make_prod_prebilattice l1 l2).
   Defined.
 
-  Definition prod_bilattices_to_bilattices {X1 X2 : hSet} {l1 : lattice X1} {l2 : lattice X2} (b : prod_bilattice X1 X2 l1 l2) : bilattice (prod_bilattice_carrier X1 X2) :=  make_bilattice (mklattice (pr1 b)) (mklattice (pr2 b)) .
+  Definition prod_prebilattices_to_prebilattices {X1 X2 : hSet} {l1 : lattice X1} {l2 : lattice X2} (b : prod_prebilattice X1 X2 l1 l2) : prebilattice (prod_prebilattice_carrier X1 X2) :=  make_prebilattice (mklattice (pr1 b)) (mklattice (pr2 b)) .
 
-  Coercion prod_bilattices_to_bilattices : prod_bilattice >-> bilattice .
-End prod_bilattices .
+  Coercion prod_prebilattices_to_prebilattices : prod_prebilattice >-> prebilattice .
+End prod_prebilattices .
 
-Section bounded_prod_bilattices.
-  Definition tbot {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2) :=
+Section bounded_prod_prebilattices.
+  Definition tbot {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_prebilattice_carrier X1 X2) :=
     Lbot bl1,, Ltop bl2 .
-  Definition ttop  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2) :=
+  Definition ttop  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_prebilattice_carrier X1 X2) :=
     Ltop bl1,, Lbot bl2 .
-  Definition kbot {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2):=
+  Definition kbot {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_prebilattice_carrier X1 X2):=
     Lbot bl1,, Lbot bl2 .
-  Definition ktop {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_bilattice_carrier X1 X2) :=  Ltop bl1,, Ltop bl2.
+  Definition ktop {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : (prod_prebilattice_carrier X1 X2) :=  Ltop bl1,, Ltop bl2.
 
-  Definition bounded_prod_bilattice (X1 X2 : hSet) (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) :=
+  Definition bounded_prod_prebilattice (X1 X2 : hSet) (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) :=
     bounded_latticeop (mklattice (latticeop_prod_t bl1 bl2)) (tbot bl1 bl2) (ttop bl1 bl2)
                       × bounded_latticeop (mklattice (latticeop_prod_k bl1 bl2)) (kbot bl1 bl2) (ktop bl1 bl2).
 
@@ -432,26 +432,26 @@ Section bounded_prod_bilattices.
     use make_dirprod; intro; use dirprod_paths; [use islunit_Lmax_Lbot | use islunit_Lmax_Lbot | use islunit_Lmin_Ltop | use islunit_Lmin_Ltop].
   Defined.
 
-  Definition make_bounded_prod_bilattice  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_prod_bilattice X1 X2 bl1 bl2 := bounded_latticeop_prod_t bl1 bl2,,bounded_latticeop_prod_k bl1 bl2 .
+  Definition make_bounded_prod_prebilattice  {X1 X2 : hSet} (bl1 : bounded_lattice X1) (bl2 : bounded_lattice X2) : bounded_prod_prebilattice X1 X2 bl1 bl2 := bounded_latticeop_prod_t bl1 bl2,,bounded_latticeop_prod_k bl1 bl2 .
 
-  Definition iscontr_bounded_prod_bilattice {X1 X2 : hSet} (l1 : bounded_lattice X1) (l2 : bounded_lattice X2) : iscontr (bounded_prod_bilattice X1 X2 l1 l2).
+  Definition iscontr_bounded_prod_prebilattice {X1 X2 : hSet} (l1 : bounded_lattice X1) (l2 : bounded_lattice X2) : iscontr (bounded_prod_prebilattice X1 X2 l1 l2).
   Proof.
     use iscontraprop1.
     - do 2 (use isapropdirprod); use isapropislunit.
-    - exact (make_bounded_prod_bilattice l1 l2).
+    - exact (make_bounded_prod_prebilattice l1 l2).
   Defined.
 
-  Definition bounded_prod_bilattices_to_prod_bilattices {X1 X2 : hSet} {bl1 : bounded_lattice X1} {bl2 : bounded_lattice X2} (b : bounded_prod_bilattice X1 X2 bl1 bl2) : prod_bilattice X1 X2 bl1 bl2 := pr221 (mkbounded_lattice (pr1 b)),, pr221 (mkbounded_lattice (pr2 b)).
+  Definition bounded_prod_prebilattices_to_prod_prebilattices {X1 X2 : hSet} {bl1 : bounded_lattice X1} {bl2 : bounded_lattice X2} (b : bounded_prod_prebilattice X1 X2 bl1 bl2) : prod_prebilattice X1 X2 bl1 bl2 := pr221 (mkbounded_lattice (pr1 b)),, pr221 (mkbounded_lattice (pr2 b)).
 
-  Coercion bounded_prod_bilattices_to_prod_bilattices : bounded_prod_bilattice >-> prod_bilattice.
+  Coercion bounded_prod_prebilattices_to_prod_prebilattices : bounded_prod_prebilattice >-> prod_prebilattice.
 
-  Definition bounded_prod_bilattices_to_bounded_bilattices {X1 X2 : hSet} {l1 : bounded_lattice X1} {l2 : bounded_lattice X2} (b : bounded_prod_bilattice X1 X2 l1 l2) : bounded_bilattice (prod_bilattice_carrier X1 X2) :=  make_bounded_bilattice (mkbounded_lattice (pr1 b)) (mkbounded_lattice (pr2 b)) .
+  Definition bounded_prod_prebilattices_to_bounded_prebilattices {X1 X2 : hSet} {l1 : bounded_lattice X1} {l2 : bounded_lattice X2} (b : bounded_prod_prebilattice X1 X2 l1 l2) : bounded_prebilattice (prod_prebilattice_carrier X1 X2) :=  make_bounded_prebilattice (mkbounded_lattice (pr1 b)) (mkbounded_lattice (pr2 b)) .
 
-  Coercion bounded_prod_bilattices_to_bounded_bilattices : bounded_prod_bilattice >-> bounded_bilattice .
-End bounded_prod_bilattices.
+  Coercion bounded_prod_prebilattices_to_bounded_prebilattices : bounded_prod_prebilattice >-> bounded_prebilattice .
+End bounded_prod_prebilattices.
 
 Section representation_theorems.
-  Definition prod_bilattices_are_interlaced {X1 X2 : hSet} {l1 : lattice X1} {l2 : lattice X2} (b : prod_bilattice X1 X2 l1 l2) : is_interlaced b .
+  Definition prod_prebilattices_are_interlaced {X1 X2 : hSet} {l1 : lattice X1} {l2 : lattice X2} (b : prod_prebilattice X1 X2 l1 l2) : is_interlaced b .
   Proof.
     do 3 (try use make_dirprod); intros [x1 x2] [y1 y2] [z1 z2] H; use dirprod_paths; cbn in H; set (H1 := maponpaths dirprod_pr1 H); cbn in H1; set (H2 := maponpaths dirprod_pr2 H); cbn in H2; cbn.
     - rewrite (iscomm_Lmin _ x1 z1), isassoc_Lmin, <- (isassoc_Lmin _ x1 y1 z1), H1, (iscomm_Lmin _ x1 z1), <- isassoc_Lmin, Lmin_id; reflexivity .
@@ -480,27 +480,27 @@ Section representation_theorems.
     - rewrite (iscomm_Lmin _ x2 z2), (isassoc_Lmin), <- (isassoc_Lmin _ x2 y2 z2), H2, (iscomm_Lmin _ x2 z2), <- isassoc_Lmin, Lmin_id. reflexivity.
   Defined.
 
-    Lemma property1 {X : hSet} : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
+    Lemma property1 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
     Proof.
       intros ? x y [? [p1 p2]].
       set (w := (meet _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
       use (interlacing_meet_k _ _ _ _ p2).
     Defined.
 
-    Lemma property1_dual {X:hSet}: ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
+    Lemma property1_dual {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
     Proof.
       intro b'.
-      use (property1 (make_interlaced_bilattice (dual_bilattice_is_interlaced b'))).
+      use (property1 (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
     Defined.
 
-    Lemma property1_dual_opp_t {X:hSet}: ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, kle b x r × tle b y r) -> tle b (consensus b y x) x.
+    Lemma property1_dual_opp_t {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b y r) -> tle b (consensus b y x) x.
     Proof.
       intros ? x y [? [p1 p2]].
       set (w := (consensus _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
       use (interlacing_consensus_t _ _ _ _ p2).
     Defined.
 
-    Lemma property2 {X : hSet} : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
+    Lemma property2 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
     Proof.
       intros b' ? ? [? [p1 p2]].
       set (pp := property1 _ _ _ (_,,p1,,p2)).
@@ -508,10 +508,10 @@ Section representation_theorems.
       use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
     Defined.
 
-    Lemma property2_opp_t {X : hSet} : ∏ (b : interlaced_bilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
+    Lemma property2_opp_t {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
     Proof.
       intros b x y [r [p1 p2]].
-      assert (p1' :  tle (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x r).
+      assert (p1' :  tle (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x r).
       {
         rewrite <- p1, iscomm_Lmin.
         use Lmax_absorb.
@@ -520,26 +520,26 @@ Section representation_theorems.
       assert (p : Lmax (tlattice b) t x = x).
       {
         rewrite iscomm_Lmax.
-        exact (property2 (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x y (r,,p1',,p2)).
+        exact (property2 (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y (r,,p1',,p2)).
       }
       rewrite <- p.
       use Lmin_absorb.
     Defined.
 
-  Definition leftRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
-  Definition isEq_leftRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (leftRel b).
+  Definition leftRel {X : hSet} (b : interlaced_prebilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
+  Definition isEq_leftRel {X : hSet} (b : interlaced_prebilattice X) : iseqrel (leftRel b).
   Proof.
-    assert (property1_op : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, tle b r x × kle b y r) -> kle b (join b y x) x).
+    assert (property1_op : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b r x × kle b y r) -> kle b (join b y x) x).
     {
       intros b' ? ? [? [p1 p2]].
-      set (bop := make_interlaced_bilattice (opp_bilattice_is_interlaced b')).
+      set (bop := make_interlaced_prebilattice (opp_prebilattice_is_interlaced b')).
       set (H := property1 bop _ _ (_,,(Lmax_le_eq_l _ _ _ p1),, (Lmax_le_eq_l _ _ _ p2))).
       use (Lmax_le_eq_l _ _ _ H).
     }
-    assert (property2_dual : ∏ (b : interlaced_bilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> kle b x (meet b y x)).
+    assert (property2_dual : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> kle b x (meet b y x)).
     {
       intro b'.
-      use (property2 (make_interlaced_bilattice (dual_bilattice_is_interlaced b'))).
+      use (property2 (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
     }
 
     do 2 (try split).
@@ -568,16 +568,16 @@ Section representation_theorems.
     - intros ? ? H. unfold leftRel. rewrite iscomm_join, iscomm_consensus. exact H.
   Defined.
 
-  Definition leftEq {X : hSet} (b : interlaced_bilattice X) : eqrel X := make_eqrel (leftRel b) (isEq_leftRel b).
+  Definition leftEq {X : hSet} (b : interlaced_prebilattice X) : eqrel X := make_eqrel (leftRel b) (isEq_leftRel b).
 
-  Definition rightRel {X : hSet} (b : interlaced_bilattice X) : hrel X := λ x y : X, eqset (meet b x y) (consensus b x y)  .
+  Definition rightRel {X : hSet} (b : interlaced_prebilattice X) : hrel X := λ x y : X, eqset (meet b x y) (consensus b x y)  .
 
-  Definition isEq_rightRel {X : hSet} (b : interlaced_bilattice X) : iseqrel (rightRel b) :=
-    isEq_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+  Definition isEq_rightRel {X : hSet} (b : interlaced_prebilattice X) : iseqrel (rightRel b) :=
+    isEq_leftRel (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)).
 
-  Definition rightEq {X : hSet} (b : interlaced_bilattice X) : eqrel X := make_eqrel (rightRel b) (isEq_rightRel b).
+  Definition rightEq {X : hSet} (b : interlaced_prebilattice X) : eqrel X := make_eqrel (rightRel b) (isEq_rightRel b).
 
-  Definition iscomp_consensus_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (consensus b).
+  Definition iscomp_consensus_leftRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (consensus b).
   Proof.
     intros x y w z H1 H2.
     use (isantisymm_Lle (klattice b) (join _ (consensus _ x w) (consensus _ y z)) ((consensus _ (consensus _ x w) (consensus _ y z)))).
@@ -594,7 +594,7 @@ Section representation_theorems.
     - use (bottom_interlacing_join_k (Lmin_le_l _ (consensus _ x w) (consensus _ y z)) (Lmin_le_r _ (consensus _ x w) (consensus _ y z))).
   Defined.
 
-  Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (gullibility b).
+  Definition iscomp_gullibility_leftRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (gullibility b).
   Proof.
     intros x y w z H1 H2.
     use (isantisymm_Lle (tlattice b) (join _ (gullibility _ x w) (gullibility _ y z)) ((consensus _ (gullibility _ x w) (gullibility _ y z)))).
@@ -627,20 +627,20 @@ Section representation_theorems.
     - use (top_interlacing_consensus_t (Lmax_le_l _ _ _) (Lmax_le_r _ _ _)).
   Defined.
 
-  Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (consensus b) :=
-    iscomp_consensus_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
-  Definition iscomp_gullibility_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (gullibility b) :=
-    iscomp_gullibility_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
-  Definition iscomp_meet_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (meet b).
+  Definition iscomp_consensus_rightRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (consensus b) :=
+    iscomp_consensus_leftRel (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)).
+  Definition iscomp_gullibility_rightRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (gullibility b) :=
+    iscomp_gullibility_leftRel (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)).
+  Definition iscomp_meet_rightRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (meet b).
   Proof.
     intros ? ? ? ? H1 H2.
-    use (!iscomp_consensus_rightRel (make_interlaced_bilattice (dual_bilattice_is_interlaced b)) _ _ _ _ (!H1) (!H2)).
+    use (!iscomp_consensus_rightRel (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b)) _ _ _ _ (!H1) (!H2)).
   Defined.
 
-  Definition iscomp_join_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (join b) :=
-    iscomp_meet_rightRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+  Definition iscomp_join_leftRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (join b) :=
+    iscomp_meet_rightRel (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)).
 
-  Definition leftRel_meet_consensus {X : hSet} (b : interlaced_bilattice X) (x y : X): leftRel b (meet b x y) (consensus b x y).
+  Definition leftRel_meet_consensus {X : hSet} (b : interlaced_prebilattice X) (x y : X): leftRel b (meet b x y) (consensus b x y).
   Proof.
     use (isantisymm_Lle (tlattice b)).
     - use Lmax_le_case.
@@ -658,7 +658,7 @@ Section representation_theorems.
     - use (top_interlacing_consensus_t (Lmax_le_l _ _ _) (Lmax_le_r _ _ _)).
   Defined.
 
-  Definition iscomp_meet_leftRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (meet b).
+  Definition iscomp_meet_leftRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (leftEq b) (leftEq b) (meet b).
   Proof.
     intros x y z w ? ?.
     use (eqreltrans (leftEq b) _ (consensus b x z) _ (leftRel_meet_consensus _ _ _)).
@@ -668,13 +668,13 @@ Section representation_theorems.
     - use eqrelsymm. use leftRel_meet_consensus.
   Defined.
 
-  Definition iscomp_join_rightRel {X : hSet} (b : interlaced_bilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (join b) :=
-    iscomp_meet_leftRel (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+  Definition iscomp_join_rightRel {X : hSet} (b : interlaced_prebilattice X) : iscomprelrelfun2 (rightEq b) (rightEq b) (join b) :=
+    iscomp_meet_leftRel (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)).
 
-  Definition rightRel_join_consensus {X : hSet} (b : interlaced_bilattice X) (x y : X) : rightRel b (join b x y) (consensus b x y)
-    := leftRel_meet_consensus (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x y.
+  Definition rightRel_join_consensus {X : hSet} (b : interlaced_prebilattice X) (x y : X) : rightRel b (join b x y) (consensus b x y)
+    := leftRel_meet_consensus (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y.
 
-  Definition rightRel_meet_gullibility {X : hSet} (b : interlaced_bilattice X) (x y : X) : rightRel b (meet b x y) (gullibility b x y).
+  Definition rightRel_meet_gullibility {X : hSet} (b : interlaced_prebilattice X) (x y : X) : rightRel b (meet b x y) (gullibility b x y).
   Proof.
     use (isantisymm_Lle (tlattice b)).
     - use (bottom_interlacing_consensus_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
@@ -692,10 +692,10 @@ Section representation_theorems.
          --- use isrefl_Lle.
   Defined.
 
-  Definition leftRel_join_gullibility {X : hSet} (b : interlaced_bilattice X) (x y : X) : leftRel b (join b x y) (gullibility b x y) :=
-    rightRel_meet_gullibility (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)) x y.
+  Definition leftRel_join_gullibility {X : hSet} (b : interlaced_prebilattice X) (x y : X) : leftRel b (join b x y) (gullibility b x y) :=
+    rightRel_meet_gullibility (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y.
 
-  Definition leftLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (leftRel b)).
+  Definition leftLattice {X : hSet} (b : interlaced_prebilattice X) : lattice (setquotinset (leftRel b)).
   Proof.
     set (iscc := iscomp_consensus_leftRel b).
     set (iscg := iscomp_gullibility_leftRel b).
@@ -719,10 +719,10 @@ Section representation_theorems.
       reflexivity.
   Defined.
 
-  Definition rightLattice {X : hSet} (b : interlaced_bilattice X) : lattice (setquotinset (rightRel b)) :=
-    leftLattice (make_interlaced_bilattice (t_opp_bilattice_is_interlaced b)).
+  Definition rightLattice {X : hSet} (b : interlaced_prebilattice X) : lattice (setquotinset (rightRel b)) :=
+    leftLattice (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)).
 
-  Definition leftAndRightIsId {X : hSet} (b : interlaced_bilattice X) (x y : X) (p1 : leftRel b x y) (p2 : rightRel b x y) : x = y.
+  Definition leftAndRightIsId {X : hSet} (b : interlaced_prebilattice X) (x y : X) (p1 : leftRel b x y) (p2 : rightRel b x y) : x = y.
   Proof.
     set (p := p1 @ !p2).
     use (isantisymm_Lle (tlattice b)).
@@ -734,10 +734,10 @@ Section representation_theorems.
       use Lmin_le_l.
   Defined.
 
-  Definition interlaced_bilattices_are_prod {X : hSet} (b : interlaced_bilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2 :=
-    setquotinset (leftRel b),, setquotinset (rightRel b),,leftLattice b,,rightLattice b,,make_prod_bilattice (leftLattice b) (rightLattice b).
+  Definition interlaced_prebilattices_are_prod {X : hSet} (b : interlaced_prebilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2 :=
+    setquotinset (leftRel b),, setquotinset (rightRel b),,leftLattice b,,rightLattice b,,make_prod_prebilattice (leftLattice b) (rightLattice b).
 
-  Definition XisLeftCrossRight {X : hSet} (b : interlaced_bilattice X) : weq X (prod_bilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))) .
+  Definition XisLeftCrossRight {X : hSet} (b : interlaced_prebilattice X) : weq X (prod_prebilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))) .
   Proof.
     (** First, move calculation from equivalence classes to representatives **)
     exists (λ x, setquotpr (leftEq b) x,, setquotpr (rightEq b) x).
@@ -826,10 +826,10 @@ Section representation_theorems.
 
 
 (*
-  Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_bilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2).
+  Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_prebilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2).
   Proof.
-    set (f := λ b , interlaced_bilattices_are_prod (pr2 b)).
-    set (g := λ b : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2, prod_bilattice_carrier (pr1 b) (pr12 b),, (make_interlaced_bilattice (prod_bilattices_are_interlaced (pr222 (pr2 b))))).
+    set (f := λ b , interlaced_prebilattices_are_prod (pr2 b)).
+    set (g := λ b : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2, prod_prebilattice_carrier (pr1 b) (pr12 b),, (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr222 (pr2 b))))).
     use (Equivalence_to_weq).
     use (makeEquivalence _ _ f g).
     - intro b.
@@ -860,15 +860,15 @@ Section representation_theorems.
       -- cbn.
          rewrite (weqtopaths (hSet_univalence _ _)).
          use (invweq (XisLeftCrossRight _)).
-      -- use interlaced_bilattice_transportf; intro x; use weqfunextsec; intro y.
-         --- unfold meet, tlattice, Lmin, interlaced_bilattice.
-             set (X' := prod_bilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))).
-             set (l :=  (λ X0 : hSet, ∑ b0 : bilattice X0, is_interlaced b0)).
+      -- use interlaced_prebilattice_transportf; intro x; use weqfunextsec; intro y.
+         --- unfold meet, tlattice, Lmin, interlaced_prebilattice.
+             set (X' := prod_prebilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))).
+             set (l :=  (λ X0 : hSet, ∑ b0 : prebilattice X0, is_interlaced b0)).
              set (e := (internal_paths_rew_r UU (X' = X) (X' ≃ X)
                                              (λ u : UU, u) (invweq (XisLeftCrossRight b)) (weqtopaths (hSet_univalence X' X)))).
 (*
-             set (b' := (make_interlaced_bilattice
-              (prod_bilattices_are_interlaced (make_prod_bilattice (leftLattice b) (rightLattice b))))).
+             set (b' := (make_interlaced_prebilattice
+              (prod_prebilattices_are_interlaced (make_prod_prebilattice (leftLattice b) (rightLattice b))))).
  *)
              set (b' := pr2 (g (f (X,, b)))).
 
@@ -880,7 +880,7 @@ Section representation_theorems.
              set (c := ! (invweq (hSet_univalence X X') ((XisLeftCrossRight b)))).
              set (d := (pr1weq ((XisLeftCrossRight b)))).
              set (x' := d x).
-             Check (transportf interlaced_bilattice c).
+             Check (transportf interlaced_prebilattice c).
 
              Check (pr11 b).
 
@@ -893,14 +893,14 @@ Section representation_theorems.
                × setquot (rightRel (((mm,, jj,, it),, cc,, gg,, ik),, i)) ≃ X) (λ u : UU, u)
               (invweq (XisLeftCrossRight (((mm,, jj,, it),, cc,, gg,, ik),, i)))
               (weqtopaths (hSet_univalence X' X)))).
-             rewrite (pr1_transportf _ ((make_interlaced_bilattice
-              (prod_bilattices_are_interlaced
-                 (make_prod_bilattice (leftLattice (((mm,, jj,, it),, cc,, gg,, ik),, i))
+             rewrite (pr1_transportf _ ((make_interlaced_prebilattice
+              (prod_prebilattices_are_interlaced
+                 (make_prod_prebilattice (leftLattice (((mm,, jj,, it),, cc,, gg,, ik),, i))
                     (rightLattice (((mm,, jj,, it),, cc,, gg,, ik),, i))))))).
              rewrite (pr1_transportf  (internal_paths_rew_r UU (X' = pr1 b) (setquot (leftRel (pr2 b)) × setquot (rightRel (pr2 b)) ≃ pr1 b)
               (λ u : UU, u) (invweq (XisLeftCrossRight (pr2 b))) (weqtopaths (hSet_univalence X' (pr1 b))))
-           (make_interlaced_bilattice
-              (prod_bilattices_are_interlaced (make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b)))))).
+           (make_interlaced_prebilattice
+              (prod_prebilattices_are_interlaced (make_prod_prebilattice (leftLattice (pr2 b)) (rightLattice (pr2 b)))))).
 
 
              rewrite (pr1_transportf ( (internal_paths_rew_r UU
@@ -910,39 +910,39 @@ Section representation_theorems.
              (weqtopaths
                 (hSet_univalence
                    X'
-                   (pr1 b)))) (make_interlaced_bilattice (prod_bilattices_are_interlaced (make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b))))))).
+                   (pr1 b)))) (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (make_prod_prebilattice (leftLattice (pr2 b)) (rightLattice (pr2 b))))))).
              Check (invmap c).
 
              Check (pr1_transportf c).
 
              Check (@pr1_transportf ).
              set (b' :=  g (f b)).
-             unfold g, f, interlaced_bilattices_are_prod, prod_bilattices_are_interlaced in b'.
+             unfold g, f, interlaced_prebilattices_are_prod, prod_prebilattices_are_interlaced in b'.
              cbn in b.
 
              Check (pr1 b').
              Check (pr1 (pr2 b')).
 
-             unfold interlaced_bilattice in b'.
+             unfold interlaced_prebilattice in b'.
 
-             Check (transportf bilattice c (pr12 b')).
-             Check ( (make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b)))).
+             Check (transportf prebilattice c (pr12 b')).
+             Check ( (make_prod_prebilattice (leftLattice (pr2 b)) (rightLattice (pr2 b)))).
 
 
              rewrite (pr1_transportf c b').
 
-             Check (weqtopaths (hSet_univalence (pr1 b) ( prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b)))) (XisLeftCrossRight (pr2 b)))).
-             Check (@pr1_transportf hSet bilattice _ _ _ (weqtopaths (XisLeftCrossRight (pr2 b)))).
+             Check (weqtopaths (hSet_univalence (pr1 b) ( prod_prebilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b)))) (XisLeftCrossRight (pr2 b)))).
+             Check (@pr1_transportf hSet prebilattice _ _ _ (weqtopaths (XisLeftCrossRight (pr2 b)))).
              Check (pr1_transportf (invweq (XisLeftCrossRight (pr2 b)))).
              Check (@pr1_transportf ).
              rewrite (pr1_transportf ( (internal_paths_rew_r UU
-             (prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b))) = pr1 b)
+             (prod_prebilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b))) = pr1 b)
              (setquot (leftRel (pr2 b)) × setquot (rightRel (pr2 b)) ≃ pr1 b) (λ u : UU, u)
              (invweq (XisLeftCrossRight (pr2 b)))
              (weqtopaths
                 (hSet_univalence
-                   (prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b))))
-                   (pr1 b))))) ((make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b))))).
+                   (prod_prebilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b))))
+                   (pr1 b))))) ((make_prod_prebilattice (leftLattice (pr2 b)) (rightLattice (pr2 b))))).
              admit.
          --- admit.
          --- admit.
@@ -954,28 +954,28 @@ Section representation_theorems.
 *)
 End representation_theorems.
 
-Section bilattice_FOUR.
-  Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
+Section prebilattice_FOUR.
+  Definition FOUR := make_bounded_prod_prebilattice bool_boundedlattice bool_boundedlattice .
 
-  Check prod_bilattices_are_interlaced FOUR : is_interlaced FOUR .
+  Check prod_prebilattices_are_interlaced FOUR : is_interlaced FOUR .
 
   (*
-  Definition iFOUR := make_interlaced_bilattice (prod_bilattices_are_interlaced FOUR).
+  Definition iFOUR := make_interlaced_prebilattice (prod_prebilattices_are_interlaced FOUR).
 
-  Definition tt : prod_bilattice_carrier boolset boolset := (true,,true).
-  Definition ff : prod_bilattice_carrier boolset boolset := (false,,false).
+  Definition tt : prod_prebilattice_carrier boolset boolset := (true,,true).
+  Definition ff : prod_prebilattice_carrier boolset boolset := (false,,false).
   Definition tt'L : setquotinset (leftRel iFOUR) := setquotpr (leftEq iFOUR) tt.
   Definition tt'R : setquotinset (rightRel iFOUR) := setquotpr (rightEq iFOUR) tt.
   Definition ff'L : setquotinset (leftRel iFOUR) := setquotpr (leftEq iFOUR) ff.
   Definition ff'R : setquotinset (rightRel iFOUR) := setquotpr (rightEq iFOUR) ff.
 
-  Check (join (pr2 (pr222 (interlaced_bilattices_are_prod iFOUR)))) (tt'L,,tt'R) (ff'L,,ff'R).
+  Check (join (pr2 (pr222 (interlaced_prebilattices_are_prod iFOUR)))) (tt'L,,tt'R) (ff'L,,ff'R).
   Compute join iFOUR tt ff.
    *)
 
-  Definition is_distributive_FOUR : is_distributive_bilattice FOUR .
+  Definition is_distributive_FOUR : is_distributive_prebilattice FOUR .
   Proof.
     repeat apply make_dirprod; intros [x1 x2] [y1 y2] [z1 z2]; induction x1, x2, y1, y2, z1, z2; trivial.
   Defined.
 
-End bilattice_FOUR.
+End prebilattice_FOUR.
