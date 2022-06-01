@@ -5,7 +5,7 @@ Require Import UniMath.MoreFoundations.Equivalences.
 Section equivalences.
   Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
   Proof.
-    use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ is) x y) ((setquotfun2 _ _ _ _) y x) )).
+    use (setquotuniv2prop _ (λ x y ,  @eqset (setquotinset _) ((setquotfun2 _ _ _ _) x y) ((setquotfun2 _ _ _ _) y x) )).
     intros.
     cbn.
     now rewrite p.
@@ -823,15 +823,15 @@ Section representation_theorems.
                  (setquotpr (leftEq b) y1,, setquotpr (rightEq b) y2)
           )).
   Defined.
+
+
 (*
   Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_bilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2).
   Proof.
     set (f := λ b , interlaced_bilattices_are_prod (pr2 b)).
     set (g := λ b : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_bilattice X1 X2 l1 l2, prod_bilattice_carrier (pr1 b) (pr12 b),, (make_interlaced_bilattice (prod_bilattices_are_interlaced (pr222 (pr2 b))))).
     use (Equivalence_to_weq).
-    use (makeEquivalence).
-    - exact f.
-    - exact g.
+    use (makeEquivalence _ _ f g).
     - intro b.
       use total2_paths_f.
       {
@@ -855,20 +855,70 @@ Section representation_theorems.
         admit.
       }
       admit.
-    - intro b.
+    - intros [X b].
       use total2_paths_f.
       -- cbn.
          rewrite (weqtopaths (hSet_univalence _ _)).
          use (invweq (XisLeftCrossRight _)).
       -- use interlaced_bilattice_transportf; intro x; use weqfunextsec; intro y.
-         --- unfold meet, tlattice.  cbn.
-             set (X' := prod_bilattice_carrier (setquotinset (leftRel (pr2 b))) (setquotinset (rightRel (pr2 b)))).
-             set (c := ! (invweq (hSet_univalence (pr1 b) X') ((XisLeftCrossRight (pr2 b))))).
+         --- unfold meet, tlattice, Lmin, interlaced_bilattice.
+             set (X' := prod_bilattice_carrier (setquotinset (leftRel b)) (setquotinset (rightRel b))).
+             set (l :=  (λ X0 : hSet, ∑ b0 : bilattice X0, is_interlaced b0)).
+             set (e := (internal_paths_rew_r UU (X' = X) (X' ≃ X)
+                                             (λ u : UU, u) (invweq (XisLeftCrossRight b)) (weqtopaths (hSet_univalence X' X)))).
+(*
+             set (b' := (make_interlaced_bilattice
+              (prod_bilattices_are_interlaced (make_prod_bilattice (leftLattice b) (rightLattice b))))).
+ *)
+             set (b' := pr2 (g (f (X,, b)))).
+
+             set (t := transportf l e b').
+             set (tt := pr1 t).
+             unfold t, l in tt.
+             rewrite (pr1_transportf e b') in tt.
+             Check (@pr1_transportf hSet l _ X X' (!e) b').
+             set (c := ! (invweq (hSet_univalence X X') ((XisLeftCrossRight b)))).
+             set (d := (pr1weq ((XisLeftCrossRight b)))).
+             set (x' := d x).
+             Check (transportf interlaced_bilattice c).
+
+             Check (pr11 b).
+
+
+
+
+
+             set (e := (internal_paths_rew_r UU (X' = X)
+              (setquot (leftRel (((mm,, jj,, it),, cc,, gg,, ik),, i))
+               × setquot (rightRel (((mm,, jj,, it),, cc,, gg,, ik),, i)) ≃ X) (λ u : UU, u)
+              (invweq (XisLeftCrossRight (((mm,, jj,, it),, cc,, gg,, ik),, i)))
+              (weqtopaths (hSet_univalence X' X)))).
+             rewrite (pr1_transportf _ ((make_interlaced_bilattice
+              (prod_bilattices_are_interlaced
+                 (make_prod_bilattice (leftLattice (((mm,, jj,, it),, cc,, gg,, ik),, i))
+                    (rightLattice (((mm,, jj,, it),, cc,, gg,, ik),, i))))))).
+             rewrite (pr1_transportf  (internal_paths_rew_r UU (X' = pr1 b) (setquot (leftRel (pr2 b)) × setquot (rightRel (pr2 b)) ≃ pr1 b)
+              (λ u : UU, u) (invweq (XisLeftCrossRight (pr2 b))) (weqtopaths (hSet_univalence X' (pr1 b))))
+           (make_interlaced_bilattice
+              (prod_bilattices_are_interlaced (make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b)))))).
+
+
+             rewrite (pr1_transportf ( (internal_paths_rew_r UU
+             (X' = pr1 b)
+             (setquot (leftRel (pr2 b)) × setquot (rightRel (pr2 b)) ≃ pr1 b) (λ u : UU, u)
+             (invweq (XisLeftCrossRight (pr2 b)))
+             (weqtopaths
+                (hSet_univalence
+                   X'
+                   (pr1 b)))) (make_interlaced_bilattice (prod_bilattices_are_interlaced (make_prod_bilattice (leftLattice (pr2 b)) (rightLattice (pr2 b))))))).
+             Check (invmap c).
 
              Check (pr1_transportf c).
 
              Check (@pr1_transportf ).
              set (b' :=  g (f b)).
+             unfold g, f, interlaced_bilattices_are_prod, prod_bilattices_are_interlaced in b'.
+             cbn in b.
 
              Check (pr1 b').
              Check (pr1 (pr2 b')).
@@ -908,6 +958,20 @@ Section bilattice_FOUR.
   Definition FOUR := make_bounded_prod_bilattice bool_boundedlattice bool_boundedlattice .
 
   Check prod_bilattices_are_interlaced FOUR : is_interlaced FOUR .
+
+  (*
+  Definition iFOUR := make_interlaced_bilattice (prod_bilattices_are_interlaced FOUR).
+
+  Definition tt : prod_bilattice_carrier boolset boolset := (true,,true).
+  Definition ff : prod_bilattice_carrier boolset boolset := (false,,false).
+  Definition tt'L : setquotinset (leftRel iFOUR) := setquotpr (leftEq iFOUR) tt.
+  Definition tt'R : setquotinset (rightRel iFOUR) := setquotpr (rightEq iFOUR) tt.
+  Definition ff'L : setquotinset (leftRel iFOUR) := setquotpr (leftEq iFOUR) ff.
+  Definition ff'R : setquotinset (rightRel iFOUR) := setquotpr (rightEq iFOUR) ff.
+
+  Check (join (pr2 (pr222 (interlaced_bilattices_are_prod iFOUR)))) (tt'L,,tt'R) (ff'L,,ff'R).
+  Compute join iFOUR tt ff.
+   *)
 
   Definition is_distributive_FOUR : is_distributive_bilattice FOUR .
   Proof.
