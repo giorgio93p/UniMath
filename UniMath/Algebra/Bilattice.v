@@ -1,6 +1,13 @@
 Require Import UniMath.Algebra.Lattice.
 Require Import UniMath.MoreFoundations.Subtypes.
 Require Import UniMath.MoreFoundations.Equivalences.
+Require Import UniMath.CategoryTheory.Core.Categories.
+Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.CategoryTheory.DisplayedCats.SIP.
+Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Core.Univalence.
+Require Import UniMath.CategoryTheory.DisplayedCats.Total.
+
 
 Section equivalences.
   Definition iscommsetquotfun2 {X: hSet} {R : eqrel X} (f : binop X) (is : iscomprelrelfun2 R R f) (p : iscomm f) : iscomm (setquotfun2 R R f is).
@@ -37,6 +44,18 @@ Section lattices.
       use (setproperty X).
   Defined.
 
+  Definition isaset_lattice (X : hSet) : isaset (lattice X) .
+  Proof.
+    Check (isasetbinoponhSet X).
+    use isaset_total2.
+    - use (isasetbinoponhSet X).
+    - intro min.
+      use isaset_total2.
+      -- use (isasetbinoponhSet X).
+      -- intro max.
+         use (isasetaprop isaprop_latticeop).
+  Defined.
+
   Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
     (isldistr (Lmin l) (Lmax l)) × isldistr (Lmax l) (Lmin l) .
 
@@ -46,8 +65,8 @@ Section lattices.
   Proof.
     exists (λ b1 b2 : boolset, if b1 then b2 else false), (λ b1 b2 : boolset, if b1 then true else b2).
     repeat apply make_dirprod;
-        try (intros a b c; induction a, b, c; trivial);
-        try (intros a b; induction a, b; trivial) .
+      try (intros a b c; induction a, b, c; trivial);
+      try (intros a b; induction a, b; trivial) .
   Defined.
 
   Definition bool_boundedlattice : bounded_lattice boolset .
@@ -75,6 +94,9 @@ Section prebilattices .
   Definition join {X: hSet} (b : prebilattice X) : binop X := Lmax (tlattice b) .
   Definition consensus {X : hSet} (b : prebilattice X) : binop X := Lmin (klattice b) .
   Definition gullibility {X : hSet} (b : prebilattice X) : binop X := Lmax (klattice b) .
+
+  Definition isaset_prebilattice (X : hSet) : isaset (prebilattice X)
+    :=  isaset_dirprod (isaset_lattice X) (isaset_lattice X).
 
   Definition prebilattice_transportf {X1 X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (p : X1 = X2)
              (m : meet (transportf prebilattice p b1) ~ meet b2)
@@ -104,6 +126,58 @@ Section prebilattices .
   Proof.
     use (@prebilattice_transportf X X b1 b2 (idpath X)); now rewrite idpath_transportf.
   Defined.
+
+  Definition respects_prebilattice_structure {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : X1 -> X2) : UU
+    := ∀ x y,
+      make_hProp _ (
+                   isapropdirprod _ _
+                                  (setproperty _  (meet b2 (f x) (f y)) (f (meet b1 x y)))
+                                  (isapropdirprod _ _ (setproperty _ (join b2 (f x) (f y)) (f (join b1 x y)))
+                                                  (isapropdirprod _ _
+                                                                  (setproperty _  (consensus b2 (f x) (f y)) (f (consensus b1 x y))  )
+                                                                  (setproperty _  (gullibility b2 (f x) (f y)) (f (gullibility b1 x y)))))
+                 ).
+
+  Definition category_prebilattice : category.
+  Proof.
+    use (@total_category hset_category).
+    use disp_cat_from_SIP_data.
+    - intro X.
+      exact (prebilattice X).
+    - intros X1 X2 b1 b2 f.
+      use (respects_prebilattice_structure b1 b2 f).
+    - intros X1 X2 b1 b2 f p1 p2.
+      use impred_prop.
+    - now intros X1 b1 x y.
+    - intros X1 X2 X3 b1 b2 b3 f g p1 p2 x y.
+      cbn.
+      do 3 (try use make_dirprod).
+      -- now rewrite (pr1 (p2 (f x) (f y))), (pr1 (p1 x y)).
+      -- now rewrite (pr12 (p2 (f x) (f y))), (pr12 (p1 x y)).
+      -- now rewrite (pr122 (p2 (f x) (f y))), (pr122 (p1 x y)).
+      -- now rewrite (pr222 (p2 (f x) (f y))), (pr222 (p1 x y)).
+  Defined.
+
+  Definition is_univalent_category_prebilattice : is_univalent (category_prebilattice) .
+  Proof.
+    use SIP.
+    - use Univalence.is_univalent_HSET.
+    - use isaset_prebilattice.
+    - intros X b1 b2 p1 p2.
+      use prebilattice_eq; intro x; use weqfunextsec; intro y.
+      -- exact (pr1 (p2 x y)).
+      -- exact (pr12 (p2 x y)).
+      -- exact (pr122 (p2 x y)).
+      -- exact (pr222 (p2 x y)).
+  Defined.
+
+  (***
+  Definition t {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
+  Proof.
+    exists (((invweq (hSet_univalence X1 X2))) f).
+  Defined.
+   ***)
+
 
   Definition isassoc_consensus {X : hSet} (b : prebilattice X) : isassoc (consensus b) := isassoc_Lmin (klattice b) .
   Definition isassoc_join {X : hSet} (b : prebilattice X) : isassoc (join b) := isassoc_Lmax (tlattice b) .
@@ -295,16 +369,16 @@ End interlaced_prebilattices.
 
 Section distributive_prebilattices.
   Definition is_distributive_prebilattice {X : hSet} (b : prebilattice X) :=
-              is_distributive_lattice (klattice b)
-                × is_distributive_lattice (tlattice b)
-                × isldistr (consensus b) (meet b)
-                × isldistr (meet b) (consensus b)
-                × isldistr (consensus b) (join b)
-                × isldistr (join b) (consensus b)
-                × isldistr (gullibility b) (meet b)
-                × isldistr (meet b) (gullibility b)
-                × isldistr (gullibility b) (join b)
-                × isldistr (join b) (gullibility b)
+    is_distributive_lattice (klattice b)
+                            × is_distributive_lattice (tlattice b)
+                            × isldistr (consensus b) (meet b)
+                            × isldistr (meet b) (consensus b)
+                            × isldistr (consensus b) (join b)
+                            × isldistr (join b) (consensus b)
+                            × isldistr (gullibility b) (meet b)
+                            × isldistr (meet b) (gullibility b)
+                            × isldistr (gullibility b) (join b)
+                            × isldistr (join b) (gullibility b)
   .
 
   Definition isaprop_is_distributive {X : hSet} {b : prebilattice X} : isaprop (is_distributive_prebilattice b).
@@ -480,51 +554,51 @@ Section representation_theorems.
     - rewrite (iscomm_Lmin _ x2 z2), (isassoc_Lmin), <- (isassoc_Lmin _ x2 y2 z2), H2, (iscomm_Lmin _ x2 z2), <- isassoc_Lmin, Lmin_id. reflexivity.
   Defined.
 
-    Lemma property1 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
-    Proof.
-      intros ? x y [? [p1 p2]].
-      set (w := (meet _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
-      use (interlacing_meet_k _ _ _ _ p2).
-    Defined.
+  Lemma property1 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
+  Proof.
+    intros ? x y [? [p1 p2]].
+    set (w := (meet _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
+    use (interlacing_meet_k _ _ _ _ p2).
+  Defined.
 
-    Lemma property1_dual {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
-    Proof.
-      intro b'.
-      use (property1 (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
-    Defined.
+  Lemma property1_dual {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
+  Proof.
+    intro b'.
+    use (property1 (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
+  Defined.
 
-    Lemma property1_dual_opp_t {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b y r) -> tle b (consensus b y x) x.
-    Proof.
-      intros ? x y [? [p1 p2]].
-      set (w := (consensus _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
-      use (interlacing_consensus_t _ _ _ _ p2).
-    Defined.
+  Lemma property1_dual_opp_t {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b y r) -> tle b (consensus b y x) x.
+  Proof.
+    intros ? x y [? [p1 p2]].
+    set (w := (consensus _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
+    use (interlacing_consensus_t _ _ _ _ p2).
+  Defined.
 
-    Lemma property2 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
-    Proof.
-      intros b' ? ? [? [p1 p2]].
-      set (pp := property1 _ _ _ (_,,p1,,p2)).
-      rewrite (iscomm_meet) in pp.
-      use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
-    Defined.
+  Lemma property2 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
+  Proof.
+    intros b' ? ? [? [p1 p2]].
+    set (pp := property1 _ _ _ (_,,p1,,p2)).
+    rewrite (iscomm_meet) in pp.
+    use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
+  Defined.
 
-    Lemma property2_opp_t {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
-    Proof.
-      intros b x y [r [p1 p2]].
-      assert (p1' :  tle (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x r).
-      {
-        rewrite <- p1, iscomm_Lmin.
-        use Lmax_absorb.
-      }
-      set (t := consensus b y x).
-      assert (p : Lmax (tlattice b) t x = x).
-      {
-        rewrite iscomm_Lmax.
-        exact (property2 (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y (r,,p1',,p2)).
-      }
-      rewrite <- p.
-      use Lmin_absorb.
-    Defined.
+  Lemma property2_opp_t {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
+  Proof.
+    intros b x y [r [p1 p2]].
+    assert (p1' :  tle (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x r).
+    {
+      rewrite <- p1, iscomm_Lmin.
+      use Lmax_absorb.
+    }
+    set (t := consensus b y x).
+    assert (p : Lmax (tlattice b) t x = x).
+    {
+      rewrite iscomm_Lmax.
+      exact (property2 (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y (r,,p1',,p2)).
+    }
+    rewrite <- p.
+    use Lmin_absorb.
+  Defined.
 
   Definition leftRel {X : hSet} (b : interlaced_prebilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
   Definition isEq_leftRel {X : hSet} (b : interlaced_prebilattice X) : iseqrel (leftRel b).
@@ -951,7 +1025,7 @@ Section representation_theorems.
       cbn.
       admit.
   Defined.
-*)
+ *)
 End representation_theorems.
 
 Section prebilattice_FOUR.
