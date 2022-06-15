@@ -4,6 +4,7 @@ Require Import UniMath.MoreFoundations.Equivalences.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
 Require Import UniMath.CategoryTheory.DisplayedCats.SIP.
+Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
 Require Import UniMath.CategoryTheory.categories.HSET.Core.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.DisplayedCats.Total.
@@ -138,6 +139,22 @@ Section prebilattices .
                                                                   (setproperty _  (gullibility b2 (f x) (f y)) (f (gullibility b1 x y)))))
                  ).
 
+  Definition weqinv_respects_prebilattice_structure {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : respects_prebilattice_structure b2 b1 (invmap f).
+  Proof.
+             intros x y.
+             do 3 (try use make_dirprod);
+             rewrite <- (homotweqinvweq f x), <- (homotweqinvweq f y);
+             [
+               rewrite (pr1 (p (invmap f x) (invmap f y))) |
+               rewrite (pr12 (p (invmap f x) (invmap f y))) |
+               rewrite (pr122 (p (invmap f x) (invmap f y))) |
+               rewrite (pr222 (p (invmap f x) (invmap f y)))
+             ];
+             now rewrite homotweqinvweq, homotweqinvweq, homotinvweqweq.
+
+  Defined.
+
+
   Definition category_prebilattice : category.
   Proof.
     use (@total_category hset_category).
@@ -171,13 +188,51 @@ Section prebilattices .
       -- exact (pr222 (p2 x y)).
   Defined.
 
-  (***
-  Definition t {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
+  Definition t {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) :  @Isos.iso category_prebilattice (X1,,b1) (X2,,b2).
   Proof.
-    exists (((invweq (hSet_univalence X1 X2))) f).
-  Defined.
-   ***)
+    set( f' := (pr1weq f,, p) : (category_prebilattice ⟦ X1,, b1, X2,, b2 ⟧)%Cat).
+    set (p_inv := weqinv_respects_prebilattice_structure b1 b2 f p).
+      exists f'.
+      use Isos.is_iso_from_is_z_iso.
+      exists (invmap f,, p_inv).
+      use make_dirprod.
+      - use total2_paths_f.
+         -- use weqfunextsec.
+             use homotinvweqweq.
+         -- use weqfunextsec.
+             intro x.
+             use weqfunextsec.
+             intro y.
+             cbn.
+             unfold mor_disp, invmap.
+             cbn.
+             unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
+             cbn.
+             (* rewrite transportf_total2_const. *)
 
+             Locate ";;".
+             admit.
+      - use total2_paths_b.
+         -- use weqfunextsec.
+             use homotweqinvweq.
+         --  use weqfunextsec.
+             intro x.
+             use weqfunextsec.
+             intro y.
+             cbn.
+             unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
+             cbn.
+             admit.
+  Admitted.
+
+  Definition t2 {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
+  Proof.
+    set (I := t b1 b2 f p).
+    set (i := fiber_paths (isotoid category_prebilattice is_univalent_category_prebilattice I)).
+    (* cbn in i. (* in order to see what path to use in the next line *)  *)
+    exists ( (base_paths (X1,, b1) (X2,, b2) (isotoid category_prebilattice is_univalent_category_prebilattice I))).
+    use i.
+  Defined.
 
   Definition isassoc_consensus {X : hSet} (b : prebilattice X) : isassoc (consensus b) := isassoc_Lmin (klattice b) .
   Definition isassoc_join {X : hSet} (b : prebilattice X) : isassoc (join b) := isassoc_Lmax (tlattice b) .
@@ -898,6 +953,28 @@ Section representation_theorems.
           )).
   Defined.
 
+  Definition iso_interlaced_product {X : hSet} (b : interlaced_prebilattice X) :  @Isos.iso category_prebilattice (X,, (pr1 b))
+           (prod_prebilattice_carrier (pr1 (interlaced_prebilattices_are_prod b))
+              (pr12 (interlaced_prebilattices_are_prod b)),,
+            (pr1 (make_interlaced_prebilattice
+                    (prod_prebilattices_are_interlaced (pr222 (pr2 (interlaced_prebilattices_are_prod b))))))).
+
+  Proof.
+    use (t b  (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr2 (pr222 (interlaced_prebilattices_are_prod  b))))) (XisLeftCrossRight b)).
+    intros x y.
+    do 4 (try use make_dirprod); use dirprod_paths; cbn;
+    try (use pathsinv0);
+    try (use (iscompsetquotpr (leftEq _)));
+    try ( use (iscompsetquotpr (rightEq _))).
+    - use (leftRel_meet_consensus).
+    - use (rightRel_meet_gullibility).
+    - use (leftRel_join_gullibility).
+    - use (rightRel_join_consensus).
+    - use (pr21 (isEq_leftRel _)).
+    - use (pr21 (isEq_rightRel _)).
+    - use (pr21 (isEq_leftRel _)).
+    - use (pr21 (isEq_rightRel _)).
+  Defined.
 
 (*
   Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_prebilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2).
