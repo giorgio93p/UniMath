@@ -141,16 +141,16 @@ Section prebilattices .
 
   Definition weqinv_respects_prebilattice_structure {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : respects_prebilattice_structure b2 b1 (invmap f).
   Proof.
-             intros x y.
-             do 3 (try use make_dirprod);
-             rewrite <- (homotweqinvweq f x), <- (homotweqinvweq f y);
-             [
-               rewrite (pr1 (p (invmap f x) (invmap f y))) |
-               rewrite (pr12 (p (invmap f x) (invmap f y))) |
-               rewrite (pr122 (p (invmap f x) (invmap f y))) |
-               rewrite (pr222 (p (invmap f x) (invmap f y)))
-             ];
-             now rewrite homotweqinvweq, homotweqinvweq, homotinvweqweq.
+    intros x y.
+    do 3 (try use make_dirprod);
+    rewrite <- (homotweqinvweq f x), <- (homotweqinvweq f y);
+    [
+      rewrite (pr1 (p (invmap f x) (invmap f y))) |
+      rewrite (pr12 (p (invmap f x) (invmap f y))) |
+      rewrite (pr122 (p (invmap f x) (invmap f y))) |
+      rewrite (pr222 (p (invmap f x) (invmap f y)))
+    ];
+    now rewrite homotweqinvweq, homotweqinvweq, homotinvweqweq.
 
   Defined.
 
@@ -192,37 +192,37 @@ Section prebilattices .
   Proof.
     set( f' := (pr1weq f,, p) : (category_prebilattice ⟦ X1,, b1, X2,, b2 ⟧)%Cat).
     set (p_inv := weqinv_respects_prebilattice_structure b1 b2 f p).
-      exists f'.
-      use Isos.is_iso_from_is_z_iso.
-      exists (invmap f,, p_inv).
-      use make_dirprod.
-      - use total2_paths_f.
-         -- use weqfunextsec.
-             use homotinvweqweq.
-         -- use weqfunextsec.
-             intro x.
-             use weqfunextsec.
-             intro y.
-             cbn.
-             unfold mor_disp, invmap.
-             cbn.
-             unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
-             cbn.
-             (* rewrite transportf_total2_const. *)
+    exists f'.
+    use Isos.is_iso_from_is_z_iso.
+    exists (invmap f,, p_inv).
+    use make_dirprod.
+    - use total2_paths_f.
+      -- use weqfunextsec.
+         use homotinvweqweq.
+      -- use weqfunextsec.
+         intro x.
+         use weqfunextsec.
+         intro y.
+         cbn.
+         unfold mor_disp, invmap.
+         cbn.
+         unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
+         cbn.
+         (* rewrite transportf_total2_const. *)
 
-             Locate ";;".
-             admit.
-      - use total2_paths_b.
-         -- use weqfunextsec.
-             use homotweqinvweq.
-         --  use weqfunextsec.
-             intro x.
-             use weqfunextsec.
-             intro y.
-             cbn.
-             unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
-             cbn.
-             admit.
+         Locate ";;".
+         admit.
+    - use total2_paths_b.
+      -- use weqfunextsec.
+         use homotweqinvweq.
+      --  use weqfunextsec.
+          intro x.
+          use weqfunextsec.
+          intro y.
+          cbn.
+          unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
+          cbn.
+          admit.
   Admitted.
 
   Definition t2 {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
@@ -954,10 +954,10 @@ Section representation_theorems.
   Defined.
 
   Definition iso_interlaced_product {X : hSet} (b : interlaced_prebilattice X) :  @Isos.iso category_prebilattice (X,, (pr1 b))
-           (prod_prebilattice_carrier (pr1 (interlaced_prebilattices_are_prod b))
-              (pr12 (interlaced_prebilattices_are_prod b)),,
-            (pr1 (make_interlaced_prebilattice
-                    (prod_prebilattices_are_interlaced (pr222 (pr2 (interlaced_prebilattices_are_prod b))))))).
+                                                                                            (prod_prebilattice_carrier (pr1 (interlaced_prebilattices_are_prod b))
+                                                                                                                       (pr12 (interlaced_prebilattices_are_prod b)),,
+                                                                                                                       (pr1 (make_interlaced_prebilattice
+                                                                                                                               (prod_prebilattices_are_interlaced (pr222 (pr2 (interlaced_prebilattices_are_prod b))))))).
 
   Proof.
     use (t b  (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr2 (pr222 (interlaced_prebilattices_are_prod  b))))) (XisLeftCrossRight b)).
