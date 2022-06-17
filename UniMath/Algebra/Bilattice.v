@@ -154,7 +154,6 @@ Section prebilattices .
 
   Defined.
 
-
   Definition category_prebilattice : category.
   Proof.
     use (@total_category hset_category).
@@ -188,7 +187,7 @@ Section prebilattices .
       -- exact (pr222 (p2 x y)).
   Defined.
 
-  Definition t {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) :  @Isos.iso category_prebilattice (X1,,b1) (X2,,b2).
+  Definition prebilattice_iso {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : @Isos.iso category_prebilattice (X1,,b1) (X2,,b2).
   Proof.
     set( f' := (pr1weq f,, p) : (category_prebilattice ⟦ X1,, b1, X2,, b2 ⟧)%Cat).
     set (p_inv := weqinv_respects_prebilattice_structure b1 b2 f p).
@@ -203,31 +202,20 @@ Section prebilattices .
          intro x.
          use weqfunextsec.
          intro y.
-         cbn.
-         unfold mor_disp, invmap.
-         cbn.
-         unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
-         cbn.
-         (* rewrite transportf_total2_const. *)
-
-         Locate ";;".
-         admit.
-    - use total2_paths_b.
+         do 3 (try use dirprod_paths); use PartA.Unnamed_thm.
+    - use total2_paths_f.
       -- use weqfunextsec.
          use homotweqinvweq.
-      --  use weqfunextsec.
-          intro x.
-          use weqfunextsec.
-          intro y.
-          cbn.
-          unfold p_inv, comp_disp, Constructions.disp_struct_data, Constructions.disp_struct_ob_mor.
-          cbn.
-          admit.
-  Admitted.
+      -- use weqfunextsec.
+         intro x.
+         use weqfunextsec.
+         intro y.
+         do 3 (try use dirprod_paths); use PartA.Unnamed_thm.
+  Defined.
 
-  Definition t2 {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
+  Definition prebilattice_transportf_iso {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
   Proof.
-    set (I := t b1 b2 f p).
+    set (I := prebilattice_iso b1 b2 f p).
     set (i := fiber_paths (isotoid category_prebilattice is_univalent_category_prebilattice I)).
     (* cbn in i. (* in order to see what path to use in the next line *)  *)
     exists ( (base_paths (X1,, b1) (X2,, b2) (isotoid category_prebilattice is_univalent_category_prebilattice I))).
@@ -953,7 +941,7 @@ Section representation_theorems.
           )).
   Defined.
 
-  Definition iso_interlaced_product {X : hSet} (b : interlaced_prebilattice X) :  @Isos.iso category_prebilattice (X,, (pr1 b))
+  Definition iso_interlaced_product {X : hSet} (b : interlaced_prebilattice X) : @Isos.iso category_prebilattice (X,, (pr1 b))
                                                                                             (prod_prebilattice_carrier (pr1 (interlaced_prebilattices_are_prod b))
                                                                                                                        (pr12 (interlaced_prebilattices_are_prod b)),,
                                                                                                                        (pr1 (make_interlaced_prebilattice
