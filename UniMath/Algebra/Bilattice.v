@@ -81,6 +81,9 @@ End lattices.
 Section prebilattices .
   Definition prebilattice (X : hSet) := lattice X × lattice X .
 
+  Definition prebilattice_carrier {X : hSet} (b : prebilattice X) := X.
+  Coercion prebilattice_carrier : prebilattice >-> hSet.
+
   Definition make_prebilattice {X : hSet} (tLattice kLattice: lattice X) : prebilattice X := tLattice,, kLattice.
 
   Definition tlattice {X : hSet} (b : prebilattice X) : lattice X := pr1 b .
