@@ -948,12 +948,12 @@ Section representation_theorems.
                                                                                                                                (prod_prebilattices_are_interlaced (pr222 (pr2 (interlaced_prebilattices_are_prod b))))))).
 
   Proof.
-    use (t b  (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr2 (pr222 (interlaced_prebilattices_are_prod  b))))) (XisLeftCrossRight b)).
+    use (prebilattice_iso b  (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr2 (pr222 (interlaced_prebilattices_are_prod  b))))) (XisLeftCrossRight b)).
     intros x y.
-    do 4 (try use make_dirprod); use dirprod_paths; cbn;
-    try (use pathsinv0);
+    do 4 (try use make_dirprod); use dirprod_paths;
+    use pathsinv0;
     try (use (iscompsetquotpr (leftEq _)));
-    try ( use (iscompsetquotpr (rightEq _))).
+    try (use (iscompsetquotpr (rightEq _))).
     - use (leftRel_meet_consensus).
     - use (rightRel_meet_gullibility).
     - use (leftRel_join_gullibility).
