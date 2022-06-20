@@ -964,8 +964,19 @@ Section representation_theorems.
     - use (pr21 (isEq_rightRel _)).
   Defined.
 
+  Definition eq_interlaced_product {X : hSet} (b : interlaced_prebilattice X) : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) (b' : prod_prebilattice X1 X2 l1 l2), (X,, (interlaced_prebilattice_to_prebilattice b)) = (prod_prebilattice_carrier X1 X2,, (prod_prebilattices_to_prebilattices b')).
+  Proof.
+    set (interlacedToProd := interlaced_prebilattices_are_prod b).
+    exists (pr1 interlacedToProd).
+    exists (pr12 interlacedToProd).
+    exists (pr122 interlacedToProd).
+    exists (pr1 (pr222 interlacedToProd)).
+    exists (pr2 (pr222 interlacedToProd)).
+    exact (isotoid category_prebilattice is_univalent_category_prebilattice (iso_interlaced_product b)).
+  Defined.
+
 (*
-  Definition weq_interlaced_prod : weq (∑ (X : hSet), interlaced_prebilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2).
+  Definition weq_total_interlaced_prod : weq (∑ (X : hSet), interlaced_prebilattice X) (∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2).
   Proof.
     set (f := λ b , interlaced_prebilattices_are_prod (pr2 b)).
     set (g := λ b : ∑ (X1 X2 : hSet) (l1 : lattice X1) (l2 : lattice X2) , prod_prebilattice X1 X2 l1 l2, prod_prebilattice_carrier (pr1 b) (pr12 b),, (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr222 (pr2 b))))).
