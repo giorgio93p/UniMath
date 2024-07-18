@@ -75,7 +75,7 @@ Section lattices.
     assert (isldistr (Lmax l) (Lmin l) ) .
     {
       intros a b c .
-      now rewrite (p c b (Lmin _ c a)),
+      rewrite (p c b (Lmin _ c a)),
         (iscomm_Lmax _ (Lmin _ c a) c),
         (Lmax_absorb _ c a),
         ((distrlattice_Lmin_rdistr p) c a b),
@@ -85,6 +85,7 @@ Section lattices.
         (iscomm_Lmin _ (Lmax _ _ _) c ),
         (Lmin_absorb _ c b),
         iscomm_Lmin, iscomm_Lmax .
+      reflexivity.
     }
     assumption .
   Defined.
@@ -470,18 +471,30 @@ Section distributive_prebilattices.
 
   Coercion distributive_prebilattices_to_prebilattices : distributive_prebilattice >-> prebilattice .
 
-  Definition distributive_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr2 b) .
-  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := distrlattice_Lmax_ldistr (distributive_consensus_gullibility b) .
-  Definition distributive_meet_join {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (join b) := pr1 (pr2 (pr2 b)) .
-  Definition distributive_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := distrlattice_Lmax_ldistr (distributive_meet_join b) .
-  Definition distributive_consensus_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (meet b) := pr1 (pr2 (pr2 (pr2 b))) .
-  Definition distributive_meet_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 b)))) .
-  Definition distributive_consensus_join {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 b))))) .
-  Definition distributive_join_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))) .
-  Definition distributive_gullibility_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (meet b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))) .
-  Definition distributive_meet_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (gullibility b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))))) .
-  Definition distributive_gullibility_join {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
-  Definition distributive_join_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (gullibility b) := pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
+  Definition ldistr_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr2 b) .
+  Definition rdistr_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isrdistr (consensus b) (gullibility b) := distrlattice_Lmin_rdistr (pr1 (pr2 b)) .
+  Definition ldistr_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := distrlattice_Lmax_ldistr (ldistr_consensus_gullibility b) .
+  Definition rdistr_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isrdistr (gullibility b) (consensus b) := distrlattice_Lmax_rdistr (ldistr_consensus_gullibility b) .
+  Definition ldistr_meet_join {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (join b) := pr1 (pr2 (pr2 b)) .
+  Definition rdistr_meet_join {X : hSet} (b : distributive_prebilattice X) : isrdistr (meet b) (join b) := distrlattice_Lmin_rdistr (pr1 (pr2 (pr2 b))) .
+  Definition ldistr_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := distrlattice_Lmax_ldistr (ldistr_meet_join b) .
+  Definition rdistr_join_meet {X : hSet} (b : distributive_prebilattice X) : isrdistr (join b) (meet b) := distrlattice_Lmax_rdistr (ldistr_meet_join b) .
+  Definition ldistr_consensus_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (meet b) := pr1 (pr2 (pr2 (pr2 b))) .
+  Definition rdistr_consensus_meet {X : hSet} (b : distributive_prebilattice X) : isrdistr (consensus b) (meet b) := weqldistrrdistr (consensus b) (meet b) (iscomm_meet b) (ldistr_consensus_meet b) .
+  Definition ldistr_meet_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 b)))) .
+  Definition rdistr_meet_consensus {X : hSet} (b : distributive_prebilattice X) : isrdistr (meet b) (consensus b) := weqldistrrdistr (meet b) (consensus b) (iscomm_consensus b) (ldistr_meet_consensus b).
+  Definition ldistr_consensus_join {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 b))))) .
+  Definition rdistr_consensus_join {X : hSet} (b : distributive_prebilattice X) : isrdistr (consensus b) (join b) := weqldistrrdistr (consensus b) (join b) (iscomm_join b) (ldistr_consensus_join b).
+  Definition ldistr_join_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))) .
+  Definition rdistr_join_consensus {X : hSet} (b : distributive_prebilattice X) : isrdistr (join b) (consensus b) := weqldistrrdistr (join b) (consensus b) (iscomm_consensus b) (ldistr_join_consensus b) .
+  Definition ldistr_gullibility_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (meet b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))) .
+  Definition rdistr_gullibility_meet {X : hSet} (b : distributive_prebilattice X) : isrdistr (gullibility b) (meet b) := weqldistrrdistr (gullibility b) (meet b) (iscomm_meet b) (ldistr_gullibility_meet b) .
+  Definition ldistr_meet_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (gullibility b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))))) .
+  Definition rdistr_meet_gullibility {X : hSet} (b : distributive_prebilattice X) : isrdistr (meet b) (gullibility b) := weqldistrrdistr (meet b) (gullibility b) (iscomm_gullibility b) (ldistr_meet_gullibility b) .
+  Definition ldistr_gullibility_join {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
+  Definition rdistr_gullibility_join {X : hSet} (b : distributive_prebilattice X) : isrdistr (gullibility b) (join b) := weqldistrrdistr (gullibility b) (join b) (iscomm_join b) (ldistr_gullibility_join b) .
+  Definition ldistr_join_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (gullibility b) := pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
+  Definition rdistr_join_gullibility {X : hSet} (b : distributive_prebilattice X) : isrdistr (join b) (gullibility b) := weqldistrrdistr (join b) (gullibility b) (iscomm_gullibility b) (ldistr_join_gullibility b) .
 
   Definition make_distributive_prebilattice {X : hSet} {b : prebilattice X} (is : is_distributive_prebilattice b) : distributive_prebilattice X := b,,is .
 
@@ -489,16 +502,16 @@ Section distributive_prebilattices.
   Proof.
     repeat split; intros x y z H.
     - rewrite (iscomm_consensus _ x z), (iscomm_consensus _ y z).
-      set(d := distributive_meet_consensus b x y z). unfold meet in d. cbn.
+      set(d := ldistr_meet_consensus b x y z). unfold meet in d. cbn.
       rewrite <- d,  H. reflexivity.
     - rewrite (iscomm_gullibility _ x z), (iscomm_gullibility _ y z).
-      set (d := distributive_meet_gullibility b x y z). unfold meet in d. cbn.
+      set (d := ldistr_meet_gullibility b x y z). unfold meet in d. cbn.
       rewrite <- d,  H; reflexivity.
     - rewrite (iscomm_meet _ x z), (iscomm_meet _ y z).
-      set (d := (distributive_consensus_meet b x y z)). unfold consensus in d. cbn.
+      set (d := (ldistr_consensus_meet b x y z)). unfold consensus in d. cbn.
       rewrite <- d , H;  reflexivity.
     - rewrite (iscomm_join _ x z), (iscomm_join _ y z).
-      set (d := distributive_consensus_join b x y z). unfold consensus in d. cbn.
+      set (d := ldistr_consensus_join b x y z). unfold consensus in d. cbn.
       rewrite <- d, H; reflexivity .
   Defined.
 
