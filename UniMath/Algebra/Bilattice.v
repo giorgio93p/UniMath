@@ -57,24 +57,41 @@ Section lattices.
          use (isasetaprop isaprop_latticeop).
   Defined.
 
-  Definition lattice_ldistr_ldistr {X : hSet} {l : lattice X} (p : isldistr (Lmin l) (Lmax l)) : isldistr (Lmax l) (Lmin l) .
+  Definition isdistr_lattice {X : hSet} (l : lattice X) := isldistr (Lmin l) (Lmax l) .
+
+  Definition distrlattice_Lmin_ldistr {X : hSet} {l : lattice X} (p : isdistr_lattice l) : isldistr (Lmin l) (Lmax l) := p .
+
+  Definition distrlattice_Lmin_rdistr {X : hSet} {l : lattice X} (p : isdistr_lattice l) : isrdistr (Lmin l) (Lmax l) .
   Proof.
-    intros a b c .
-    now rewrite (p c b (Lmin _ c a)),
-      (iscomm_Lmax _ (Lmin _ c a) c),
-      (Lmax_absorb _ c a),
-      (iscomm_Lmax _ (Lmin _ c a) b),
-      (p c a b),
-      (iscomm_Lmin _ c (Lmin _ _ _)),
-      (iscomm_Lmin _ (Lmax _ _ _) (Lmax _ _ _)),
-      isassoc_Lmin,
-      (iscomm_Lmax _ b c ),
-      (iscomm_Lmin _ (Lmax _ _ _) c ),
-      (Lmin_absorb _ c b),
-      iscomm_Lmin, iscomm_Lmax .
+    use weqldistrrdistr.
+    - use iscomm_Lmax.
+    - use p.
   Defined.
 
   Definition dual_lattice {X : hSet} (l : lattice X) : lattice X := mklattice (((isassoc_Lmax l),, (iscomm_Lmax l)),, ((isassoc_Lmin l),,(iscomm_Lmin l)),,(Lmax_absorb l),,(Lmin_absorb l)).
+
+  Definition dual_lattice_distr {X : hSet} {l : lattice X} (p : isdistr_lattice l) : isdistr_lattice (dual_lattice l) .
+  Proof.
+    assert (isldistr (Lmax l) (Lmin l) ) .
+    {
+      intros a b c .
+      now rewrite (p c b (Lmin _ c a)),
+        (iscomm_Lmax _ (Lmin _ c a) c),
+        (Lmax_absorb _ c a),
+        ((distrlattice_Lmin_rdistr p) c a b),
+        (iscomm_Lmin _ c (Lmin _ _ _)),
+        (iscomm_Lmin _ (Lmax _ _ _) (Lmax _ _ _)),
+        isassoc_Lmin,
+        (iscomm_Lmin _ (Lmax _ _ _) c ),
+        (Lmin_absorb _ c b),
+        iscomm_Lmin, iscomm_Lmax .
+    }
+    assumption .
+  Defined.
+
+  Definition distrlattice_Lmax_ldistr {X : hSet} {l : lattice X} (p : isdistr_lattice l) : isldistr (Lmax l) (Lmin l) := distrlattice_Lmin_ldistr (dual_lattice_distr p).
+
+  Definition distrlattice_Lmax_rdistr {X : hSet} {l : lattice X} (p : isdistr_lattice l) : isrdistr (Lmax l) (Lmin l) := distrlattice_Lmin_rdistr (dual_lattice_distr p) .
 
   Definition bool_lattice : lattice boolset .
   Proof.
@@ -454,9 +471,9 @@ Section distributive_prebilattices.
   Coercion distributive_prebilattices_to_prebilattices : distributive_prebilattice >-> prebilattice .
 
   Definition distributive_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr2 b) .
-  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := lattice_ldistr_ldistr (distributive_consensus_gullibility b) .
+  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := distrlattice_Lmax_ldistr (distributive_consensus_gullibility b) .
   Definition distributive_meet_join {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (join b) := pr1 (pr2 (pr2 b)) .
-  Definition distributive_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := lattice_ldistr_ldistr (distributive_meet_join b) .
+  Definition distributive_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := distrlattice_Lmax_ldistr (distributive_meet_join b) .
   Definition distributive_consensus_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (meet b) := pr1 (pr2 (pr2 (pr2 b))) .
   Definition distributive_meet_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 b)))) .
   Definition distributive_consensus_join {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 b))))) .
@@ -465,7 +482,6 @@ Section distributive_prebilattices.
   Definition distributive_meet_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (gullibility b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b)))))))) .
   Definition distributive_gullibility_join {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
   Definition distributive_join_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (gullibility b) := pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 (pr2 b))))))))) .
-
 
   Definition make_distributive_prebilattice {X : hSet} {b : prebilattice X} (is : is_distributive_prebilattice b) : distributive_prebilattice X := b,,is .
 
