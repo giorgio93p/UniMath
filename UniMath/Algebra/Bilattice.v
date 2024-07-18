@@ -57,8 +57,22 @@ Section lattices.
          use (isasetaprop isaprop_latticeop).
   Defined.
 
-  Definition is_distributive_lattice {X : hSet} (l : lattice X) :=
-    (isldistr (Lmin l) (Lmax l)) × isldistr (Lmax l) (Lmin l) .
+  Definition lattice_ldistr_ldistr {X : hSet} {l : lattice X} (p : isldistr (Lmin l) (Lmax l)) : isldistr (Lmax l) (Lmin l) .
+  Proof.
+    intros a b c .
+    now rewrite (p c b (Lmin _ c a)),
+      (iscomm_Lmax _ (Lmin _ c a) c),
+      (Lmax_absorb _ c a),
+      (iscomm_Lmax _ (Lmin _ c a) b),
+      (p c a b),
+      (iscomm_Lmin _ c (Lmin _ _ _)),
+      (iscomm_Lmin _ (Lmax _ _ _) (Lmax _ _ _)),
+      isassoc_Lmin,
+      (iscomm_Lmax _ b c ),
+      (iscomm_Lmin _ (Lmax _ _ _) c ),
+      (Lmin_absorb _ c b),
+      iscomm_Lmin, iscomm_Lmax .
+  Defined.
 
   Definition dual_lattice {X : hSet} (l : lattice X) : lattice X := mklattice (((isassoc_Lmax l),, (iscomm_Lmax l)),, ((isassoc_Lmin l),,(iscomm_Lmin l)),,(Lmax_absorb l),,(Lmin_absorb l)).
 
@@ -415,16 +429,16 @@ End interlaced_prebilattices.
 
 Section distributive_prebilattices.
   Definition is_distributive_prebilattice {X : hSet} (b : prebilattice X) :=
-    is_distributive_lattice (klattice b)
-                            × is_distributive_lattice (tlattice b)
-                            × isldistr (consensus b) (meet b)
-                            × isldistr (meet b) (consensus b)
-                            × isldistr (consensus b) (join b)
-                            × isldistr (join b) (consensus b)
-                            × isldistr (gullibility b) (meet b)
-                            × isldistr (meet b) (gullibility b)
-                            × isldistr (gullibility b) (join b)
-                            × isldistr (join b) (gullibility b)
+    isldistr (consensus b) (gullibility b)
+             × isldistr (meet b) (join b)
+             × isldistr (consensus b) (meet b)
+             × isldistr (meet b) (consensus b)
+             × isldistr (consensus b) (join b)
+             × isldistr (join b) (consensus b)
+             × isldistr (gullibility b) (meet b)
+             × isldistr (meet b) (gullibility b)
+             × isldistr (gullibility b) (join b)
+             × isldistr (join b) (gullibility b)
   .
 
   Definition isaprop_is_distributive {X : hSet} {b : prebilattice X} : isaprop (is_distributive_prebilattice b).
@@ -439,10 +453,10 @@ Section distributive_prebilattices.
 
   Coercion distributive_prebilattices_to_prebilattices : distributive_prebilattice >-> prebilattice .
 
-  Definition distributive_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr1 (pr2 b)) .
-  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := pr2 (pr1 (pr2 b)) .
-  Definition distributive_meet_join {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (join b) := pr1 (pr1 (pr2 (pr2 b))) .
-  Definition distributive_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := pr2 (pr1 (pr2 (pr2 b))) .
+  Definition distributive_consensus_gullibility {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (gullibility b) := pr1 (pr2 b) .
+  Definition distributive_gullibility_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (gullibility b) (consensus b) := lattice_ldistr_ldistr (distributive_consensus_gullibility b) .
+  Definition distributive_meet_join {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (join b) := pr1 (pr2 (pr2 b)) .
+  Definition distributive_join_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (join b) (meet b) := lattice_ldistr_ldistr (distributive_meet_join b) .
   Definition distributive_consensus_meet {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (meet b) := pr1 (pr2 (pr2 (pr2 b))) .
   Definition distributive_meet_consensus {X : hSet} (b : distributive_prebilattice X) : isldistr (meet b) (consensus b) := pr1 (pr2 (pr2 (pr2 (pr2 b)))) .
   Definition distributive_consensus_join {X : hSet} (b : distributive_prebilattice X) : isldistr (consensus b) (join b) := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 b))))) .
@@ -945,10 +959,10 @@ Section representation_theorems.
   Defined.
 
   Definition iso_interlaced_product {X : hSet} (b : interlaced_prebilattice X) : @Isos.iso category_prebilattice (X,, (pr1 b))
-                                                                                            (prod_prebilattice_carrier (pr1 (interlaced_prebilattices_are_prod b))
-                                                                                                                       (pr12 (interlaced_prebilattices_are_prod b)),,
-                                                                                                                       (pr1 (make_interlaced_prebilattice
-                                                                                                                               (prod_prebilattices_are_interlaced (pr222 (pr2 (interlaced_prebilattices_are_prod b))))))).
+                                                                                           (prod_prebilattice_carrier (pr1 (interlaced_prebilattices_are_prod b))
+                                                                                                                      (pr12 (interlaced_prebilattices_are_prod b)),,
+                                                                                                                      (pr1 (make_interlaced_prebilattice
+                                                                                                                              (prod_prebilattices_are_interlaced (pr222 (pr2 (interlaced_prebilattices_are_prod b))))))).
 
   Proof.
     use (prebilattice_iso b  (make_interlaced_prebilattice (prod_prebilattices_are_interlaced (pr2 (pr222 (interlaced_prebilattices_are_prod  b))))) (XisLeftCrossRight b)).
