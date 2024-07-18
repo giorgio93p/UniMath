@@ -1124,21 +1124,7 @@ End representation_theorems.
 Section prebilattice_FOUR.
   Definition FOUR := make_bounded_prod_prebilattice bool_boundedlattice bool_boundedlattice .
 
-  Check prod_prebilattices_are_interlaced FOUR : is_interlaced FOUR .
-
-  (*
-  Definition iFOUR := make_interlaced_prebilattice (prod_prebilattices_are_interlaced FOUR).
-
-  Definition tt : prod_prebilattice_carrier boolset boolset := (true,,true).
-  Definition ff : prod_prebilattice_carrier boolset boolset := (false,,false).
-  Definition tt'L : setquotinset (leftRel iFOUR) := setquotpr (leftEq iFOUR) tt.
-  Definition tt'R : setquotinset (rightRel iFOUR) := setquotpr (rightEq iFOUR) tt.
-  Definition ff'L : setquotinset (leftRel iFOUR) := setquotpr (leftEq iFOUR) ff.
-  Definition ff'R : setquotinset (rightRel iFOUR) := setquotpr (rightEq iFOUR) ff.
-
-  Check (join (pr2 (pr222 (interlaced_prebilattices_are_prod iFOUR)))) (tt'L,,tt'R) (ff'L,,ff'R).
-  Compute join iFOUR tt ff.
-   *)
+  Definition is_interlaced_FOUR : is_interlaced FOUR := prod_prebilattices_are_interlaced FOUR .
 
   Definition is_distributive_FOUR : is_distributive_prebilattice FOUR .
   Proof.
