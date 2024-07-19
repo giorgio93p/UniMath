@@ -248,6 +248,7 @@ Section prebilattices .
          do 3 (try use dirprod_paths); use PartA.Unnamed_thm.
   Defined.
 
+
   Definition prebilattice_transportf_iso {X1 : hSet} {X2 : hSet} (b1 : prebilattice X1) (b2 : prebilattice X2) (f : weq X1 X2) (p : respects_prebilattice_structure b1 b2 f) : ∑ p, transportf prebilattice p b1 = b2.
   Proof.
     set (I := prebilattice_iso b1 b2 f p).
@@ -442,6 +443,66 @@ Section interlaced_prebilattices .
   Proof.
     destruct (t_opp_prebilattice_is_interlaced (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b))) as [? [? [? ?]]].
     do 3 (try split); assumption.
+  Defined.
+
+  Lemma interlaced_leqt_leqk_leqkmeet {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
+  Proof.
+    intros ? x y [? [p1 p2]].
+    set (w := (meet _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
+    use (interlacing_meet_k _ _ _ _ p2).
+  Defined.
+
+  Lemma interlaced_leqk_leqt_leqtconsensus {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
+  Proof.
+    intro b'.
+    use (interlaced_leqt_leqk_leqkmeet (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
+  Defined.
+
+  Lemma interlaced_leqk_geqt_geqtconsensus {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b y r) -> tle b (consensus b y x) x.
+  Proof.
+    intros ? x y [? [p1 p2]].
+    set (w := (consensus _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
+    use (interlacing_consensus_t _ _ _ _ p2).
+  Defined.
+
+  Lemma interlaced_leqt_leqk_leqtconsensus {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
+  Proof.
+    intros b' ? ? [? [p1 p2]].
+    set (pp := interlaced_leqt_leqk_leqkmeet _ _ _ (_,,p1,,p2)).
+    rewrite (iscomm_meet) in pp.
+    use (interlaced_leqk_leqt_leqtconsensus _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
+  Defined.
+
+  Lemma interlaced_geqt_leqk_geqtconsensus {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
+  Proof.
+    intros b x y [r [p1 p2]].
+    assert (p1' :  tle (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x r).
+    {
+      rewrite <- p1, iscomm_Lmin.
+      use Lmax_absorb.
+    }
+    set (t := consensus b y x).
+    assert (p : Lmax (tlattice b) t x = x).
+    {
+      rewrite iscomm_Lmax.
+      exact (interlaced_leqt_leqk_leqtconsensus (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y (r,,p1',,p2)).
+    }
+    rewrite <- p.
+    use Lmin_absorb.
+  Defined.
+
+  Lemma interlaced_geqt_geqk_geqkjoin {X: hSet} :  ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b r x × kle b y r) -> kle b (join b y x) x .
+  Proof.
+    intros b' ? ? [? [p1 p2]].
+    set (bop := make_interlaced_prebilattice (opp_prebilattice_is_interlaced b')).
+    set (H := interlaced_leqt_leqk_leqkmeet bop _ _ (_,,(Lmax_le_eq_l _ _ _ p1),, (Lmax_le_eq_l _ _ _ p2))).
+    use (Lmax_le_eq_l _ _ _ H).
+  Defined.
+
+  Lemma interlaced_leqk_leqt_leqkmeet {X : hSet} :  ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> kle b x (meet b y x) .
+  Proof .
+    intro b'.
+    use (interlaced_leqt_leqk_leqtconsensus (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
   Defined.
 End interlaced_prebilattices.
 
@@ -643,68 +704,9 @@ Section representation_theorems.
     - rewrite (iscomm_Lmin _ x2 z2), (isassoc_Lmin), <- (isassoc_Lmin _ x2 y2 z2), H2, (iscomm_Lmin _ x2 z2), <- isassoc_Lmin, Lmin_id. reflexivity.
   Defined.
 
-  Lemma property1 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> kle b x (meet b y x).
-  Proof.
-    intros ? x y [? [p1 p2]].
-    set (w := (meet _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
-    use (interlacing_meet_k _ _ _ _ p2).
-  Defined.
-
-  Lemma property1_dual {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> tle b x (consensus b y x).
-  Proof.
-    intro b'.
-    use (property1 (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
-  Defined.
-
-  Lemma property1_dual_opp_t {X:hSet}: ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b y r) -> tle b (consensus b y x) x.
-  Proof.
-    intros ? x y [? [p1 p2]].
-    set (w := (consensus _ y x)); rewrite <- (Lmin_le_eq_r _ _ _ p1).
-    use (interlacing_consensus_t _ _ _ _ p2).
-  Defined.
-
-  Lemma property2 {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b x r × kle b r y) -> tle b x (consensus b y x).
-  Proof.
-    intros b' ? ? [? [p1 p2]].
-    set (pp := property1 _ _ _ (_,,p1,,p2)).
-    rewrite (iscomm_meet) in pp.
-    use (property1_dual _ _ _ (_,, pp,, Lmin_le_r (tlattice b') _ _)).
-  Defined.
-
-  Lemma property2_opp_t {X : hSet} : ∏ (b : interlaced_prebilattice X) (x y : X), (∑ r : X, tle b r x × kle b r y) -> tle b (consensus b y x) x.
-  Proof.
-    intros b x y [r [p1 p2]].
-    assert (p1' :  tle (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x r).
-    {
-      rewrite <- p1, iscomm_Lmin.
-      use Lmax_absorb.
-    }
-    set (t := consensus b y x).
-    assert (p : Lmax (tlattice b) t x = x).
-    {
-      rewrite iscomm_Lmax.
-      exact (property2 (make_interlaced_prebilattice (t_opp_prebilattice_is_interlaced b)) x y (r,,p1',,p2)).
-    }
-    rewrite <- p.
-    use Lmin_absorb.
-  Defined.
-
   Definition leftRel {X : hSet} (b : interlaced_prebilattice X) : hrel X := λ x y : X, eqset (join b x y) (consensus b x y)  .
   Definition isEq_leftRel {X : hSet} (b : interlaced_prebilattice X) : iseqrel (leftRel b).
   Proof.
-    assert (property1_op : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, tle b r x × kle b y r) -> kle b (join b y x) x).
-    {
-      intros b' ? ? [? [p1 p2]].
-      set (bop := make_interlaced_prebilattice (opp_prebilattice_is_interlaced b')).
-      set (H := property1 bop _ _ (_,,(Lmax_le_eq_l _ _ _ p1),, (Lmax_le_eq_l _ _ _ p2))).
-      use (Lmax_le_eq_l _ _ _ H).
-    }
-    assert (property2_dual : ∏ (b : interlaced_prebilattice X) (x y : X) , (∑ r : X, kle b x r × tle b r y) -> kle b x (meet b y x)).
-    {
-      intro b'.
-      use (property2 (make_interlaced_prebilattice (dual_prebilattice_is_interlaced b'))).
-    }
-
     do 2 (try split).
     - intros x y z H1 H2. use (isantisymm_Lle (tlattice b)).
       -- use Lmax_le_case.
@@ -716,7 +718,7 @@ Section representation_theorems.
                  use interlacing_consensus_t. use Lmin_absorb .
              }
              set (r2 := Lmin_le_r _ _ _ : kle b (consensus b (consensus b x y) z) z ).
-             rewrite iscomm_consensus. use (property2 _ _ _ (_,,r1,,r2)).
+             rewrite iscomm_consensus. use (interlaced_leqt_leqk_leqtconsensus _ _ _ (_,,r1,,r2)).
          --- set (r1 := Lmax_le_r _ _ _  : tle b z (join b (join b x y) z) ).
              assert (r2 : kle b (join b (join b x y) z) x).
              {
@@ -725,7 +727,7 @@ Section representation_theorems.
                  use interlacing_join_k. use Lmin_le_l.
                - rewrite H1. use Lmin_le_l.
              }
-             use (property2 _ _ _ (_,,r1,,r2)).
+             use (interlaced_leqt_leqk_leqtconsensus _ _ _ (_,,r1,,r2)).
       -- use (top_interlacing_consensus_t (Lmax_le_l _ x z) (Lmax_le_r _ x z)).
     - intro. unfold leftRel, consensus. rewrite Lmin_id. unfold join. rewrite Lmax_id. reflexivity.
     - intros ? ? H. unfold leftRel. rewrite iscomm_join, iscomm_consensus. exact H.
@@ -763,7 +765,7 @@ Section representation_theorems.
     use (isantisymm_Lle (tlattice b) (join _ (gullibility _ x w) (gullibility _ y z)) ((consensus _ (gullibility _ x w) (gullibility _ y z)))).
     - use Lmax_le_case.
       -- rewrite iscomm_consensus.
-         use (property2 _ (gullibility _ x w) (gullibility _ y z)).
+         use (interlaced_leqt_leqk_leqtconsensus _ (gullibility _ x w) (gullibility _ y z)).
          exists (gullibility b (join b x y) (join b w z)).
          split.
          ---use (double_interlacing_gullibility_t (Lmax_le_l _ x y) (Lmax_le_l _ w z)).
@@ -775,7 +777,7 @@ Section representation_theorems.
              ---- use (istrans_Lle _ _ z _).
                   ----- use Lmin_le_r.
                   ----- use Lmax_le_r.
-      -- use (property2 _ (gullibility _ y z) (gullibility _ x w)).
+      -- use (interlaced_leqt_leqk_leqtconsensus _ (gullibility _ y z) (gullibility _ x w)).
          exists (gullibility b (join b x y) (join b w z)).
          split.
          --- use (double_interlacing_gullibility_t (Lmax_le_r _ _ _) (Lmax_le_r _ _ _)).
@@ -808,12 +810,12 @@ Section representation_theorems.
     use (isantisymm_Lle (tlattice b)).
     - use Lmax_le_case.
       -- rewrite (iscomm_consensus _ (meet _ _ _) _ ) .
-         use property2.
+         use interlaced_leqt_leqk_leqtconsensus.
          exists (consensus b x y).
          split.
          --- use (bottom_interlacing_consensus_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
          --- use isrefl_Lle.
-      -- use property1_dual.
+      -- use interlaced_leqk_leqt_leqtconsensus.
          exists (meet b x y).
          split.
          --- use (bottom_interlacing_meet_k (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
@@ -843,12 +845,12 @@ Section representation_theorems.
     - use (bottom_interlacing_consensus_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
     - use Lmin_le_case.
       -- rewrite iscomm_consensus.
-         use property1_dual_opp_t.
+         use interlaced_leqk_geqt_geqtconsensus.
          exists (gullibility b x y).
          split.
          --- exact (top_interlacing_meet_k (Lmax_le_l _ _ _) (Lmax_le_r _ _ _)).
          --- use isrefl_Lle.
-      -- use property2_opp_t .
+      -- use interlaced_geqt_leqk_geqtconsensus .
          exists (meet b x y).
          split.
          --- exact (bottom_interlacing_gullibility_t (Lmin_le_l _ _ _) (Lmin_le_r _ _ _)).
