@@ -21,10 +21,10 @@ Require Import UniMath.Foundations.Sets.
 
 Require Import UniMath.MoreFoundations.Tactics.
 
-Require Import UniMath.CategoryTheory.limits.zero.
-Require Import UniMath.CategoryTheory.limits.equalizers.
-Require Import UniMath.CategoryTheory.limits.coequalizers.
-Require Import UniMath.CategoryTheory.limits.Opp.
+Require Import UniMath.CategoryTheory.Limits.Zero.
+Require Import UniMath.CategoryTheory.Limits.Equalizers.
+Require Import UniMath.CategoryTheory.Limits.Coequalizers.
+Require Import UniMath.CategoryTheory.Limits.Opp.
 
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Isos.
@@ -39,9 +39,9 @@ Require Import UniMath.CategoryTheory.Additive.
 Require Import UniMath.CategoryTheory.Abelian.
 Require Import UniMath.CategoryTheory.AbelianToAdditive.
 
-Require Import UniMath.CategoryTheory.limits.kernels.
-Require Import UniMath.CategoryTheory.limits.cokernels.
-Require Import UniMath.CategoryTheory.limits.BinDirectSums.
+Require Import UniMath.CategoryTheory.Limits.Kernels.
+Require Import UniMath.CategoryTheory.Limits.Cokernels.
+Require Import UniMath.CategoryTheory.Limits.BinDirectSums.
 
 Local Open Scope cat.
 
@@ -363,13 +363,10 @@ Arguments CoImage_Eq [A] _.
 Arguments make_ShortShortExact [A] _ _.
 Arguments ShortShortExact_isKernel [A] _ _ _ _.
 Arguments ShortShortExact_Kernel [A] _.
-Arguments LeftShortExact _.
 Arguments make_LeftShortExact [A] _ _.
 Arguments isMonic [A] _ _ _ _ _.
-Arguments RightShortExact _.
 Arguments make_RightShortExact [A] _ _ .
 Arguments isEpi [A] _ _ _ _ _ .
-Arguments ShortShortExact _.
 Arguments make_ShortShortExact [A] _ _.
 
 
@@ -904,7 +901,7 @@ Section shortshortexact_iskernel_iscokernel.
     use Kernel_up_to_iso_isKernel.
     + exact K.
     + exact (z_iso_inv (make_z_iso _ _ e)).
-    + apply (maponpaths (λ g : _, (z_iso_inv_mor (make_z_iso _ _ e)) · g)) in e1.
+    + apply (maponpaths (λ g : _, (inv_from_z_iso (make_z_iso _ _ e)) · g)) in e1.
       use (pathscomp0 _ (! e1)). clear e1. rewrite assoc.
       cbn. rewrite (is_inverse_in_precat2 e). rewrite id_left. apply idpath.
   Qed.
@@ -940,7 +937,7 @@ Section shortshortexact_iskernel_iscokernel.
     use Cokernel_up_to_iso_isCokernel.
     + exact CK.
     + exact (z_iso_inv (make_z_iso _ _ e)).
-    + apply (maponpaths (λ g : _, g · (z_iso_inv_mor (make_z_iso _ _ e)))) in e1.
+    + apply (maponpaths (λ g : _, g · (inv_from_z_iso (make_z_iso _ _ e)))) in e1.
       use (pathscomp0 _ (! e1)). clear e1. rewrite <- assoc. cbn.
       rewrite (is_inverse_in_precat1 e). rewrite id_right. apply idpath.
   Qed.

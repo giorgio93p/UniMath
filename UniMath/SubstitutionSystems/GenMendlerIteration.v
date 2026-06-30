@@ -24,15 +24,16 @@ Contents :
 
 ************************************************************)
 
+Require Export UniMath.Tactics.EnsureStructuredProofs.
 Require Import UniMath.Foundations.PartD.
 
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Local Open Scope cat.
-Require Import UniMath.CategoryTheory.limits.initial.
+Require Import UniMath.CategoryTheory.Limits.Initial.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
 Require Import UniMath.CategoryTheory.opp_precat.
 Require Import UniMath.CategoryTheory.yoneda.
 Require Import UniMath.CategoryTheory.Adjunctions.Core.
@@ -40,8 +41,8 @@ Require Import UniMath.CategoryTheory.Adjunctions.Core.
 Arguments functor_composite {_ _ _} _ _ .
 Arguments nat_trans_comp {_ _ _ _ _} _ _ .
 Local Notation "G ∙ F" := (functor_composite F G : [ _ , _ , _ ]) (at level 35).
-Local Notation "C '^op'" := (opp_precat C) (at level 3, format "C ^op").
-Local Notation "↓ f" := (mor_from_algebra_mor _ _ _ f) (at level 3, format "↓ f").
+Local Notation "C '^op'" := (opp_precat C) (format "C ^op").
+Local Notation "↓ f" := (mor_from_algebra_mor _ f) (at level 3, format "↓ f").
 (* in Agda mode \downarrow *)
 
 (** Goal: derive Generalized Iteration in Mendler-style and a fusion law *)
@@ -63,7 +64,7 @@ Defined.
 Notation "⟨ A , α ⟩" := (AlgConstr A α).
 (* \<  , \> *)
 
-Variable μF_Initial : Initial AF.
+Context (μF_Initial : Initial AF).
 
 Let μF : C := alg_carrier _ (InitialObject μF_Initial).
 Let inF : F μF --> μF := alg_map _ (InitialObject μF_Initial).
@@ -75,13 +76,12 @@ Context (C' : category).
 
 Section the_iteration_principle.
 
-Variable X : C'.
+Context (X : C').
 
 Let Yon : functor C'^op HSET := yoneda_objects C' X.
 
-Variable L : functor C C'.
-
-Variable is_left_adj_L : is_left_adjoint L.
+Context (L : functor C C')
+        (is_left_adj_L : is_left_adjoint L).
 
 Let φ := @φ_adj _ _ _ _ (pr2 is_left_adj_L).
 Let φ_inv := @φ_adj_inv _ _ _ _ (pr2 is_left_adj_L).
@@ -102,7 +102,7 @@ Definition ψ_target : functor C^op HSET := functor_composite (functor_opp F) ψ
 
 Section general_case.
 
-Variable ψ : ψ_source ⟹ ψ_target.
+Context (ψ : ψ_source ⟹ ψ_target).
 
 Definition preIt : L μF --> X := φ_inv (iter (φ (ψ (R X) (ε X)))).
 
@@ -112,7 +112,7 @@ Proof.
   assert (ψ_is_nat := nat_trans_ax ψ);
   assert (ψ_is_nat_inst1 := ψ_is_nat _ _ h).
   (* assert (ψ_is_nat_inst2 := aux0 _ _ _ _ f ψ_is_nat_inst1). *)
-  assert (ψ_is_nat_inst2 := toforallpaths _ _ _ ψ_is_nat_inst1 f).
+  assert (ψ_is_nat_inst2 := eqtohomot ψ_is_nat_inst1 f).
   apply ψ_is_nat_inst2.
 Qed.
 
@@ -213,9 +213,9 @@ End general_case.
 
 Section special_case.
 
-  Variable G : functor C' C'.
-  Variable ρ : G X --> X.
-  Variable θ : functor_composite F L ⟹ functor_composite L G.
+  Context (G : functor C' C')
+          (ρ : G X --> X)
+          (θ : functor_composite F L ⟹ functor_composite L G).
 
 
   Lemma is_nat_trans_ψ_from_comps
@@ -257,21 +257,21 @@ End the_iteration_principle.
 
 (** * Fusion law for Generalized Iteration in Mendler-style *)
 
-Variable X X': C'.
+Context (X X': C').
 Let Yon : functor C'^op HSET := yoneda_objects C' X.
 Let Yon' : functor C'^op HSET := yoneda_objects C' X'.
-Variable L : functor C C'.
-Variable is_left_adj_L : is_left_adjoint L.
-Variable ψ : ψ_source X L ⟹ ψ_target X L.
-Variable L' : functor C C'.
-Variable is_left_adj_L' : is_left_adjoint L'.
-Variable ψ' : ψ_source X' L' ⟹ ψ_target X' L'.
+Context (L : functor C C')
+        (is_left_adj_L : is_left_adjoint L)
+        (ψ : ψ_source X L ⟹ ψ_target X L)
+        (L' : functor C C')
+        (is_left_adj_L' : is_left_adjoint L')
+        (ψ' : ψ_source X' L' ⟹ ψ_target X' L')
 
-Variable Φ : functor_composite (functor_opp L) Yon ⟹ functor_composite (functor_opp L') Yon'.
+        (Φ : functor_composite (functor_opp L) Yon ⟹ functor_composite (functor_opp L') Yon').
 
 Section fusion_law.
 
-  Variable H : ψ μF · Φ (F μF) = Φ μF · ψ' μF.
+  Context (H : ψ μF · Φ (F μF) = Φ μF · ψ' μF).
 
   Theorem fusion_law : Φ μF (It X L is_left_adj_L ψ) = It X' L' is_left_adj_L' ψ'.
   Proof.
@@ -280,11 +280,11 @@ Section fusion_law.
     apply path_to_ctr.
     assert (Φ_is_nat := nat_trans_ax Φ).
     assert (Φ_is_nat_inst1 := Φ_is_nat _ _ inF).
-    assert (Φ_is_nat_inst2 := toforallpaths _ _ _ Φ_is_nat_inst1 (It X L is_left_adj_L ψ)).
+    assert (Φ_is_nat_inst2 := eqtohomot Φ_is_nat_inst1 (It X L is_left_adj_L ψ)).
     unfold compose in Φ_is_nat_inst2; simpl in Φ_is_nat_inst2.
     simpl.
     rewrite <- Φ_is_nat_inst2.
-    assert (H_inst :=  toforallpaths _ _ _ H (It X L is_left_adj_L ψ)).
+    assert (H_inst :=  eqtohomot H (It X L is_left_adj_L ψ)).
     unfold compose in H_inst; simpl in H_inst.
     rewrite <- H_inst.
     apply maponpaths.

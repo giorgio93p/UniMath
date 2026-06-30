@@ -20,7 +20,8 @@ Require Import UniMath.CategoryTheory.Equivalences.Core.
 Require Import UniMath.CategoryTheory.FunctorCategory.
 Require Import UniMath.CategoryTheory.whiskering.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
+Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
 Require Import UniMath.Bicategories.Core.AdjointUnique.
 Require Import UniMath.Bicategories.Core.Univalence.
@@ -153,77 +154,77 @@ Qed.
 Definition bicat_of_univ_cats : bicat
   := (prebicat_of_univ_cats,, isaset_cells_prebicat_of_univ_cats).
 
-Definition is_invertible_2cell_to_is_nat_iso
+Definition is_invertible_2cell_to_is_nat_z_iso
            {C D : bicat_of_univ_cats}
            {F G : C --> D}
            (η : F ==> G)
-  : is_invertible_2cell η → is_nat_iso η.
+  : is_invertible_2cell η → is_nat_z_iso (pr1 η).
 Proof.
   intros Hη X.
-  use is_iso_qinv.
-  - apply (Hη^-1).
+  use tpair.
+  - apply Hη^-1.
   - abstract
       (split ; cbn ;
        [ exact (nat_trans_eq_pointwise (vcomp_rinv Hη) X)
        | exact (nat_trans_eq_pointwise (vcomp_linv Hη) X)]).
 Defined.
 
-Definition invertible_2cell_to_nat_iso
+Definition invertible_2cell_to_nat_z_iso
            {C D : bicat_of_univ_cats}
            (F G : C --> D)
-  : invertible_2cell F G → nat_iso F G.
+  : invertible_2cell F G → nat_z_iso F G.
 Proof.
   intros η.
-  use make_nat_iso.
+  use make_nat_z_iso.
   - exact (cell_from_invertible_2cell η).
-  - apply is_invertible_2cell_to_is_nat_iso.
+  - apply is_invertible_2cell_to_is_nat_z_iso.
     apply η.
 Defined.
 
-Definition is_nat_iso_to_is_invertible_2cell
+Definition is_nat_z_iso_to_is_invertible_2cell
            {C D : bicat_of_univ_cats}
            {F G : C --> D}
            (η : F ==> G)
-  : is_nat_iso η → is_invertible_2cell η.
+  : is_nat_z_iso (pr1 η) → is_invertible_2cell η.
 Proof.
   intros Hη.
   use tpair.
-  - apply (nat_iso_inv (η ,, Hη)).
+  - apply (nat_z_iso_inv (η ,, Hη)).
   - abstract
       (split ;
        [ apply nat_trans_eq ; [ apply homset_property | ] ;
          intros x ; cbn ;
-         exact (iso_inv_after_iso (pr1 η x ,, _))
+         exact (z_iso_inv_after_z_iso (pr1 η x ,, _))
        | apply nat_trans_eq ; [ apply homset_property | ] ;
          intros x ; cbn ;
-         exact (iso_after_iso_inv (pr1 η x ,, _)) ]).
+         exact (z_iso_after_z_iso_inv (pr1 η x ,, _)) ]).
 Defined.
 
-Definition nat_iso_to_invertible_2cell
+Definition nat_z_iso_to_invertible_2cell
            {C D : bicat_of_univ_cats}
            (F G : C --> D)
-  : nat_iso F G → invertible_2cell F G.
+  : nat_z_iso F G → invertible_2cell F G.
 Proof.
   intros η.
   use tpair.
   - apply η.
-  - apply is_nat_iso_to_is_invertible_2cell.
+  - apply is_nat_z_iso_to_is_invertible_2cell.
     apply η.
 Defined.
 
-Definition invertible_2cell_is_nat_iso
+Definition invertible_2cell_is_nat_z_iso
            {C D : bicat_of_univ_cats}
            (F G : C --> D)
-  : nat_iso F G ≃ invertible_2cell F G.
+  : nat_z_iso F G ≃ invertible_2cell F G.
 Proof.
   use make_weq.
-  - exact (nat_iso_to_invertible_2cell F G).
+  - exact (nat_z_iso_to_invertible_2cell F G).
   - use isweq_iso.
-    + exact (invertible_2cell_to_nat_iso F G).
+    + exact (invertible_2cell_to_nat_z_iso F G).
     + intros x.
       use subtypePath.
       * intro.
-        apply isaprop_is_nat_iso.
+        apply isaprop_is_nat_z_iso.
       * apply idpath.
     + intros x.
       use subtypePath.
@@ -259,9 +260,9 @@ Proof.
          exact p).
   - split.
     + intro X.
-      apply (invertible_2cell_to_nat_iso _ _ (left_equivalence_unit_iso A)).
+      apply (invertible_2cell_to_nat_z_iso _ _ (left_equivalence_unit_iso A)).
     + intro X.
-      apply (invertible_2cell_to_nat_iso _ _ (left_equivalence_counit_iso A)).
+      apply (invertible_2cell_to_nat_z_iso _ _ (left_equivalence_counit_iso A)).
 Defined.
 
 Definition equiv_cat_to_adj_equiv
@@ -287,10 +288,10 @@ Proof.
          intro x ; cbn ;
          rewrite id_left, !id_right ;
          apply (pr2(pr2(pr1 A)))).
-    + apply is_nat_iso_to_is_invertible_2cell.
+    + apply is_nat_z_iso_to_is_invertible_2cell.
       intro x.
       apply (pr2 A).
-    + apply is_nat_iso_to_is_invertible_2cell.
+    + apply is_nat_z_iso_to_is_invertible_2cell.
       intro x.
       apply (pr2 A).
 Defined.
@@ -316,7 +317,7 @@ Proof.
     + intros A.
       use subtypePath.
       * intro.
-        apply isapropdirprod ; apply impred ; intro ; apply isaprop_is_iso.
+        apply isapropdirprod ; apply impred ; intro ; apply isaprop_is_z_isomorphism.
       * use total2_paths_b.
         ** apply idpath.
         ** use subtypePath.
@@ -330,12 +331,25 @@ Definition univalent_cat_idtoiso_2_1
            (F G : bicat_of_univ_cats⟦C,D⟧)
   : F = G ≃ invertible_2cell F G.
 Proof.
-  refine ((invertible_2cell_is_nat_iso F G)
-            ∘ iso_is_nat_iso F G
+  refine ((invertible_2cell_is_nat_z_iso F G)
+            ∘ z_iso_is_nat_z_iso F G
             ∘ make_weq (@idtoiso (functor_category C D) F G) _)%weq.
   refine (is_univalent_functor_category C D _ F G).
   apply D.
 Defined.
+
+Proposition idtoiso_2_1_in_bicat_of_univ_cats
+            {C₁ C₂ : bicat_of_univ_cats}
+            {F G : C₁ --> C₂}
+            (p : F = G)
+            (x : pr1 C₁)
+  : pr11 (@idtoiso_2_1 bicat_of_univ_cats C₁ C₂ F G p) x
+    =
+    idtoiso (maponpaths (λ H, pr11 H x) p).
+Proof.
+  induction p ; cbn.
+  apply idpath.
+Qed.
 
 Definition univalent_cat_is_univalent_2_1
   : is_univalent_2_1 bicat_of_univ_cats.
@@ -377,7 +391,7 @@ Section CatIso_To_LeftAdjEquiv.
            (HF : is_catiso F).
 
   Local Definition cat_iso_unit
-    : nat_iso
+    : nat_z_iso
         (functor_identity C)
         (functor_composite F (inv_catiso (F ,, HF))).
   Proof.
@@ -428,7 +442,7 @@ Section CatIso_To_LeftAdjEquiv.
   Defined.
 
   Local Definition cat_iso_counit
-    : nat_iso
+    : nat_z_iso
         (functor_composite (inv_catiso (F ,, HF)) F)
         (functor_identity (pr1 (pr1 D))).
   Proof.
@@ -467,29 +481,27 @@ Section CatIso_To_LeftAdjEquiv.
         * apply cat_iso_counit.
     - split.
       + use tpair ; try split.
-        * apply (nat_iso_inv cat_iso_unit).
+        * apply (nat_z_iso_inv cat_iso_unit).
         * apply nat_trans_eq.
           { apply homset_property. }
           intro X ; cbn.
-          rewrite idtoiso_inv ; cbn ; unfold precomp_with.
-          rewrite id_right.
-          apply iso_after_iso_inv.
+          rewrite idtoiso_inv; cbn.
+          apply z_iso_after_z_iso_inv.
         * apply nat_trans_eq.
           { apply homset_property. }
           intro X ; cbn.
-          rewrite idtoiso_inv ; cbn ; unfold precomp_with.
-          rewrite id_right.
-          apply iso_inv_after_iso.
+          rewrite idtoiso_inv; cbn.
+          apply z_iso_inv_after_z_iso.
       + use tpair ; try split.
-        * apply (nat_iso_inv cat_iso_counit).
+        * apply (nat_z_iso_inv cat_iso_counit).
         * apply nat_trans_eq.
           { apply homset_property. }
           intro X ; cbn.
-          apply iso_inv_after_iso.
+          apply z_iso_inv_after_z_iso.
         * apply nat_trans_eq.
           { apply homset_property. }
           intro X ; cbn.
-          apply iso_after_iso_inv.
+          apply z_iso_after_z_iso_inv.
   Qed.
 
 End CatIso_To_LeftAdjEquiv.
@@ -568,8 +580,7 @@ Proof.
       * apply C.
       * use tpair.
         ** exact (ηinv X).
-        ** use is_iso_qinv ; try split.
-           *** exact (η X).
+        ** exists (η X); split.
            *** exact (ηinvη X).
            *** exact (ηηinv X).
     + intros Y ; cbn.
@@ -577,8 +588,7 @@ Proof.
       * apply D.
       * use tpair.
         ** exact (ε Y).
-        ** use is_iso_qinv ; try split.
-           *** exact (εinv Y).
+        ** exists (εinv Y); split.
            *** exact (εεinv Y).
            *** exact (εinvε Y).
 Qed.
@@ -644,10 +654,239 @@ Definition adj_equivalence_to_left_equivalence
 Proof.
   simple refine ((_ ,, (_ ,, _)) ,, (_ ,, _)).
   - exact (adj_equivalence_inv A).
-  - exact (pr1 (unit_nat_iso_from_adj_equivalence_of_cats A)).
-  - exact (pr1 (counit_nat_iso_from_adj_equivalence_of_cats A)).
-  - apply is_nat_iso_to_is_invertible_2cell.
-    exact (pr2 (unit_nat_iso_from_adj_equivalence_of_cats A)).
-  - apply is_nat_iso_to_is_invertible_2cell.
-    exact (pr2 (counit_nat_iso_from_adj_equivalence_of_cats A)).
+  - exact (pr1 (unit_nat_z_iso_from_adj_equivalence_of_cats A)).
+  - exact (pr1 (counit_nat_z_iso_from_adj_equivalence_of_cats A)).
+  - apply is_nat_z_iso_to_is_invertible_2cell.
+    exact (pr2 (unit_nat_z_iso_from_adj_equivalence_of_cats A)).
+  - apply is_nat_z_iso_to_is_invertible_2cell.
+    exact (pr2 (counit_nat_z_iso_from_adj_equivalence_of_cats A)).
 Defined.
+
+(** Left adjoints and right adjoints of categories *)
+Definition left_adjoint_to_is_left_adjoint
+           {C₁ C₂ : bicat_of_univ_cats}
+           {L : C₁ --> C₂}
+           (HL : left_adjoint L)
+  : is_left_adjoint L.
+Proof.
+  simple refine (left_adjoint_right_adjoint HL
+                 ,,
+                 ((left_adjoint_unit HL
+                   ,,
+                   left_adjoint_counit HL)
+                 ,,
+                 _)).
+  split.
+  - abstract
+      (intro x ; cbn ;
+       pose (nat_trans_eq_pointwise (internal_triangle1 HL) x) as p ;
+       cbn in p ;
+       rewrite !id_left, !id_right in p ;
+       exact p).
+  - abstract
+      (intro x ; cbn ;
+       pose (nat_trans_eq_pointwise (internal_triangle2 HL) x) as p ;
+       cbn in p ;
+       rewrite !id_left, !id_right in p ;
+       exact p).
+Defined.
+
+Definition is_left_adjoint_to_left_adjoint
+           {C₁ C₂ : bicat_of_univ_cats}
+           {L : C₁ --> C₂}
+           (HL : is_left_adjoint L)
+  : left_adjoint L.
+Proof.
+  simple refine ((right_functor HL ,, (adjunit HL ,, adjcounit HL)) ,, _).
+  split.
+  - abstract
+      (use nat_trans_eq ; [ apply homset_property | ] ;
+       intro x ; cbn ;
+       rewrite !id_left, !id_right ;
+       apply (pr122 HL)).
+  - abstract
+      (use nat_trans_eq ; [ apply homset_property | ] ;
+       intro x ; cbn ;
+       rewrite !id_left, !id_right ;
+       apply (pr222 HL)).
+Defined.
+
+Definition left_adjoint_weq_is_left_adjoint
+           {C₁ C₂ : bicat_of_univ_cats}
+           (L : C₁ --> C₂)
+  : left_adjoint L ≃ is_left_adjoint L.
+Proof.
+  use make_weq.
+  - exact left_adjoint_to_is_left_adjoint.
+  - use isweq_iso.
+    + exact is_left_adjoint_to_left_adjoint.
+    + abstract
+        (intro HL ;
+         use subtypePath ; [ intro ; apply isapropdirprod ; apply cellset_property | ] ;
+         apply idpath).
+    + abstract
+        (intro HL ;
+         refine (maponpaths (λ z, _ ,, z) _) ;
+         use subtypePath ; [ | apply idpath ] ;
+         intro ;
+         apply isapropdirprod ; use impred ; intro ; apply homset_property).
+Defined.
+
+Definition right_adjoint_to_is_right_adjoint
+           {C₁ C₂ : bicat_of_univ_cats}
+           {R : C₁ --> C₂}
+           (HR : internal_right_adj R)
+  : is_right_adjoint R.
+Proof.
+  simple refine (pr11 HR
+                 ,,
+                 ((pr121 HR
+                   ,,
+                   pr221 HR)
+                 ,,
+                 _)).
+  split.
+  - abstract
+      (intro x ; cbn ;
+       pose (nat_trans_eq_pointwise (pr12 HR) x) as p ;
+       cbn in p ;
+       rewrite !id_left, !id_right in p ;
+       exact p).
+  - abstract
+      (intro x ; cbn ;
+       pose (nat_trans_eq_pointwise (pr22 HR) x) as p ;
+       cbn in p ;
+       rewrite !id_left, !id_right in p ;
+       exact p).
+Defined.
+
+Definition is_right_adjoint_to_right_adjoint
+           {C₁ C₂ : bicat_of_univ_cats}
+           {R : C₁ --> C₂}
+           (HR : is_right_adjoint R)
+  : internal_right_adj R.
+Proof.
+  simple refine ((pr1 HR ,, (pr112 HR ,, pr212 HR)) ,, _).
+  split.
+  - abstract
+      (use nat_trans_eq ; [ apply homset_property | ] ;
+       intro x ; cbn ;
+       rewrite !id_left, !id_right ;
+       apply (pr122 HR)).
+  - abstract
+      (use nat_trans_eq ; [ apply homset_property | ] ;
+       intro x ; cbn ;
+       rewrite !id_left, !id_right ;
+       apply (pr222 HR)).
+Defined.
+
+Definition right_adjoint_weq_is_right_adjoint
+           {C₁ C₂ : bicat_of_univ_cats}
+           (R : C₁ --> C₂)
+  : internal_right_adj R ≃ is_right_adjoint R.
+Proof.
+  use make_weq.
+  - exact right_adjoint_to_is_right_adjoint.
+  - use isweq_iso.
+    + exact is_right_adjoint_to_right_adjoint.
+    + abstract
+        (intro HL ;
+         use subtypePath ; [ intro ; apply isapropdirprod ; apply cellset_property | ] ;
+         apply idpath).
+    + abstract
+        (intro HL ;
+         refine (maponpaths (λ z, _ ,, z) _) ;
+         use subtypePath ; [ | apply idpath ] ;
+         intro ;
+         apply isapropdirprod ; use impred ; intro ; apply homset_property).
+Defined.
+
+(**
+   This gives us a bicategorical proof that being a left adjooint is a proposition
+ *)
+Proposition isaprop_is_left_adjoint
+            {C₁ C₂ : univalent_category}
+            (F : C₁ ⟶ C₂)
+  : isaprop (is_left_adjoint F).
+Proof.
+  use (isofhlevelweqf _ (left_adjoint_weq_is_left_adjoint F)).
+  apply isaprop_left_adjoint.
+  exact univalent_cat_is_univalent_2_1.
+Qed.
+
+(**
+   With univalence we also get simple proofs that left adjoints are preserved under adjoint
+   equivalence in the arrow bicategory
+ *)
+Proposition is_left_adjoint_equivalence_help
+            {C₁ C₂ C₃ C₄ : bicat_of_univ_cats}
+            {F : C₁ --> C₂}
+            {G : C₃ --> C₄}
+            {E : adjoint_equivalence C₁ C₃}
+            {E' : adjoint_equivalence C₂ C₄}
+            (τ : invertible_2cell (E · G) (F · E'))
+            (HF : is_left_adjoint F)
+  : is_left_adjoint G.
+Proof.
+  revert C₁ C₃ E C₂ C₄ E' F G τ HF.
+  use J_2_0.
+  {
+    exact univalent_cat_is_univalent_2_0.
+  }
+  intro C₁.
+  use J_2_0.
+  {
+    exact univalent_cat_is_univalent_2_0.
+  }
+  intro C₂.
+  intros F G τ.
+  assert (invertible_2cell F G) as τ'.
+  {
+    exact (comp_of_invertible_2cell
+             (rinvunitor_invertible_2cell _)
+             (comp_of_invertible_2cell
+                (inv_of_invertible_2cell τ)
+                (linvunitor_invertible_2cell _))).
+  }
+  clear τ.
+  revert C₁ C₂ F G τ'.
+  use J_2_1.
+  {
+    exact univalent_cat_is_univalent_2_1.
+  }
+  intros C₁ C₂ F H.
+  exact H.
+Qed.
+
+Proposition is_left_adjoint_equivalence
+            {C₁ C₂ C₃ C₄ : category}
+            (HC₁ : is_univalent C₁)
+            (HC₂ : is_univalent C₂)
+            (HC₃ : is_univalent C₃)
+            (HC₄ : is_univalent C₄)
+            {F : C₁ ⟶ C₂}
+            {G : C₃ ⟶ C₄}
+            {E : C₁ ⟶ C₃}
+            {E' : C₂ ⟶ C₄}
+            (τ : nat_z_iso (E ∙ G) (F ∙ E'))
+            (HE : adj_equivalence_of_cats E)
+            (HE' : adj_equivalence_of_cats E')
+            (HF : is_left_adjoint F)
+  : is_left_adjoint G.
+Proof.
+  use (is_left_adjoint_equivalence_help
+         (C₁ := C₁ ,, HC₁)
+         (C₂ := C₂ ,, HC₂)
+         (C₃ := C₃ ,, HC₃)
+         (C₄ := C₄ ,, HC₄)).
+  - exact F.
+  - refine (E ,, _).
+    use equiv_cat_to_adj_equiv.
+    exact HE.
+  - refine (E' ,, _).
+    use equiv_cat_to_adj_equiv.
+    exact HE'.
+  - use nat_z_iso_to_invertible_2cell.
+    exact τ.
+  - exact HF.
+Qed.

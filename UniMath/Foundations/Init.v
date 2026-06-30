@@ -1,14 +1,12 @@
 (** Initial setup unrelated to Univalent Foundations *)
 
-Require Export Coq.Init.Logic.
-(* this fixes the advanced forms of the 'rewrite' tactic, but we want to eliminate it eventually *)
-(* Unfortunately, it also defines some notations, which we need to override later, hence the necessity to suppress such warnings. *)
-
-Require Export Coq.Init.Notations.
+From Corelib Require Export Init.Notations.
 (* get the standard Coq reserved notations *)
 
-From Coq Require Export Ltac.
+From Corelib Require Export Ltac.
 (* get the tactics *)
+
+#[global] Unset Universe Checking.
 
 (** Notations *)
 
@@ -31,9 +29,9 @@ Notation "x → y" := (x -> y)
 
 (** Reserved notations *)
 
-Reserved Notation "x :: y" (at level 60, right associativity). (* originally in Coq.Init.Datatypes *)
+Reserved Notation "x :: y" (at level 60, right associativity). (* originally in Corelib.Init.Datatypes *)
 
-Reserved Notation "x ++ y" (at level 60, right associativity). (* originally in Coq.Init.Datatypes *)
+Reserved Notation "x ++ y" (at level 60, right associativity). (* originally in Corelib.Init.Datatypes *)
 
 Reserved Notation "p # x" (right associativity, at level 65).
 
@@ -85,9 +83,9 @@ Reserved Notation "! p " (at level 50, left associativity).
 
 Reserved Notation "p #' x" (right associativity, at level 65).
 
-Reserved Notation "C '^op'" (at level 3, format "C ^op").
+Reserved Notation "C '^op'" (at level 1, format "C ^op").
 
-Reserved Notation "q '^-1'" (at level 10).
+Reserved Notation "q '^-1'" (at level 1).
 
 Reserved Notation "a <-- b" (at level 55).
 
@@ -196,5 +194,6 @@ Ltac exact_op x := (* from Jason Gross: same as "exact", but with unification th
   exact (((λ g:G, g) : T -> G) x).
 
 Create HintDb rewrite discriminated.
+#[global]
 Hint Variables Opaque : rewrite.
 Create HintDb typeclass_instances discriminated.

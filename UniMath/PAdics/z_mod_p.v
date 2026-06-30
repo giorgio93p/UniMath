@@ -198,17 +198,17 @@ Proof.
   change 0 with ( nattohz 0%nat ).
   apply nattohzandlth.
   apply ( istransnatlth _ 1 ).
-  apply natlthnsn.
-  apply natlthnsn.
+  - apply natlthnsn.
+  - apply natlthnsn.
 Defined.
 
 Local Lemma testlemma3 : hzlth 0 ( nattohz 3 ).
 Proof.
   apply ( istranshzlth _ ( nattohz 2 ) ).
-  apply testlemma21.
-  change 0 with ( nattohz 0%nat ).
-  apply nattohzandlth.
-  apply natlthnsn.
+  - apply testlemma21.
+  - change 0 with ( nattohz 0%nat ).
+    apply nattohzandlth.
+    apply natlthnsn.
 Defined.
 
 Lemma testlemma9 : hzlth 0 ( nattohz 9 ).
@@ -293,9 +293,9 @@ Proof.
            ++ unfold R.
               assert ( hzlth r ( - m ) ) as u.
               { rewrite <- hzabsvalleh0.
-                apply ( pr2 ( pr2 ( pr2 ( a ) ) ) ).
-                apply hzlthtoleh.
-                assumption.
+                ** apply ( pr2 ( pr2 ( pr2 ( a ) ) ) ).
+                ** apply hzlthtoleh.
+                   assumption.
               }
               rewrite <- ( hzlminus m ).
               change ( pr2 ( make_dirprod Q ( - m - r ) ) ) with ( - m - r ).
@@ -433,9 +433,9 @@ Proof.
                 rewrite <- equal.
                 rewrite hzplusr0.
                 rewrite hzabsvalgeh0.
-                apply pathsinv0.
-                apply ringrmultminus.
-                assumption.
+                ** apply pathsinv0.
+                   apply ringrmultminus.
+                ** assumption.
               }
               rewrite f0, f1.
               assumption.
@@ -814,7 +814,7 @@ Proof.
   - apply ( hzqrand0ineq p x ).
 Defined.
 
-Lemma hzqrand1eq ( p : hz ) ( is : isaprime p ) : 1 = ( ( p * 0 ) + 1 ).
+Lemma hzqrand1eq ( p : hz ) ( isc : isaprime p ) : 1 = ( ( p * 0 ) + 1 ).
 Proof.
   intros.
   rewrite hzmultx0.
@@ -822,7 +822,7 @@ Proof.
   apply idpath.
 Defined.
 
-Lemma hzqrand1ineq ( p : hz ) ( is : isaprime p ) :
+Lemma hzqrand1ineq ( p : hz ) ( isc : isaprime p ) :
   hzleh 0 1 × hzlth 1 ( nattohz ( hzabsval p ) ).
 Proof.
   intros.
@@ -830,32 +830,32 @@ Proof.
   - apply hzlthtoleh.
     apply hzlthnsn.
   - rewrite hzabsvalgth0.
-    + apply is.
+    + apply isc.
     + apply ( istranshzgth _ 1 _ ).
-      * apply is.
+      * apply isc.
       * apply ( hzgthsnn 0 ).
 Defined.
 
-Lemma hzqrand1q ( p : hz ) ( is : isaprime p ) :
-  hzquotientmod p ( isaprimetoneq0 is ) 1 = 0.
+Lemma hzqrand1q ( p : hz ) ( isc : isaprime p ) :
+  hzquotientmod p ( isaprimetoneq0 isc ) 1 = 0.
 Proof.
   intros.
   apply pathsinv0.
-  apply ( hzqrtestq p ( isaprimetoneq0 is ) 1 0 1 ).
+  apply ( hzqrtestq p ( isaprimetoneq0 isc ) 1 0 1 ).
   split.
-  - apply ( hzqrand1eq p is ).
-  - apply ( hzqrand1ineq p is ).
+  - apply ( hzqrand1eq p isc ).
+  - apply ( hzqrand1ineq p isc ).
 Defined.
 
-Lemma hzqrand1r ( p : hz ) ( is : isaprime p ) :
-  hzremaindermod p ( isaprimetoneq0 is ) 1 = 1.
+Lemma hzqrand1r ( p : hz ) ( isc : isaprime p ) :
+  hzremaindermod p ( isaprimetoneq0 isc ) 1 = 1.
 Proof.
   intros.
   apply pathsinv0.
-  apply ( hzqrtestr p ( isaprimetoneq0 is ) 1 0 1 ).
+  apply ( hzqrtestr p ( isaprimetoneq0 isc ) 1 0 1 ).
   split.
-  - apply ( hzqrand1eq p is ).
-  - apply ( hzqrand1ineq p is ).
+  - apply ( hzqrand1eq p isc ).
+  - apply ( hzqrand1ineq p isc ).
 Defined.
 
 Lemma hzqrandselfeq ( p : hz ) ( x : hzneq 0 p ) : p = ( p * 1 + 0 ).
@@ -1046,10 +1046,10 @@ Proof.
   - apply hzqrandtimesineq.
 Defined.
 
-Lemma hzqrandremaindereq ( m : hz ) ( is : hzneq 0 m ) ( n : hz ) :
-  hzremaindermod m is n =
-  ( ( m * ( pr1 ( make_dirprod 0 ( hzremaindermod m is n ) ) ) +
-          ( pr2 ( make_dirprod (@ringunel1 hz ) ( hzremaindermod m is n ) ) ) ) ).
+Lemma hzqrandremaindereq ( m : hz ) ( isc : hzneq 0 m ) ( n : hz ) :
+  hzremaindermod m isc n =
+  ( ( m * ( pr1 ( make_dirprod 0 ( hzremaindermod m isc n ) ) ) +
+          ( pr2 ( make_dirprod (@ringunel1 hz ) ( hzremaindermod m isc n ) ) ) ) ).
 Proof.
   intros.
   simpl.
@@ -1058,9 +1058,9 @@ Proof.
   apply idpath.
 Defined.
 
-Lemma hzqrandremainderineq ( m : hz ) ( is : hzneq 0 m ) ( n : hz ) :
-  hzleh ( @ringunel1 hz ) ( hzremaindermod m is n ) ×
-  hzlth ( hzremaindermod m is n ) ( nattohz ( hzabsval m ) ).
+Lemma hzqrandremainderineq ( m : hz ) ( isc : hzneq 0 m ) ( n : hz ) :
+  hzleh ( @ringunel1 hz ) ( hzremaindermod m isc n ) ×
+  hzlth ( hzremaindermod m isc n ) ( nattohz ( hzabsval m ) ).
 Proof.
   intros.
   split.
@@ -1068,22 +1068,22 @@ Proof.
   - apply hzlthremaindermodmod.
 Defined.
 
-Lemma hzremaindermoditerated ( m : hz ) ( is : hzneq 0 m ) ( n : hz ) :
-  hzremaindermod m is ( hzremaindermod m is n ) = ( hzremaindermod m is n ).
+Lemma hzremaindermoditerated ( m : hz ) ( isc : hzneq 0 m ) ( n : hz ) :
+  hzremaindermod m isc ( hzremaindermod m isc n ) = ( hzremaindermod m isc n ).
 Proof.
   intros.
   apply pathsinv0.
-  apply ( hzqrtestr m is ( hzremaindermod m is n ) 0 ( hzremaindermod m is n ) ).
+  apply ( hzqrtestr m isc ( hzremaindermod m isc n ) 0 ( hzremaindermod m isc n ) ).
   split.
   - apply hzqrandremaindereq.
   - apply hzqrandremainderineq.
 Defined.
 
-Lemma hzqrandremainderq ( m : hz ) ( is : hzneq 0 m ) ( n : hz ) :
-  0 = hzquotientmod m is ( hzremaindermod m is n ).
+Lemma hzqrandremainderq ( m : hz ) ( isc : hzneq 0 m ) ( n : hz ) :
+  0 = hzquotientmod m isc ( hzremaindermod m isc n ).
 Proof.
   intros.
-  apply ( hzqrtestq m is ( hzremaindermod m is n ) 0 ( hzremaindermod m is n ) ).
+  apply ( hzqrtestq m isc ( hzremaindermod m isc n ) 0 ( hzremaindermod m isc n ) ).
   split.
   - apply hzqrandremaindereq.
   - apply hzqrandremainderineq.
@@ -1149,7 +1149,7 @@ Proof.
     }
     apply ( total2_paths2_f f0 ).
     assert ( isaprop ( iscommonhzdiv l n m ×
-                       forall x : hz, iscommonhzdiv x n m -> hzleh x l ) ) as is.
+                       forall x : hz, iscommonhzdiv x n m -> hzleh x l ) ) as isc.
     { apply isofhleveldirprod.
       - apply isapropiscommonhzdiv.
       - apply impred.
@@ -1157,7 +1157,7 @@ Proof.
         apply impredfun.
         apply ( hzleh t l ).
     }
-    apply is.
+    apply isc.
   }
   split with f.
   intro g.
@@ -1280,7 +1280,7 @@ Proof.
                 apply x0.
           -- assumption.
         * apply ( istranshzleh _ 0 _ ).
-          assumption.
+          { assumption. }
           change 0 with ( nattohz 0%nat ).
           apply nattohzandleh.
           assumption.
@@ -1334,8 +1334,8 @@ Proof.
           -- apply hzdivandmultr.
              exact ( pr1 c0 ).
           -- rewrite hzabsvalgeh0 in c0.
-             exact ( pr2 c0 ).
-             assumption.
+             ++ exact ( pr2 c0 ).
+             ++ assumption.
         * exact ( pr1 c0 ).
       + intros l o.
         apply c1.
@@ -1687,8 +1687,8 @@ Proof.
         apply i.
         apply pathsinv0.
         rewrite hzabsvaleq0.
-        apply idpath.
-        assumption.
+        -- apply idpath.
+        -- assumption.
     + apply ( gcdisgreatest n m i ).
       split.
       * apply hzdivisrefl.
@@ -1939,11 +1939,11 @@ Proof.
                 ** apply hzdivisrefl.
                 ** assumption.
              ++ rewrite hzabsvalleh0.
-                rewrite <- ( ringminusminus hz m ).
-                apply hzdivandminus.
-                rewrite ( ringminusminus hz m ).
-                apply hzdivisrefl.
-                assumption.
+                ** rewrite <- ( ringminusminus hz m ).
+                   apply hzdivandminus.
+                   rewrite ( ringminusminus hz m ).
+                   apply hzdivisrefl.
+                ** assumption.
     - apply isantisymmhzleh.
       + apply gcdisgreatest.
         split.
@@ -2243,10 +2243,10 @@ Lemma gcdandprime ( p : hz ) ( x : hzneq 0 p ) ( y : isaprime p )
       ( a : hz ) ( q : neg ( hzmod p x a 0 ) ) : gcd p a x = 1.
 Proof.
   intros.
-  assert ( isaprop ( gcd p a x = 1) ) as is
+  assert ( isaprop ( gcd p a x = 1) ) as isc
   by apply isasethz.
   apply ( pr2 y ( gcd p a x )
-              ( pr1 ( gcdiscommondiv p a x ) ) (make_hProp _ is ) ).
+              ( pr1 ( gcdiscommondiv p a x ) ) (make_hProp _ isc ) ).
   intro t.
   destruct t as [ t0 | t1 ].
   - apply t0.
@@ -2344,7 +2344,7 @@ Proof.
     change ( 0%ring ) with
     ( setquotpr ( hzmodisringeqrel p ( isaprimetoneq0 y ) ) 0%hz ).
     assert ( hzmodisringeqrel p ( isaprimetoneq0 y ) 1%hz 0%hz ) as o.
-    { apply ( setquotprpathsandR
+    { apply ( weqpathsinsetquot
                 ( hzmodisringeqrel p ( isaprimetoneq0 y ) ) 1%hz 0%hz ).
       assumption.
     }

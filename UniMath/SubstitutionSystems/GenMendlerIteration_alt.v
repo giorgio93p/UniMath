@@ -16,6 +16,7 @@ Based on a note by Ralph Matthes.
 
 ************************************************************)
 
+Require Export UniMath.Tactics.EnsureStructuredProofs.
 Require Import UniMath.Foundations.PartD.
 
 Require Import UniMath.MoreFoundations.Tactics.
@@ -24,10 +25,10 @@ Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Functors.
-Require Import UniMath.CategoryTheory.limits.initial.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
+Require Import UniMath.CategoryTheory.Limits.Initial.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
 Require Import UniMath.CategoryTheory.opp_precat.
 Require Import UniMath.CategoryTheory.Chains.Chains.
 Require Import UniMath.CategoryTheory.Chains.Adamek.
@@ -40,7 +41,7 @@ Local Open Scope cat.
 Arguments functor_composite {_ _ _} _ _ .
 Arguments nat_trans_comp {_ _ _ _ _} _ _ .
 Local Notation "G ∙ F" := (functor_composite F G : [ _ , _ , _ ]) (at level 35).
-Local Notation "C '^op'" := (opp_precat C) (at level 3, format "C ^op").
+Local Notation "C '^op'" := (opp_precat C) (format "C ^op").
 Local Notation "↓ f" := (mor_from_algebra_mor _ _ _ f) (at level 3, format "↓ f").
 Local Notation "'chain'" := (diagram nat_graph).
 
@@ -55,8 +56,8 @@ Context {C : category} (IC : Initial C)
 
 Local Notation "0" := (InitialObject IC).
 
-Let AF := FunctorAlg F.
-Let chnF := initChain IC F.
+Let AF : category := FunctorAlg F.
+Let chnF : chain C := initChain IC F.
 Let μF_Initial : Initial AF := colimAlgInitial IC HF (CC chnF).
 Let μF : C := alg_carrier _ (InitialObject μF_Initial).
 Let inF : C⟦F μF,μF⟧ := alg_map _ (InitialObject μF_Initial).
@@ -74,7 +75,7 @@ Context {D : category}.
 
 Section the_iteration_principle.
 
-Variables (X : D) (L : functor C D) (IL : isInitial D (L 0)) (HL : is_omega_cocont L).
+Context (X : D) (L : functor C D) (IL : isInitial D (L 0)) (HL : is_omega_cocont L).
 
 Let ILD : Initial D := tpair _ _ IL.
 Local Notation "'L0'" := (InitialObject ILD).
@@ -86,7 +87,7 @@ Definition ψ_target : functor C^op HSET := functor_composite (functor_opp F) ψ
 
 Section general_case.
 
-Variable (ψ : ψ_source ⟹ ψ_target).
+Context (ψ : ψ_source ⟹ ψ_target).
 
 Let LchnF : chain D := mapchain L chnF.
 Let z : D⟦L0,X⟧ := InitialArrow ILD X.
@@ -111,7 +112,7 @@ induction n as [|n IHn].
 + change (pr1 (Pow (S (S n))) _ z) with (ψ (iter_functor F (S n) 0) (Pow (S n) _ z)).
   assert (H : dmor LchnF (idpath (S (S n))) · ψ ((iter_functor F (S n)) IC) ((Pow (S n)) IC z) =
               ψ (iter_functor F n 0) (dmor LchnF (idpath (S n)) · pr1 (Pow (S n)) _ z)).
-    apply pathsinv0, (toforallpaths _ _ _ (nat_trans_ax ψ _ _ (dmor chnF (idpath (S n))))).
+  { apply pathsinv0, (eqtohomot (nat_trans_ax ψ _ _ (dmor chnF (idpath (S n))))). }
   now rewrite H, IHn.
 Qed.
 
@@ -138,14 +139,14 @@ Proof.
 apply (colimArrowCommutes CC_LchnF).
 Qed.
 
-Local Lemma is_iso_inF : is_iso inF.
+Local Lemma is_z_iso_inF : is_z_isomorphism inF.
 Proof.
 (* Use Lambek's lemma, this could be extracted from the concrete proof as well *)
-apply initialAlg_is_iso, pr2.
+apply initialAlg_is_z_iso, pr2.
 Defined.
 
-Let inF_iso : iso (F μF) μF := make_iso _ is_iso_inF.
-Let inF_inv : C⟦μF,F μF⟧ := inv_from_iso inF_iso.
+Let inF_z_iso : z_iso (F μF) μF := make_z_iso' _ is_z_iso_inF.
+Let inF_inv : C⟦μF,F μF⟧ := inv_from_z_iso inF_z_iso.
 
 (* The direction * -> ** *)
 Lemma S_imp_SS h n : # L inF · h = ψ μF h → # L (e n) · h = Pow n IC z.
@@ -156,7 +157,7 @@ induction n.
   apply (InitialArrowUnique ILD).
 - rewrite e_comm, functor_comp, <- assoc, Hh.
   assert (H : # L (# F (e n)) · ψ μF h = ψ (iter_functor F n 0) (# L (e n) · h)).
-    apply pathsinv0, (toforallpaths _ _ _ (nat_trans_ax ψ _ _ (e n))).
+  { apply pathsinv0, (eqtohomot (nat_trans_ax ψ _ _ (e n))). }
   now rewrite H, IHn.
 Qed.
 
@@ -165,26 +166,26 @@ Local Lemma SS_imp_S (H : ∏ n, # L (e n) · preIt = Pow n IC z) : # L inF · p
 Proof.
 assert (H'' : # L inF · # L inF_inv = identity _).
 { rewrite <- functor_comp,  <- functor_id.
-   apply maponpaths, (iso_inv_after_iso inF_iso). }
+   apply maponpaths, (z_iso_inv_after_z_iso inF_z_iso). }
 assert (H' : ∏ n, # L (e (S n)) · # L inF_inv · ψ μF preIt = pr1 (Pow (S n)) _ z).
 { intro n.
   rewrite e_comm, functor_comp.
-  eapply pathscomp0;
+  etrans;
    [apply cancel_postcomposition; rewrite <-assoc;  apply maponpaths, H''|].
   rewrite id_right.
   assert (H1 : # L (# F (e n)) · ψ μF preIt = ψ (iter_functor F n 0) (# L (e n) · preIt)).
-  { apply pathsinv0, (toforallpaths _ _ _ (nat_trans_ax ψ _ _ (e n))). }
-  eapply pathscomp0; [ apply H1|].
+  { apply pathsinv0, (eqtohomot (nat_trans_ax ψ _ _ (e n))). }
+  etrans; [ apply H1|].
   now rewrite H.
 }
 assert (HH : preIt = # L inF_inv · ψ μF preIt).
 { apply pathsinv0, (colimArrowUnique CC_LchnF); simpl; intro n.
   destruct n.
   - apply (InitialArrowUnique ILD).
-  - simpl; eapply pathscomp0; [| apply H'].
+  - simpl; etrans; [| apply H'].
     now apply assoc.
 }
-eapply pathscomp0; [ apply maponpaths, HH|].
+etrans; [ apply maponpaths, HH|].
 now rewrite assoc, H'', id_left.
 Qed.
 
@@ -220,8 +221,8 @@ End general_case.
 (** * Specialized Mendler Iteration *)
 Section special_case.
 
-Variables (G : functor D D) (ρ : G X --> X).
-Variables (θ : functor_composite F L ⟹ functor_composite L G).
+Context (G : functor D D) (ρ : G X --> X)
+        (θ : functor_composite F L ⟹ functor_composite L G).
 
 Lemma is_nat_trans_ψ_from_comps :
         is_nat_trans ψ_source ψ_target
@@ -251,31 +252,31 @@ End the_iteration_principle.
 (** * Fusion law for Generalized Iteration in Mendler-style *)
 Section fusion_law.
 
-Variables (X X' : D).
+Context (X X' : D).
 
 Let Yon : functor D^op HSET := yoneda_objects D X.
 Let Yon' : functor D^op HSET := yoneda_objects D X'.
 
-Variables (L : functor C D) (HL : is_omega_cocont L) (IL : isInitial D (L 0)).
-Variables (ψ : ψ_source X L ⟹ ψ_target X L).
+Context (L : functor C D) (HL : is_omega_cocont L) (IL : isInitial D (L 0))
+        (ψ : ψ_source X L ⟹ ψ_target X L).
 
-Variables (L' : functor C D) (HL' : is_omega_cocont L') (IL' : isInitial D (L' 0)).
-Variables (ψ' : ψ_source X' L' ⟹ ψ_target X' L').
+Context (L' : functor C D) (HL' : is_omega_cocont L') (IL' : isInitial D (L' 0))
+        (ψ' : ψ_source X' L' ⟹ ψ_target X' L').
 
-Variables (Φ : functor_composite (functor_opp L) Yon ⟹ functor_composite (functor_opp L') Yon').
+Context (Φ : functor_composite (functor_opp L) Yon ⟹ functor_composite (functor_opp L') Yon').
 
-Variables (H : ψ μF · Φ (F μF) = Φ μF · ψ' μF).
+Context (H : ψ μF · Φ (F μF) = Φ μF · ψ' μF).
 
 Theorem fusion_law : Φ μF (It X L IL HL ψ) = It X' L' IL' HL' ψ'.
 Proof.
 apply path_to_ctr.
 assert (Φ_is_nat := nat_trans_ax Φ).
 assert (Φ_is_nat_inst1 := Φ_is_nat _ _ inF).
-assert (Φ_is_nat_inst2 := toforallpaths _ _ _ Φ_is_nat_inst1 (It X L IL HL ψ)).
+assert (Φ_is_nat_inst2 := eqtohomot Φ_is_nat_inst1 (It X L IL HL ψ)).
 unfold compose in Φ_is_nat_inst2; simpl in Φ_is_nat_inst2.
 simpl.
 rewrite <- Φ_is_nat_inst2.
-assert (H_inst :=  toforallpaths _ _ _ H (It X L IL HL ψ)).
+assert (H_inst :=  eqtohomot H (It X L IL HL ψ)).
 unfold compose in H_inst; simpl in H_inst.
 rewrite <- H_inst.
 apply maponpaths.

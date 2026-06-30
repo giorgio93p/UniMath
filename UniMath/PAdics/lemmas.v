@@ -7,6 +7,8 @@
 
 (** Imports *)
 
+Require Export UniMath.Tactics.EnsureStructuredProofs.
+
 Require Import UniMath.Foundations.PartA.
 Require Import UniMath.Foundations.Propositions.
 Require Import UniMath.Foundations.NaturalNumbers.
@@ -69,9 +71,9 @@ Proof.
   - auto.
   - intros m p q r. destruct m.
     + apply fromempty. exact (isirreflnatlth 0%nat q ).
-    + assert ( natleh n m ) as a. apply r.
+    + assert ( natleh n m ) as a. { apply r. }
       assert ( natleh ( sub n 0%nat ) m ) as a0.
-        exact (transportf ( fun x : nat => natleh x m ) ( pathsinv0 ( minus0r n ) ) a).
+      { exact (transportf ( fun x : nat => natleh x m ) ( pathsinv0 ( minus0r n ) ) a). }
       exact ( transportf ( fun x : nat => natleh ( sub n 0 ) x ) (pathsinv0 ( minus0r m ) ) a0 ).
 Defined.
 
@@ -210,11 +212,15 @@ Proof.
     + change ( sub ( S n ) (sub n m ) = S m ).
       rewrite <- pathssminus.
       * rewrite IHn.
-        ++  apply idpath.
-        ++ assumption.
+        --  apply idpath.
+        -- assumption.
       * apply ( minuslth ( S n ) ( S m ) ).
-        ++ apply (natlehlthtrans _ n ). apply natleh0n. apply natlthnsn.
-        ++ apply (natlehlthtrans _ m ). apply natleh0n. apply natlthnsn.
+        -- apply (natlehlthtrans _ n ).
+           ++ apply natleh0n.
+           ++ apply natlthnsn.
+        -- apply (natlehlthtrans _ m ).
+           ++ apply natleh0n.
+           ++ apply natlthnsn.
 Defined.
 
 Lemma boolnegtrueimplfalse ( v : bool ) ( p : neg ( v = true ) ) : v = false.
@@ -237,8 +243,9 @@ Proof.
   intros.
   unfold natcoface.
   destruct ( natgtb i n ).
-  - apply natlthtoleh.  apply (natlehlthtrans _ upper ).
-    assumption. apply natlthnsn.
+  - apply natlthtoleh. apply (natlehlthtrans _ upper ).
+    + assumption.
+    + apply natlthnsn.
   - apply p.
 Defined.
 
@@ -271,8 +278,9 @@ Proof.
     assert ( natgtb i ( S n ) = false ) as ff.
     { apply natgehimplnatgtbfalse.
       apply ( istransnatgeh _ n ).
-      apply natgthtogeh. apply natgthsnn. assumption. }
-    rewrite ff.  rewrite minussn1.  apply idpath.
+      + apply natgthtogeh. apply natgthsnn.
+      + assumption. }
+    rewrite ff. rewrite minussn1. apply idpath.
 Defined.
 
 Lemma isinjnatcoface ( i x y : nat ) : natcoface i x = natcoface i y -> x = y.
@@ -395,15 +403,15 @@ Proof.
     }
     apply (total2_paths2_f f0 ).
     assert ( isaprop ( c * a = ( @ringunel2 X )  ×
-                       a * c = ( @ringunel2 X ) ) ) as is.
+                       a * c = ( @ringunel2 X ) ) ) as isc.
     { apply isofhleveldirprod.
       - apply ( setproperty X ).
       - apply ( setproperty X ).
     }
-    apply is.
+    apply isc.
   }
   split with f. intros g.
-  assert ( isaset ( multinvpair X a ) ) as is.
+  assert ( isaset ( multinvpair X a ) ) as isc.
   { unfold multinvpair. unfold invpair.
     change isaset with ( isofhlevel 2 ).
     apply isofhleveltotal2.
@@ -413,7 +421,7 @@ Proof.
         apply ( setproperty X ).
       + apply hlevelntosn. apply (setproperty X ).
   }
-  apply is.
+  apply isc.
 Defined.
 
 Close Scope ring_scope.
@@ -694,11 +702,11 @@ Proof.
     apply ( isirreflhzlth m ).
     apply ( hzlehlthtrans _ n _ ).
     + rewrite <- ( hzabsvalgeh0 ).
-      rewrite <- ( hzabsvalgeh0 p ).
-      apply nattohzandleh.
-      apply k.
-      apply hzgthtogeh.
-      apply ( hzgthgehtrans _ n _ ); assumption.
+      * rewrite <- ( hzabsvalgeh0 p ).
+        apply nattohzandleh.
+        apply k.
+      * apply hzgthtogeh.
+        apply ( hzgthgehtrans _ n _ ); assumption.
     + assumption.
 Defined.
 
@@ -739,7 +747,7 @@ Definition isbinopapartr { X : hSet } ( R : apart X ) ( opp : binop X ) :=
 Definition isbinopapart { X : hSet } ( R : apart X ) ( opp : binop X ) :=
   isbinopapartl R opp × isbinopapartr R opp.
 
-Lemma deceqtoneqapart { X : UU } ( is : isdeceq X ) : isapart ( neq X ).
+Lemma deceqtoneqapart { X : UU } ( isc : isdeceq X ) : isapart ( neq X ).
 Proof.
   intros. split.
   - intros a p. simpl in p. apply p. apply idpath.
@@ -748,7 +756,7 @@ Proof.
       simpl in p. apply p.
       apply pathsinv0. assumption.
     + intros a c b p P s.
-      apply s. destruct ( is a c ) as [ l | r ].
+      apply s. destruct ( isc a c ) as [ l | r ].
       * apply ii2. rewrite <- l. assumption.
       * apply ii1. assumption.
 Defined.
@@ -756,19 +764,19 @@ Defined.
 Definition isapartdec { X : hSet } ( R : apart X ) :=
   forall a b : X, pr1 R a b  ⨿ ( a = b ).
 
-Lemma isapartdectodeceq { X : hSet } ( R : apart X ) ( is : isapartdec R ) :
+Lemma isapartdectodeceq { X : hSet } ( R : apart X ) ( isc : isapartdec R ) :
   isdeceq X.
 Proof.
-  intros y z. destruct ( is y z ) as [ l | r ].
+  intros y z. destruct ( isc y z ) as [ l | r ].
   - apply ii2. intros f. apply ( pr1 ( pr2 R ) z).
     rewrite f in l. assumption.
   - apply ii1. assumption.
 Defined.
 
-Lemma isdeceqtoisapartdec ( X : hSet ) ( is : isdeceq X ) :
-  isapartdec ( tpair _ ( deceqtoneqapart is ) ).
+Lemma isdeceqtoisapartdec ( X : hSet ) ( isc : isdeceq X ) :
+  isapartdec ( tpair _ ( deceqtoneqapart isc ) ).
 Proof.
-  intros a b. destruct ( is a b ) as [ l | r ].
+  intros a b. destruct ( isc a b ) as [ l | r ].
   - apply ii2. assumption.
   - apply ii1. intros f. apply r. assumption.
 Defined.
@@ -835,7 +843,7 @@ Definition isaafield ( A : acommring ) :=
   forall x : A, x # 0 -> multinvpair A x.
 
 Definition afld := ∑ A : acommring, isaafield A.
-Definition make_afld ( A : acommring ) ( is : isaafield A ) : afld := tpair A is .
+Definition make_afld ( A : acommring ) ( isc : isaafield A ) : afld := tpair A isc .
 Definition pr1afld : afld -> acommring := @pr1 _ _ .
 Coercion pr1afld : afld >-> acommring.
 
@@ -939,27 +947,15 @@ Proof.
            ++ intros k s. rewrite right in s. apply ( IHn k ). assumption.
 Defined.
 
-Lemma setquotprpathsandR { X : UU } ( R : eqrel X ) :
-  forall x y : X, setquotpr R x = setquotpr R y -> R x y.
-Proof.
-  intros.
-  assert ( pr1 ( setquotpr R x ) y ) as i.
-  { assert ( pr1 ( setquotpr R y ) y ) as i0.
-    { unfold setquotpr. simpl. apply (pr2 (pr1 (pr2 R))). }
-    destruct X0. assumption.
-  }
-  apply i.
-Defined.
-
 (* Some lemmas on decidable properties of natural numbers. *)
 
 Definition isdecnatprop ( P : nat -> hProp ) :=
   forall m : nat, P m ⨿ neg ( P m ).
 
-Lemma negisdecnatprop ( P : nat -> hProp ) ( is : isdecnatprop P ) :
+Lemma negisdecnatprop ( P : nat -> hProp ) ( isc : isdecnatprop P ) :
   isdecnatprop ( fun n : nat => hneg ( P n ) ).
 Proof.
-  intros n. destruct ( is n ) as [ l | r ].
+  intros n. destruct ( isc n ) as [ l | r ].
   - apply ii2. intro j.
     assert hfalse as x.
     { simpl in j. apply j. assumption. }
@@ -967,11 +963,11 @@ Proof.
   - apply ii1. assumption.
 Defined.
 
-Lemma bndexistsisdecnatprop ( P : nat -> hProp ) ( is : isdecnatprop P ) :
+Lemma bndexistsisdecnatprop ( P : nat -> hProp ) ( isc : isdecnatprop P ) :
   isdecnatprop ( fun n : nat => ∃ m : nat, natleh m n × P m ).
 Proof.
   intros n. induction n.
-  - destruct ( is 0%nat ) as [ l | r ].
+  - destruct ( isc 0%nat ) as [ l | r ].
     + apply ii1. apply total2tohexists.
       split with 0%nat. split.
       * apply isreflnatleh.
@@ -986,7 +982,7 @@ Proof.
         apply (pr2 m').
       }
       apply x.
-  - destruct ( is ( S n ) ) as [ l | r ].
+  - destruct ( isc ( S n ) ) as [ l | r ].
     + apply ii1.
       apply total2tohexists.
       split with ( S n ).
@@ -1019,13 +1015,13 @@ Proof.
            ++ apply (pr2 m').
 Defined.
 
-Lemma isdecisbndqdec ( P : nat -> hProp ) ( is : isdecnatprop P ) ( n : nat ) :
+Lemma isdecisbndqdec ( P : nat -> hProp ) ( isc : isdecnatprop P ) ( n : nat ) :
   ( forall m : nat, natleh m n -> P m ) ⨿ ∃ m : nat, natleh m n × neg ( P m ).
 Proof.
-  destruct ( bndexistsisdecnatprop _ ( negisdecnatprop P is ) n ) as [ l | r ].
+  destruct ( bndexistsisdecnatprop _ ( negisdecnatprop P isc ) n ) as [ l | r ].
   - apply ii2. assumption.
   - apply ii1. intros m j.
-    destruct ( is m ) as [ l' | r' ].
+    destruct ( isc m ) as [ l' | r' ].
     + assumption.
     + apply fromempty.
       apply r. apply total2tohexists.
@@ -1034,19 +1030,19 @@ Proof.
 Defined.
 
 Lemma leastelementprinciple ( n : nat ) ( P : nat -> hProp )
-      ( is : isdecnatprop P ) : P n ->
+      ( isc : isdecnatprop P ) : P n ->
       ∃ k : nat, P k × forall m : nat, natlth m k -> neg ( P m ).
 Proof.
-  revert P is. induction n.
-  - intros P is u.
+  revert P isc. induction n.
+  - intros P isc u.
     apply total2tohexists.
     split with 0%nat. split.
     + assumption.
     + intros m i.
       apply fromempty.
       apply ( negnatgth0n m i ).
-  - intros P is u.
-    destruct ( is 0%nat ) as [ l | r ].
+  - intros P isc u.
+    destruct ( isc 0%nat ) as [ l | r ].
     + apply total2tohexists. split with 0%nat. split.
       * assumption.
       * intros m i.
@@ -1054,7 +1050,7 @@ Proof.
         apply ( negnatgth0n m i ).
     + set ( P' := fun m : nat => P ( S m ) ).
       assert ( forall m : nat, P' m ⨿ neg ( P' m ) ) as is'.
-      { intros m. unfold P'. apply ( is ( S m ) ). }
+      { intros m. unfold P'. apply ( isc ( S m ) ). }
       set ( c := IHn P' is' u ).
       use (hinhuniv _ c).
       intros k.

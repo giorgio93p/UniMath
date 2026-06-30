@@ -34,13 +34,13 @@ Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.whiskering.
 Require Import UniMath.CategoryTheory.Monads.Monads.
-Require Import UniMath.CategoryTheory.limits.binproducts.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.initial.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Initial.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
 Require Import UniMath.CategoryTheory.opp_precat.
 Require Import UniMath.CategoryTheory.yoneda.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
 Require Import UniMath.CategoryTheory.PointedFunctors.
 Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
 Require Import UniMath.CategoryTheory.HorizontalComposition.
@@ -50,7 +50,7 @@ Require Import UniMath.SubstitutionSystems.SubstitutionSystems.
 Require Import UniMath.SubstitutionSystems.GenMendlerIteration.
 Require Import UniMath.CategoryTheory.RightKanExtension.
 Require Import UniMath.SubstitutionSystems.GenMendlerIteration.
-Require Import UniMath.CategoryTheory.UnitorsAndAssociatorsForEndofunctors.
+Require Import UniMath.CategoryTheory.BicatOfCatsElementary.
 Require Import UniMath.SubstitutionSystems.Notation.
 Local Open Scope subsys.
 
@@ -70,22 +70,20 @@ Let EndEndC := [EndC, EndC].
 Let CPEndEndC:= BinCoproducts_functor_precat _ _ CPEndC: BinCoproducts EndEndC.
 
 
-Variable KanExt : ∏ Z : Ptd, GlobalRightKanExtensionExists _ _ (U Z) C.
+Context (KanExt : ∏ Z : Ptd, GlobalRightKanExtensionExists _ _ (U Z) C).
 
-Variable H : Presignature C C C.
+Context (H : Presignature C C C).
 Let θ := theta H.
 
-Definition Const_plus_H (X : EndC) : functor EndC EndC
-  := BinCoproduct_of_functors _ _ CPEndC (constant_functor _ _ X) H.
-  (* := sum_of_functors CPEndC (constant_functor _ _ X) H. *)
+Let Const_plus_H (X : EndC) : functor EndC EndC := Const_plus_H C CP H X.
 
-Definition Id_H :  functor [C, C] [C, C]
- := Const_plus_H (functor_identity _ : EndC).
+Let Id_H :  functor [C, C] [C, C] := Id_H C CP H.
 
 Let Alg : category := FunctorAlg Id_H.
 
 
-Variable IA : Initial Alg.
+Context (IA : Initial Alg).
+
 Definition SpecializedGMIt (Z : Ptd) (X : EndC)
   :  ∏ (G : functor [C, C] [C, C])
        (ρ : [C, C] ⟦ G X, X ⟧)
@@ -118,7 +116,7 @@ Local Lemma aux_iso_1_is_nat_trans (Z : Ptd) :
       BinCoproductOfArrows [C, C]
         (CPEndC (functor_composite (U Z) (functor_identity C))
            ((θ_source H) (X ⊗ Z))) (CPEndC (U Z) ((θ_source H) (X ⊗ Z)))
-        (ρ_functors (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
+        (runitor_CAT (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
 Proof.
   intros X X' α.
   apply nat_trans_eq_alt.
@@ -147,7 +145,7 @@ Definition aux_iso_1 (Z : Ptd)
 Proof.
   use tpair.
   - intro X.
-    exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (ρ_functors (U Z))
+    exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (runitor_CAT (U Z))
             (nat_trans_id (θ_source H (X⊗Z):functor C C))).
   - exact (aux_iso_1_is_nat_trans Z).
 Defined.
@@ -162,7 +160,7 @@ Local Lemma aux_iso_1_inv_is_nat_trans (Z : Ptd) :
       BinCoproductOfArrows [C, C]
         (CPEndC (functor_composite (functor_identity C) (U Z))
            ((θ_source H) (X ⊗ Z))) (CPEndC (U Z) ((θ_source H) (X ⊗ Z)))
-        (λ_functors (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
+        (lunitor_CAT (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
 Proof.
   intros X X' α.
   apply nat_trans_eq_alt.
@@ -189,7 +187,7 @@ Local Definition aux_iso_1_inv (Z: Ptd)
 Proof.
   use tpair.
   - intro X.
-    exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (λ_functors (U Z))
+    exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (lunitor_CAT (U Z))
            (nat_trans_id (θ_source H (X⊗Z):functor C C))).
   - exact (aux_iso_1_inv_is_nat_trans Z).
 Defined.
@@ -307,10 +305,10 @@ Proof.
     unfold coproduct_nat_trans_in1_data ; simpl.
     repeat rewrite <- assoc .
     apply BinCoproductIn1Commutes_right_in_ctx_dir.
-    unfold λ_functors; simpl.
+    simpl.
     rewrite id_left.
     apply BinCoproductIn1Commutes_right_in_ctx_dir.
-    unfold ρ_functors; simpl.
+    simpl.
     rewrite id_left.
     apply BinCoproductIn1Commutes_right_in_ctx_dir.
     rewrite (@id_left EndC).
@@ -322,7 +320,7 @@ Proof.
   - rewrite <- h_eq1'_inst.
     clear h_eq1'_inst.
     apply BinCoproductIn1Commutes_left_in_ctx_dir.
-    unfold λ_functors, nat_trans_id; simpl.
+    unfold nat_trans_id; simpl.
     rewrite id_left.
     repeat rewrite (id_left EndEndC).
     repeat rewrite (id_left EndC).
@@ -448,12 +446,12 @@ Proof.
       unfold coproduct_nat_trans_in1_data in h'_eq1_inst; simpl in h'_eq1_inst.
       rewrite <- @assoc in h'_eq1_inst.
       etrans.
-      eapply pathsinv0. exact h'_eq1_inst.
+      { eapply pathsinv0; exact h'_eq1_inst. }
       clear h'_eq1_inst.
       apply BinCoproductIn1Commutes_right_in_ctx_dir.
       apply BinCoproductIn1Commutes_right_in_ctx_dir.
       apply BinCoproductIn1Commutes_right_dir.
-        apply idpath.
+      apply idpath.
     + destruct h'_eq as [_ h'_eq2]. (*clear h'_eq2.*)
       assert (h'_eq2_inst := nat_trans_eq_pointwise h'_eq2 c);
         clear h'_eq2.
@@ -594,7 +592,7 @@ Defined.
 
 
 
-Local Notation "C '^op'" := (opp_precat C) (at level 3, format "C ^op").
+Local Notation "C '^op'" := (opp_precat C) (format "C ^op").
 
 Let Yon (X : EndC) : functor EndC^op HSET := yoneda_objects EndC X.
 
@@ -615,7 +613,7 @@ Proof.
     unfold compose;
     simpl;
     apply nat_trans_eq; [ apply homset_property |];
-    simpl; intros ?; apply assoc').
+    simpl; intro; apply assoc').
 Defined.
 
 Lemma ishssMor_InitAlg (T' : hss CP H) :
@@ -710,7 +708,7 @@ Proof.
             assert (Hyp := τ_part_of_alg_mor _ CP _ _ _ (InitialArrow IA (pr1 T'))).
             assert (Hyp_c := nat_trans_eq_pointwise Hyp c); clear Hyp.
             simpl in Hyp_c.
-            eapply pathscomp0. eapply pathsinv0. exact Hyp_c.
+            etrans; [ eapply pathsinv0; exact Hyp_c |].
             clear Hyp_c.
             apply maponpaths.
             apply pathsinv0.

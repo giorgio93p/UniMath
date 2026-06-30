@@ -16,12 +16,13 @@ Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
 Require Import UniMath.Bicategories.Core.Examples.Image.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.DisplayedBicats.Examples.FullSub.
 Require Import UniMath.Bicategories.PseudoFunctors.Display.PseudoFunctorBicat.
 Require Import UniMath.Bicategories.PseudoFunctors.PseudoFunctor.
 Import PseudoFunctor.Notations.
+Require Import UniMath.Bicategories.PseudoFunctors.Properties.
 
 Local Open Scope cat.
 
@@ -65,7 +66,7 @@ Section CorestrictImage.
   Defined.
 
   Definition corestrict_full_image_essentially_surjective
-    : essentially_surjective corestrict_full_image.
+    : essentially_surjective_psfunctor corestrict_full_image.
   Proof.
     intros x.
     induction x as [x₁ x₂].
@@ -133,20 +134,18 @@ Section CorestrictImage.
             (intros a b g ;
              use subtypePath ; [ intro ; apply isapropunit | ] ;
              exact (pr2 (left_adjoint_counit (F_local_equiv x y)) _ _ (pr1 g))).
-      - apply is_nat_iso_to_is_invertible_2cell.
+      - apply is_nat_z_iso_to_is_invertible_2cell.
         intro z.
-        exact (is_invertible_2cell_to_is_nat_iso
+        exact (is_invertible_2cell_to_is_nat_z_iso
                  _
                  (left_equivalence_unit_iso (F_local_equiv x y)) z).
-      - apply is_nat_iso_to_is_invertible_2cell.
+      - apply is_nat_z_iso_to_is_invertible_2cell.
         intro z.
-        apply is_inv2cell_to_is_iso.
+        apply is_inv2cell_to_is_z_iso.
         apply bicat_is_invertible_2cell_to_fullsub_is_invertible_2cell.
-        apply (iso_to_inv2cell
-                _
-                _
+        apply (z_iso_to_inv2cell
                 (_ ,,
-                   is_invertible_2cell_to_is_nat_iso
+                   is_invertible_2cell_to_is_nat_z_iso
                    _
                    (left_equivalence_counit_iso (F_local_equiv x y)) (pr1 z))).
     Defined.

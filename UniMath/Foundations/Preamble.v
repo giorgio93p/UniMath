@@ -2,7 +2,7 @@
 
 This is the first in the group of files which contain the (current state of) the mathematical
 library for the proof assistant Coq based on the Univalent Foundations.  It contains some new
-notations for constructions defined in Coq.Init library as well as the definition of dependent sum.
+notations for constructions defined in Corelib.Init library as well as the definition of dependent sum.
 
 
 *)
@@ -65,7 +65,7 @@ Definition succ := S.
 Declare Scope nat_scope.
 Delimit Scope nat_scope with nat.
 Bind Scope nat_scope with nat.
-Arguments S _%nat.
+Arguments S _%_nat.
 Open Scope nat_scope.
 
 Fixpoint add n m :=
@@ -82,7 +82,7 @@ Fixpoint sub n m :=
   end
 where "n - m" := (sub n m) : nat_scope.
 
-(* note: our mul differs from that in Coq.Init.Nat  *)
+(* note: our mul differs from that in Corelib.Init.Nat  *)
 Definition mul : nat -> nat -> nat.
 Proof.
   intros n m.
@@ -138,6 +138,7 @@ Notation "1000" := (10 * 100) : nat_scope.
 (** Identity Types *)
 
 Inductive paths {A:UU} (a:A) : A -> UU := paths_refl : paths a a.
+#[global]
 Hint Resolve paths_refl : core .
 Notation "a = b" := (paths a b) : type_scope.
 Notation idpath := paths_refl .

@@ -15,7 +15,7 @@ Require Import UniMath.Bicategories.PseudoFunctors.Display.Base.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.DisplayedBicats.DispAdjunctions.
 Require Import UniMath.Bicategories.DisplayedBicats.DispInvertibles.
@@ -586,6 +586,59 @@ Section Map1Cells.
       reflexivity.
   Defined.
 
+  Definition map1cells_disp_left_adjoint_equivalence_help
+             (HD : is_univalent_2 D)
+             {F₀ G₀ : ps_base C D}
+             (η₀ : adjoint_equivalence F₀ G₀)
+             (F₁ : map1cells_disp_bicat F₀)
+             (G₁ : map1cells_disp_bicat G₀)
+             (η₁ : F₁ -->[ η₀ ] G₁)
+    : disp_left_adjoint_equivalence η₀ η₁.
+  Proof.
+    revert F₀ G₀ η₀ F₁ G₁ η₁.
+    use J_2_0.
+    - use ps_base_is_univalent_2_0.
+      exact HD.
+    - intros F₀ F₁ F₁' η₁.
+      cbn in η₁.
+      pose (pr2 (all_invertible_2cell_to_disp_adjoint_equivalence
+                   F₀
+                   F₁ F₁'
+                   (λ x y f, comp_of_invertible_2cell
+                               (rinvunitor_invertible_2cell _)
+                               (comp_of_invertible_2cell
+                                  (inv_of_invertible_2cell (η₁ x y f))
+                                  (lunitor_invertible_2cell _)))))
+        as H.
+      refine (transportf
+                (disp_left_adjoint_equivalence _)
+                _
+                H).
+      use funextsec ; intro x.
+      use funextsec ; intro y.
+      use funextsec ; intro f.
+      use subtypePath ; [ intro ; apply isaprop_is_invertible_2cell | ].
+      cbn.
+      rewrite !vassocr.
+      rewrite lunitor_linvunitor.
+      rewrite id2_left.
+      rewrite !vassocl.
+      rewrite runitor_rinvunitor.
+      rewrite id2_right.
+      apply idpath.
+  Qed.
+
+  Definition map1cells_disp_left_adjoint_equivalence
+             (HD : is_univalent_2 D)
+             {F₀ G₀ : ps_base C D}
+             {η₀ : F₀ --> G₀}
+             (Hη₀ : left_adjoint_equivalence η₀)
+             (F₁ : map1cells_disp_bicat F₀)
+             (G₁ : map1cells_disp_bicat G₀)
+             (η₁ : F₁ -->[ η₀ ] G₁)
+    : disp_left_adjoint_equivalence Hη₀ η₁
+    := map1cells_disp_left_adjoint_equivalence_help HD (η₀ ,, Hη₀) F₁ G₁ η₁.
+
   Definition map1cells_disp_univalent_2_0
              (HD_2_1 : is_univalent_2_1 D)
     : disp_univalent_2_0 map1cells_disp_bicat.
@@ -603,13 +656,13 @@ Section Map1Cells.
         simple refine (_ ∘ make_weq _ (isweqtoforallpaths _ _ _))%weq.
         apply idweq.
       + refine (_ ∘ weqonsecfibers _ _ _)%weq.
-        intro X ; cbn.
-        refine (weqonsecfibers _ _ _).
-        intro Y ; cbn.
-        simple refine (weqonsecfibers _ _ _).
-        * exact (λ f, invertible_2cell (F₁ X Y f) (F₁' X Y f)).
-        * intro f ; cbn.
-          exact (make_weq (idtoiso_2_1 (F₁ X Y f) (F₁' X Y f)) (HD_2_1 _ _ _ _)).
+        * intro X ; cbn.
+          refine (weqonsecfibers _ _ _).
+          intro Y ; cbn.
+          simple refine (weqonsecfibers _ _ _).
+          -- exact (λ f, invertible_2cell (F₁ X Y f) (F₁' X Y f)).
+          -- intro f ; cbn.
+             exact (make_weq (idtoiso_2_1 (F₁ X Y f) (F₁' X Y f)) (HD_2_1 _ _ _ _)).
         * exact (all_invertible_2cell_is_disp_adjoint_equivalence HD_2_1 F₀ F₁ F₁').
     - intro p.
       induction p.

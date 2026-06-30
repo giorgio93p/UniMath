@@ -1,5 +1,7 @@
 Require Export UniMath.MoreFoundations.Notations.
 Require Export UniMath.MoreFoundations.Propositions.
+Require Export UniMath.MoreFoundations.DecidablePropositions.
+Require Export UniMath.MoreFoundations.Sets.
 
 Declare Scope subtype.
 Delimit Scope subtype with subtype.
@@ -77,6 +79,9 @@ Proof.
   + apply ii2, hinhpr. exists x. now apply negimpl_to_conj.
 Defined.
 
+Definition emptysubtype (X : UU) : hsubtype X
+  := λ x, hfalse.
+
 Definition subtype_difference {X:UU} (S T : hsubtype X) : hsubtype X := λ x, S x ∧ ¬ (T x).
 
 Notation " S - T " := (subtype_difference S T) : subtype.
@@ -102,8 +107,19 @@ Definition subtype_union {X I:UU} (S : I -> hsubtype X) : hsubtype X := λ x, �
 
 Notation "⋃ S" := (subtype_union S) (at level 100, no associativity) : subtype.
 
-Definition carrier_set {X : hSet} (S : hsubtype X) : hSet :=
-  make_hSet (carrier S) (isaset_carrier_subset _ S).
+Definition subtype_binaryunion {X} (A B : hsubtype X) : hsubtype X
+  := fun x => A x ∨ B x.
+
+Notation "A ∪ B" := (subtype_binaryunion A B)
+                              (at level 40, left associativity) : subtype.
+  (* precedence tighter than "⊆", also than "-" [subtype_difference].  *)
+  (* in agda-input method, type \cup or ∪ *)
+
+Definition subtype_binaryunion_leq1 {X} (A B : hsubtype X) : A ⊆ (A ∪ B)
+  := fun x => hdisj_in1.
+
+Definition subtype_binaryunion_leq2 {X} (A B : hsubtype X) : B ⊆ (A ∪ B)
+  := fun x => hdisj_in2.
 
 Definition subtype_union_containedIn {X:hSet} {I:UU} (S : I -> hsubtype X) i : S i ⊆ ⋃ S
   := λ x s, hinhpr (i,,s).
@@ -196,3 +212,422 @@ Proof.
   - exact (le x Sx).
   - induction e. exact Tz.
 Defined.
+
+Section Complement.
+
+  Context {X : UU}.
+
+  Definition subtype_complement (S : hsubtype X) : hsubtype X := fun x => hneg (S x).
+
+  (** Something can't be in a subtype and its complement. *)
+  Lemma not_in_subtype_and_complement (S : hsubtype X) :
+    ∏ x, S x -> subtype_complement S x -> empty.
+  Proof.
+    intros x in_S in_neg_S; exact (in_neg_S in_S).
+  Defined.
+
+  (** The intersection of a family containing a set and its complement is empty. *)
+  Lemma subtype_complement_intersection_empty {S} {I : UU} {f : I -> hsubtype X} :
+    (∑ i : I, f i = S) ->
+    (∑ j : I, f j = subtype_complement S) ->
+    subtype_intersection f ≡ emptysubtype _.
+  Proof.
+    intros has_S has_neg_S x; use make_dirprod.
+    - intros in_intersection.
+      pose (in_S := in_intersection (pr1 has_S)).
+      pose (in_neg_S := in_intersection (pr1 has_neg_S)).
+      cbn in *.
+
+      pose (in_S' := (eqtohomot (pr2 has_S)) x).
+      pose (in_neg_S' := (eqtohomot (pr2 has_neg_S)) x).
+
+      apply (not_in_subtype_and_complement S x).
+      + abstract (induction in_S'; assumption).
+      + abstract (induction in_neg_S'; assumption).
+
+    - intros empt; induction empt.
+  Qed.
+
+  (** The union of a family containing a set and its complement is the whole set (assuming LEM). *)
+  Lemma subtype_complement_union {S} (lem : LEM) {I : UU} {f : I -> hsubtype X} :
+    (∑ i : I, f i = S) ->
+    (∑ j : I, f j = subtype_complement S) ->
+    subtype_union f ≡ totalsubtype _.
+  Proof.
+    intros has_S has_neg_S x; use make_dirprod.
+    - intro; exact tt.
+    - intro.
+      induction (lem (S x)).
+      + apply hinhpr.
+        exists (pr1 has_S).
+        abstract (rewrite (pr2 has_S); assumption).
+      + apply hinhpr.
+        exists (pr1 has_neg_S).
+        abstract (rewrite (pr2 has_neg_S); assumption).
+  Qed.
+
+End Complement.
+
+(* We could define the intersection as follows but this makes it more complicated than it should be *)
+Definition binary_intersection' {X : UU} (U V : hsubtype X) : hsubtype X
+  := subtype_intersection (λ b,  bool_rect (λ _ : bool, hsubtype X) U V b).
+
+Definition binary_intersection {X : UU} (U V : hsubtype X) : hsubtype X
+  := λ x, U x ∧ V x.
+
+Notation "A ∩ B" :=
+  (binary_intersection A B)
+  (at level 40, left associativity)
+  : subtype.
+
+Lemma binary_intersection_commutative {X : UU} (U V : hsubtype X)
+  : U ∩ V ⊆ V ∩ U.
+Proof.
+  intros ? p.
+  exact (transportf _ (iscomm_hconj (U x) (V x)) p).
+Qed.
+
+Definition intersection_contained_l {X : UU} (U V : hsubtype X)
+  : U ∩ V ⊆ U.
+Proof.
+  intros ? xinUV.
+  apply xinUV.
+Qed.
+
+Definition intersection_contained_r {X : UU} (U V : hsubtype X)
+  : U ∩ V ⊆ V.
+Proof.
+  intros ? xinUV.
+  apply xinUV.
+Qed.
+
+Definition intersection_contained {X : UU} {U U' V V' : hsubtype X}
+           (uu : U ⊆ U')
+           (vv : V ⊆ V')
+  : U ∩ V ⊆ U' ∩ V'.
+Proof.
+  intros x p.
+  cbn.
+  split.
+  - apply (uu x).
+    exact ((intersection_contained_l U V) x p).
+  - apply (vv x).
+    exact ((intersection_contained_r U V) x p).
+Qed.
+
+Lemma isaprop_subtype_containedIn {X : UU} (U V : hsubtype X)
+  : isaprop (U ⊆ V).
+Proof.
+  apply impred_isaprop ; intro.
+  apply isapropimpl.
+  apply V.
+Qed.
+
+Definition image_hsubtype {X Y : UU} (U : hsubtype X) (f : X → Y)
+  : hsubtype Y := λ y : Y, (∃ x : X, f x = y × U x).
+
+Lemma image_hsubtype_emptyhsubtype {X Y : UU} (f : X → Y)
+  : image_hsubtype (emptysubtype X) f = emptysubtype Y.
+Proof.
+  apply funextsec ; intro y.
+  apply hPropUnivalence.
+  - intro yinfEmpty.
+    use (factor_through_squash _ _ yinfEmpty).
+    { apply emptysubtype. }
+    intro x.
+    apply (pr22 x).
+  - intro yinEmpty.
+    apply fromempty.
+    exact (yinEmpty).
+Qed.
+
+Definition image_hsubtype_id {X : UU} (U : hsubtype X)
+  : image_hsubtype U (idfun X) = U.
+Proof.
+  apply funextsec ; intro x.
+  apply hPropUnivalence.
+  - intro xinIdU.
+    use (factor_through_squash _ _ xinIdU).
+    { apply U. }
+    intro u0.
+    assert (p0 : U (pr1 u0) = U x).
+    {
+      apply maponpaths.
+      apply (pr12 u0).
+    }
+    induction p0.
+    apply (pr22 u0).
+  - intro xinU.
+    apply hinhpr.
+    exact (x,, idpath x,, xinU).
+Qed.
+
+Definition image_hsubtype_comp {X Y Z : UU} (U : hsubtype X)
+           (f : X → Y) (g : Y → Z)
+  : image_hsubtype U (funcomp f g) = image_hsubtype (image_hsubtype U f) g.
+Proof.
+  apply funextsec ; intro z.
+  apply hPropUnivalence.
+  - intro zinCompU.
+    use (factor_through_squash _ _ zinCompU).
+    { apply ishinh. }
+    intro x.
+    apply hinhpr.
+    exists (f (pr1 x)).
+    exists (pr12 x).
+    apply hinhpr.
+    exact (pr1 x,, maponpaths f (idpath (pr1 x)),, pr22 x).
+  - intro zinCompU.
+    use (factor_through_squash _ _ zinCompU).
+    { apply ishinh. }
+    intro y.
+    use (factor_through_squash _ _ (pr22 y)).
+    { apply ishinh. }
+    intro x.
+    apply hinhpr.
+    exists (pr1 x).
+    split.
+    + refine (_ @ (pr12 y)).
+      unfold funcomp.
+      unfold funcomp.
+      apply maponpaths.
+      exact (pr12 x).
+    + exact (pr22 x).
+Qed.
+
+Definition hsubtype_preserving {X Y : UU} (U : hsubtype X) (V : hsubtype Y) (f : X → Y)
+  : UU := (image_hsubtype U f) ⊆ V.
+
+Lemma isaprop_hsubtype_preserving {X Y : UU} (U : hsubtype X) (V : hsubtype Y) (f : X → Y)
+  : isaprop (hsubtype_preserving U V f).
+Proof.
+  apply impred_isaprop ; intro.
+  apply isapropimpl.
+  apply V.
+Qed.
+
+Lemma id_hsubtype_preserving {X : UU} (U : hsubtype X) : hsubtype_preserving U U (idfun X).
+Proof.
+  intros x xinU.
+  rewrite image_hsubtype_id in xinU.
+  exact xinU.
+Qed.
+
+Lemma comp_hsubtype_preserving {X Y Z : UU}
+      {U : hsubtype X} {V : hsubtype Y} {W : hsubtype Z}
+      {f : X → Y} {g : Y → Z}
+      (fsp : hsubtype_preserving U V f) (gsp : hsubtype_preserving V W g)
+  : hsubtype_preserving U W (funcomp f g).
+Proof.
+  intros z zinU.
+  rewrite image_hsubtype_comp in zinU.
+  apply (gsp _).
+  unfold image_hsubtype.
+  use (factor_through_squash _ _ zinU).
+  { apply ishinh. }
+  intro y.
+  apply hinhpr.
+  exists (pr1 y).
+  exists (pr12 y).
+  apply (fsp _).
+  exact (pr22 y).
+Qed.
+
+Lemma empty_hsubtype_preserving {X Y : UU} (f : X → Y)
+  : hsubtype_preserving (emptysubtype X) (emptysubtype Y) f.
+Proof.
+  unfold hsubtype_preserving.
+  rewrite image_hsubtype_emptyhsubtype.
+  apply subtype_containment_isrefl.
+Qed.
+
+Lemma total_hsubtype_preserving {X Y : UU} (f : X → Y)
+  : hsubtype_preserving (totalsubtype X) (totalsubtype Y) f.
+Proof.
+  exact (λ _ _, tt).
+Qed.
+
+Section singletons.
+  Definition singleton {X : UU} (x : X) : hsubtype X
+    := λ (a : X), ∥ a = x ∥.
+
+  (* The canonical element of the singleton subtype. *)
+  Definition singleton_point {X : UU} {x : X} : singleton x
+    := (x ,, hinhpr (idpath x)).
+
+  Definition iscontr_singleton {X : hSet} (x : X) : iscontr (singleton x).
+  Proof.
+    use make_iscontr.
+    - exact singleton_point.
+    - intros t.
+      apply subtypePath_prop.
+      apply(squash_to_prop (pr2 t)).
+      apply setproperty.
+      intro ; assumption.
+  Defined.
+
+  Definition singleton_is_in {X : UU} (A : hsubtype X) (a : A)
+    : (singleton (pr1 a)) ⊆ A.
+  Proof.
+    intro y.
+    use hinhuniv.
+    exact(λ (p : y = (pr1 a)), transportb A p (pr2 a)).
+  Defined.
+End singletons.
+
+(* Map from the coproduct of carriers to the carrier of the binary union. *)
+Definition coprod_carrier_binary_union {X}
+  (A B : hsubtype X)
+  : A ⨿ B -> A ∪ B.
+Proof.
+  apply sumofmaps; apply subtype_inc.
+  - apply subtype_binaryunion_leq1.
+  - apply subtype_binaryunion_leq2.
+Defined.
+
+Lemma issurjective_coprod_carrier_binary_union {X}
+  (A B : hsubtype X)
+  : issurjective (coprod_carrier_binary_union A B).
+Proof.
+  intros [x aub].
+  use(hinhfun _ aub).
+  apply sumofmaps
+  ; (intro y; use make_hfiber)
+  ; try (apply subtypePath_prop).
+  - exact(inl (x ,, y)).
+  - apply idpath.
+  - exact(inr (x ,, y)).
+  - apply idpath.
+Qed.
+
+Section ContainedSubtypes.
+
+  Context {X : UU}.
+  Context (A : hsubtype X).
+
+  Definition contained_subtype
+    : UU
+    := carrier (λ (B : hsubtype X), B ⊆ A).
+
+  Definition make_contained_subtype
+    (B : hsubtype X)
+    (H : B ⊆ A)
+    : contained_subtype
+    := make_carrier _ B H.
+
+  Coercion contained_subtype_to_subtype
+    (B : contained_subtype)
+    : hsubtype X
+    := pr1carrier _ B.
+
+  Definition contained_subtype_is_contained
+    (B : contained_subtype)
+    : B ⊆ A
+    := pr2 B.
+
+  Definition contained_subtype_eq
+    (B B' : contained_subtype)
+    (H1 : ∏ x, B x -> B' x)
+    (H2 : ∏ x, B' x -> B x)
+    : B = B'.
+  Proof.
+    apply carrier_eq.
+    apply funextfun.
+    intro x.
+    apply hPropUnivalence.
+    - apply H1.
+    - apply H2.
+  Qed.
+
+End ContainedSubtypes.
+
+Section CarrierSubtypes.
+
+  Context {X : UU}.
+  Context (A : hsubtype X).
+
+  Definition carrier_subtype_to_contained_subtype
+    (B : hsubtype A)
+    : contained_subtype A.
+  Proof.
+    use make_contained_subtype.
+    - intro x.
+      exists (∑ (H : A x), B (x ,, H)).
+      abstract (
+        apply isaproptotal2;
+        intro;
+        intros;
+        apply propproperty
+      ).
+    - exact (λ x, pr1).
+  Defined.
+
+  Definition contained_subtype_to_carrier_subtype
+    (B : contained_subtype A)
+    : hsubtype A.
+  Proof.
+    intro x.
+    exact (pr1 B (pr1 x)).
+  Defined.
+
+  Lemma carrier_subtype_to_contained_subtype_to_carrier_subtype
+    (B : hsubtype A)
+    : contained_subtype_to_carrier_subtype (carrier_subtype_to_contained_subtype B) = B.
+  Proof.
+    apply funextfun.
+    intro x.
+    apply hPropUnivalence.
+    - intro H.
+      refine (transportf B _ (pr2 H)).
+      now apply carrier_eq.
+    - intro H.
+      exists (pr2 x).
+      refine (transportf B _ H).
+      now apply carrier_eq.
+  Qed.
+
+  Lemma contained_subtype_to_carrier_subtype_to_contained_subtype
+    (B : contained_subtype A)
+    : carrier_subtype_to_contained_subtype (contained_subtype_to_carrier_subtype B) = B.
+  Proof.
+    apply contained_subtype_eq.
+    - intros x H.
+      exact (pr2 H).
+    - intros x H.
+      exists (pr2 B x H).
+      exact H.
+  Qed.
+
+  Definition carrier_subtype_weq_contained_subtype
+    : hsubtype A ≃ contained_subtype A
+    := weq_iso
+      carrier_subtype_to_contained_subtype
+      contained_subtype_to_carrier_subtype
+      carrier_subtype_to_contained_subtype_to_carrier_subtype
+      contained_subtype_to_carrier_subtype_to_contained_subtype.
+
+  Definition carrier_subtype_carrier_weq_contained_subtype_carrier
+    (B : hsubtype A)
+    : B ≃ carrier_subtype_weq_contained_subtype B
+    := invweq (totalAssociativity _).
+
+  Lemma carrier_subtype_contained_iff_contained_subtype_contained
+    (B B' : hsubtype A)
+    : B ⊆ B' ≃ carrier_subtype_weq_contained_subtype B ⊆ carrier_subtype_weq_contained_subtype B'.
+  Proof.
+    refine (weqiff _ (propproperty _) (propproperty _)).
+    split.
+    - intros H x Hx.
+      pose (f := invmap (carrier_subtype_carrier_weq_contained_subtype_carrier B)).
+      pose (g := subtype_inc H).
+      pose (h := carrier_subtype_carrier_weq_contained_subtype_carrier B').
+      exact ((pr2 ∘ h ∘ g ∘ f)%functions (x ,, Hx)).
+    - intros H x Hx.
+      pose (f := carrier_subtype_carrier_weq_contained_subtype_carrier B).
+      pose (g := subtype_inc H).
+      pose (h := invmap (carrier_subtype_carrier_weq_contained_subtype_carrier B')).
+      refine (transportf B' _ ((pr2 ∘ h ∘ g ∘ f)%functions (x ,, Hx))).
+      now apply carrier_eq.
+  Qed.
+
+End CarrierSubtypes.

@@ -18,17 +18,16 @@ Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.FunctorCategory.
 Require Import UniMath.CategoryTheory.whiskering.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.terminal.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Terminal.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
 Require Import UniMath.CategoryTheory.PointedFunctors.
 Require Import UniMath.SubstitutionSystems.Signatures.
-Require Import UniMath.CategoryTheory.UnitorsAndAssociatorsForEndofunctors.
-Require Import UniMath.CategoryTheory.Monoidal.MonoidalCategories.
-Require Import UniMath.CategoryTheory.Monoidal.EndofunctorsMonoidal.
+Require Import UniMath.CategoryTheory.BicatOfCatsElementary.
 Require Import UniMath.SubstitutionSystems.Notation.
+
 Local Open Scope subsys.
-Require Import UniMath.CategoryTheory.HorizontalComposition.
+
 Require Import UniMath.CategoryTheory.PointedFunctorsComposition.
 
 Local Open Scope cat.
@@ -49,10 +48,15 @@ Local Notation "'Ptd'" := (category_Ptd C).
 Local Notation "'EndC'":= ([C, C]) .
 
 (** distributivity with laws as a simple form the strength with laws,
-    for endofunctors on the base category *)
+    for endofunctors on the base category
+
+    in July 2023, it became clear that this should rather have been
+    called a pointed lax commutator; since a paper is based on this
+    notion, we keep the name
+*)
 Section def_of_δ.
 
-Variable G : EndC.
+Context (G : EndC).
 
 Definition δ_source : functor Ptd EndC :=
   functor_compose (functor_ptd_forget C) (post_comp_functor G).
@@ -62,16 +66,16 @@ Definition δ_target : functor Ptd EndC :=
 
 Section δ_laws.
 
-Variable δ : δ_source ⟹ δ_target.
+Context (δ : δ_source ⟹ δ_target).
 
 (* Should be ρ_G^-1 ∘ λ_G ? *)
 Definition δ_law1 : UU := δ (id_Ptd C) = identity G.
 Let D' Ze Ze' :=
-  nat_trans_comp (α_functors (pr1 Ze) (pr1 Ze') G)
- (nat_trans_comp (pre_whisker (pr1 Ze) (δ Ze'))
- (nat_trans_comp (α_functors_inv (pr1 Ze) G (pr1 Ze'))
- (nat_trans_comp (post_whisker (δ Ze) (pr1 Ze'))
-                 (α_functors G (pr1 Ze) (pr1 Ze'))))).
+  nat_trans_comp (rassociator_CAT (pr1 Ze) (pr1 Ze') G)
+ (nat_trans_comp (lwhisker_CAT (pr1 Ze) (δ Ze'))
+ (nat_trans_comp (lassociator_CAT (pr1 Ze) G (pr1 Ze'))
+ (nat_trans_comp (rwhisker_CAT (pr1 Ze') (δ Ze))
+                 (rassociator_CAT G (pr1 Ze) (pr1 Ze'))))).
 Definition δ_law2 : UU := ∏ Ze Ze', δ (Ze p• Ze') = D' Ze Ze'.
 
 (** the following variant is more suitable for communication about the results *)
@@ -144,8 +148,7 @@ End δ_for_id.
     distributive laws δ *)
 Section θ_from_δ.
 
-Variable G : functor C C.
-Variable DL : DistributiveLaw G.
+Context (G : functor C C) (DL : DistributiveLaw G).
 
 Let precompG := (pre_composition_functor _ C C G).
 
@@ -154,14 +157,10 @@ Definition θ_from_δ_mor (XZe : [C, C] ⊠ Ptd) :
   [C, C] ⟦ θ_source precompG XZe, θ_target precompG XZe ⟧.
 Proof.
   set (X := pr1 XZe); set (Z := pr1 (pr2 XZe)).
-  set (F1 := α_functors G Z X).
-  set (F1' := pr1 (monoidal_cat_associator (monoidal_cat_of_endofunctors _)) ((G,, Z),, X)).
-  set (F2 := post_whisker (δ G DL (pr2 XZe)) X).
-  set (F2' := # (post_comp_functor X) (δ G DL (pr2 XZe))).
-  set (F3 := α_functors_inv Z G X).
-  set (F3' := pr1 (pr2 (monoidal_cat_associator (monoidal_cat_of_endofunctors _)) ((Z,, G),, X))).
-  set (obsolete := nat_trans_comp F3 (nat_trans_comp F2 F1)).
-  exact (F3' · (F2' · F1')).
+  set (F1 := rassociator_CAT G Z X).
+  set (F2 := rwhisker_CAT X (δ G DL (pr2 XZe))).
+  set (F3 := lassociator_CAT Z G X).
+  exact (F3 · (F2 · F1)).
 Defined.
 
 Lemma is_nat_trans_θ_from_δ_mor :
@@ -217,27 +216,19 @@ End θ_from_δ.
 (* Composition of δ's *)
 Section δ_mul.
 
-  Variable G1 : [C, C].
-  Variable DL1 : DistributiveLaw G1.
-  Variable G2 : [C, C].
-  Variable DL2 : DistributiveLaw G2.
+  Context (G1 : [C, C]) (DL1 : DistributiveLaw G1)
+          (G2 : [C, C]) (DL2 : DistributiveLaw G2).
 
   Definition δ_comp_mor (Ze : ptd_obj C) : [C, C] ⟦pr1 (δ_source (functor_compose G1 G2)) Ze,
                                                         pr1 (δ_target (functor_compose G1 G2)) Ze⟧.
 Proof.
   set (Z := pr1 Ze).
-  set (F1 := α_functors_inv Z G1 G2).
-  set (F1' := pr1 (pr2 (monoidal_cat_associator (monoidal_cat_of_endofunctors _)) ((Z,, G1),, G2))).
-  set (F2 := post_whisker (δ G1 DL1 Ze) G2).
-  set (F2' := # (post_comp_functor G2) (δ G1 DL1 Ze)).
-  set (F3 := α_functors G1 Z G2).
-  set (F3' := pr1 (monoidal_cat_associator (monoidal_cat_of_endofunctors _)) ((G1,, Z),, G2)).
-  set (F4 := pre_whisker (pr1 G1) (δ G2 DL2 Ze)).
-  set (F4' := # (pre_comp_functor G1) (δ G2 DL2 Ze)).
-  set (F5 := α_functors_inv G1 G2 Z).
-  set (F5' := pr1 (pr2 (monoidal_cat_associator (monoidal_cat_of_endofunctors _)) ((G1,, G2),, Z))).
-  set (obsolete := nat_trans_comp F1 (nat_trans_comp F2 (nat_trans_comp F3 (nat_trans_comp F4 F5)))).
-  exact (F1' · (F2' · (F3' · (F4' · F5')))).
+  set (F1 := lassociator_CAT Z G1 G2).
+  set (F2 := rwhisker_CAT G2 (δ G1 DL1 Ze)).
+  set (F3 := rassociator_CAT G1 Z G2).
+  set (F4 := lwhisker_CAT G1 (δ G2 DL2 Ze)).
+  set (F5 := lassociator_CAT G1 G2 Z).
+  exact (F1 · (F2 · (F3 · (F4 · F5)))).
 Defined.
 
 Lemma is_nat_trans_δ_comp_mor : is_nat_trans (δ_source (functor_compose G1 G2))
@@ -309,7 +300,7 @@ End δ_mul.
 (** Construct the δ when G is generalized option *)
 Section genoption_sig.
 
-  Variables (A : C) (CC : BinCoproducts C).
+Context (A : C) (CC : BinCoproducts C).
 
   Let genopt := constcoprod_functor1 CC A.
 
@@ -429,7 +420,7 @@ End genoption_sig.
 (** trivially instantiate previous section to option functor *)
 Section option_sig.
 
-  Variables (TC : Terminal C) (CC : BinCoproducts C).
+Context (TC : Terminal C) (CC : BinCoproducts C).
 
   Let opt := option_functor CC TC.
 
@@ -444,8 +435,7 @@ End option_sig.
 (** Define δ for G = F^n *)
 Section iter1_dl.
 
-Variable G : functor C C.
-Variable DL : DistributiveLaw G.
+Context (G : functor C C) (DL : DistributiveLaw G).
 
 Definition DL_iter_functor1 (n: nat) : DistributiveLaw (iter_functor1 G n).
 Proof.
@@ -490,8 +480,7 @@ End id_signature.
 
 Section constantly_constant_signature.
 
-  Variable (C D D' : category).
-  Variable (d : D).
+  Context (C D D' : category) (d : D).
 
   Let H := constant_functor (functor_category C D') (functor_category C D) (constant_functor C D d).
 
@@ -529,25 +518,22 @@ Local Notation "'Ptd'" := (category_Ptd C).
 (** The category of endofunctors on [C] *)
 Local Notation "'EndC'":= ([C, C]) .
 
-Variable S: Signature C D D'.
+Context (S: Signature C D D').
 
 Let H : functor [C, D'] [C, D] := Signature_Functor S.
 Let θ : nat_trans (θ_source H) (θ_target H) := theta S.
 Let θ_strength1 := Sig_strength_law1 S.
 Let θ_strength2 := Sig_strength_law2 S.
-Variable G : [D, E].
+Context (G : [D, E]).
 
 Let GH : functor [C, D'] [C, E] := functor_composite H (post_comp_functor G).
 
 Definition Gθ_mor (XZe : [C, D'] ⊠ Ptd) : [C, E] ⟦ θ_source GH XZe, θ_target GH XZe ⟧.
 Proof.
   set (X := pr1 XZe); set (Z := pr1 (pr2 XZe) : [C, C]).
-  set (F1 := α_functors_inv Z (H X) G).
-  set (F1' := pr1 (pr2 (associativity_as_nat_z_iso _ _ _ _) ((Z,, (H X:[C, D])),, G))).
-  set (F2 := post_whisker (θ XZe) G).
-  set (F2' := # (post_comp_functor G) (θ XZe)).
-  set (obsolete := nat_trans_comp F1 F2).
-  exact (F1' · F2').
+  set (F1 := lassociator_CAT Z (H X) G).
+  set (F2 := rwhisker_CAT G (θ XZe)).
+  exact (F1 · F2).
 Defined.
 
 Lemma is_nat_trans_Gθ_mor : is_nat_trans (θ_source GH) (θ_target GH) Gθ_mor.

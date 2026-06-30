@@ -17,8 +17,8 @@ Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.FunctorCategory.
 Require Import
         UniMath.CategoryTheory.Equivalences.Core
-        UniMath.CategoryTheory.categories.HSET.Core
-        UniMath.CategoryTheory.categories.HSET.MonoEpiIso
+        UniMath.CategoryTheory.Categories.HSET.Core
+        UniMath.CategoryTheory.Categories.HSET.MonoEpiIso
         UniMath.CategoryTheory.slicecat
         UniMath.CategoryTheory.opp_precat
         UniMath.CategoryTheory.Presheaf
@@ -189,7 +189,7 @@ Section elems_slice_equiv.
     exact (maponpaths (# (pr1 P) f) (pr2 s)).
   Defined.
 
-  Definition slice_to_PreShv_ob_funct_data (Q : PreShv C / P) : functor_data ((∫P)^op) HSET :=
+  Definition slice_to_PreShv_ob_funct_data (Q : PreShv C / P) : functor_data (∫P)^op HSET :=
     slice_to_PreShv_ob_ob Q ,, @slice_to_PreShv_ob_mor Q.
 
   Definition slice_to_PreShv_ob_is_funct (Q : PreShv C / P) : is_functor (slice_to_PreShv_ob_funct_data Q).
@@ -200,7 +200,7 @@ Section elems_slice_equiv.
       apply funextsec; intro p;
         apply (invmaponpathsincl pr1);
         try (apply isofhlevelfpr1;
-             intros ?; apply setproperty).
+             intro; apply setproperty).
     + exact (eqtohomot ((pr1 Qisfunct) x) (pr1 p)).
     + exact (eqtohomot ((pr2 Qisfunct) x y z f g) (pr1 p)).
   Qed.
@@ -208,7 +208,7 @@ Section elems_slice_equiv.
   Definition slice_to_PreShv_ob : PreShv C / P → PreShv ∫P :=
     λ Q,  slice_to_PreShv_ob_funct_data Q ,,  slice_to_PreShv_ob_is_funct Q.
 
-  Definition slice_to_PreShv_ob_nat {X Y : PreShv C / P} (F : X --> Y) (e : ∫P^op) :
+  Definition slice_to_PreShv_ob_nat {X Y : PreShv C / P} (F : X --> Y) (e : (∫P)^op) :
     (slice_to_PreShv_ob_ob X) e --> (slice_to_PreShv_ob_ob Y) e.
   Proof.
     induction e as [e Pe].
@@ -228,7 +228,7 @@ Section elems_slice_equiv.
     apply funextsec; intros [p peq].
     apply (invmaponpathsincl pr1).
     + apply isofhlevelfpr1.
-      intros ?.
+      intro.
       apply setproperty.
     + simpl.
       destruct peq.
@@ -254,7 +254,7 @@ Section elems_slice_equiv.
       apply funextsec; intros [p peq];
       apply (invmaponpathsincl pr1);
       try (apply isofhlevelfpr1;
-           intros ?;
+           intro;
                   apply setproperty);
       simpl;
       unfold hfiber;
@@ -304,23 +304,20 @@ Section elems_slice_equiv.
   Definition slice_counit : slice_to_PreShv ∙ PreShv_to_slice ⟹ functor_identity (PreShv C / P) :=
     slice_counit_fun ,, is_nat_trans_slice_counit.
 
-  Definition slice_all_iso : forall F : PreShv C / P, is_iso (slice_counit F).
+  Definition slice_all_z_iso : forall F : PreShv C / P, is_z_isomorphism (slice_counit F).
   Proof.
     intros [[[F Fmor] Fisfunct] [Fnat Fisnat]].
-    apply iso_to_slice_precat_iso.
-    apply functor_iso_if_pointwise_iso.
+    apply z_iso_to_slice_precat_z_iso.
+    apply nat_trafo_z_iso_if_pointwise_z_iso.
     intros X; simpl.
     change (λ X0, pr1 (pr2 X0)) with (fromcoconusf (Fnat X)).
-    exact (hset_equiv_is_iso (make_hSet (coconusf (Fnat X))
+    exact (hset_equiv_is_z_iso (make_hSet (coconusf (Fnat X))
                                          (isaset_total2_hSet _ (λ y, (hfiber_hSet (Fnat X) y)))) _
                                (weqfromcoconusf (Fnat X))).
   Qed.
 
   Definition slice_unit : functor_identity (PreShv C / P) ⟹ slice_to_PreShv ∙ PreShv_to_slice :=
-    nat_trans_inv_from_pointwise_inv _ _
-                                     (has_homsets_slice_precat ((PreShv C)) P)
-                                     (slice_to_PreShv ∙ PreShv_to_slice) (functor_identity (PreShv C / P))
-                                     slice_counit slice_all_iso.
+    pr1 (nat_trafo_z_iso_if_pointwise_z_iso (has_homsets_slice_precat ((PreShv C)) P) (slice_counit) slice_all_z_iso).
 
   (** ** Construction of the natural isomorphism from the identity functor to (PreShv_to_slice ∙ slice_to_PreShv) *)
   Definition PreShv_unit_fun (F : PreShv ∫P) :
@@ -334,7 +331,7 @@ Section elems_slice_equiv.
       apply funextsec; intros x.
       apply (invmaponpathsincl pr1).
       apply isofhlevelfpr1;
-        intros ?;
+        intro;
                apply setproperty.
       induction (!feq).
       apply (total2_paths2_f (idpath _)).
@@ -352,7 +349,7 @@ Section elems_slice_equiv.
     apply funextsec; intros q.
     apply (invmaponpathsincl pr1).
     apply isofhlevelfpr1;
-      intros ?;
+      intro;
              apply setproperty.
     simpl. unfold hfiber.
     rewrite transportf_total2; simpl.
@@ -362,10 +359,10 @@ Section elems_slice_equiv.
   Definition PreShv_unit : functor_identity (PreShv ∫P) ⟹ PreShv_to_slice ∙ slice_to_PreShv :=
     PreShv_unit_fun ,, is_nat_trans_PreShv_unit.
 
-  Definition PreShv_all_iso : forall F : PreShv ∫P, is_iso (PreShv_unit F).
+  Definition PreShv_all_iso : forall F : PreShv ∫P, is_z_isomorphism (PreShv_unit F).
   Proof.
     intros [[F Fmor] Fisfunct].
-    apply functor_iso_if_pointwise_iso.
+    apply nat_trafo_z_iso_if_pointwise_z_iso.
     intros [X p]; simpl.
     assert (H : isweq (λ x : pr1hSet (F (X,, p)) , (p,, x) ,, idpath p : pr1hSet (slice_to_PreShv_ob_ob (PreShv_to_slice_ob ((F,, Fmor),, Fisfunct)) (X,, p)))).
     { unfold isweq. intros [[p' x'] e'].
@@ -374,7 +371,7 @@ Section elems_slice_equiv.
       intros [x'' t].
       apply (invmaponpathsincl pr1).
       apply isofhlevelfpr1;
-        intros ?;
+        intro;
                exact (pr2 (@eqset
                              ((slice_to_PreShv_ob_ob (PreShv_to_slice_ob ((F,, Fmor),, Fisfunct)) (X,, p'))) _ _)).
       assert (eq_id : base_paths (p',, x'') (p',, x') (maponpaths pr1 t) = idpath p').
@@ -386,17 +383,17 @@ Section elems_slice_equiv.
       rewrite (transportf_paths _ eq_id).
       now rewrite idpath_transportf.
     }
-    exact (hset_equiv_is_iso (F (X ,, p)) _ (_ ,, H)).
+    exact (hset_equiv_is_z_iso (F (X ,, p)) _ (_ ,, H)).
   Qed.
 
   Definition PreShv_counit : PreShv_to_slice ∙ slice_to_PreShv ⟹ functor_identity (PreShv ∫P) :=
-    nat_trans_inv_from_pointwise_inv _ _ (pr2 (PreShv ∫P)) _ _ PreShv_unit PreShv_all_iso.
+    pr1 (nat_trafo_z_iso_if_pointwise_z_iso (pr2 (PreShv ∫P)) PreShv_unit PreShv_all_iso).
 
   (** ** The equivalence of the categories PreShv ∫P and PreShv C / P *)
   Definition PreShv_of_elems_slice_of_PreShv_equiv : equivalence_of_cats (PreShv ∫P) (PreShv C / P) :=
-    (PreShv_to_slice ,,  slice_to_PreShv ,, PreShv_unit ,, slice_counit) ,, (PreShv_all_iso ,, slice_all_iso).
+    (PreShv_to_slice ,,  slice_to_PreShv ,, PreShv_unit ,, slice_counit) ,, (PreShv_all_iso ,, slice_all_z_iso).
 
   Definition PreShv_of_elems_slice_of_PreShv_adj_equiv : adj_equivalence_of_cats PreShv_to_slice :=
-    @adjointificiation (PreShv ∫P) (PreShv C / P) PreShv_of_elems_slice_of_PreShv_equiv.
+    @adjointification (PreShv ∫P) (PreShv C / P) PreShv_of_elems_slice_of_PreShv_equiv.
 
 End elems_slice_equiv.

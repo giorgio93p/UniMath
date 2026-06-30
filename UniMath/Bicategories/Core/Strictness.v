@@ -10,13 +10,13 @@ Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.Core.Isos.
-Require Import UniMath.CategoryTheory.categories.HSET.All.
+Require Import UniMath.CategoryTheory.Categories.HSET.All.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
 Require Import UniMath.Bicategories.Core.Examples.BicatOfUnivCats.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
 Require Import UniMath.Bicategories.Core.TransportLaws.
 
@@ -197,6 +197,35 @@ Definition locally_strict
            (B : bicat)
   : UU
   := ∏ (a b : B), isaset (a --> b).
+
+Definition globally_strict
+           (B : bicat)
+  : UU
+  := isaset B.
+
+(** Set bicategories *)
+Definition bisetcat
+  : UU
+  := ∑ (B : bicat), locally_strict B × globally_strict B.
+
+Coercion bisetcat_to_bicat
+         (B : bisetcat)
+  : bicat
+  := pr1 B.
+
+Proposition locally_strict_bisetcat
+            (B : bisetcat)
+  : locally_strict B.
+Proof.
+  exact (pr12 B).
+Qed.
+
+Proposition globally_strict_bisetcat
+            (B : bisetcat)
+  : globally_strict B.
+Proof.
+  exact (pr22 B).
+Qed.
 
 Definition is_strict_bicat
            (B : bicat)
@@ -418,16 +447,17 @@ Proof.
 Defined.
 
 Definition swap
-  : nat_iso diag_set diag_set.
+  : nat_z_iso diag_set diag_set.
 Proof.
-  use make_nat_iso.
+  use make_nat_z_iso.
   - use make_nat_trans.
     + intros X x.
       exact (pr2 x ,, pr1 x).
     + intros X Y f.
       apply idpath.
   - intros X.
-    use is_iso_qinv.
+    cbn.
+    use tpair.
     + exact (λ z, pr2 z ,, pr1 z).
     + split.
       * apply idpath.
@@ -454,7 +484,7 @@ Proof.
                          diag_set
                          diag_set)
                       (id2_invertible_2cell _)
-                      (nat_iso_to_invertible_2cell _ _ swap)))
+                      (nat_z_iso_to_invertible_2cell _ _ swap)))
                 boolset)
              (true ,, false)))
     as C.
@@ -846,6 +876,47 @@ Proof.
   apply idpath.
 Qed.
 
+Definition is_invertible_2cell_idto2mor
+           {C : two_cat}
+           {a b : C}
+           {f g : a --> b}
+           (p : f = g)
+  : is_invertible_2cell (C := two_cat_to_bicat C) (idto2mor p).
+Proof.
+  induction p.
+  apply (id2_invertible_2cell (C := two_cat_to_bicat C)).
+Defined.
+
+Definition idto2mor_invertible_2cell
+           {C : two_cat}
+           {a b : C}
+           {f g : a --> b}
+           (p : f = g)
+  : invertible_2cell (C := two_cat_to_bicat C) f g.
+Proof.
+  use make_invertible_2cell.
+  - exact (idto2mor p).
+  - apply is_invertible_2cell_idto2mor.
+Defined.
+
+Proposition is_univalent_2_1_two_cat_to_bicat
+            {C : two_cat}
+            (HC : locally_univalent_two_cat C)
+  : is_univalent_2_1 (two_cat_to_bicat C).
+Proof.
+  intros x y f g.
+  use weqhomot.
+  - exact (make_weq _ (HC x y f g))%weq.
+  - intros p.
+    use subtypePath.
+    {
+      intro.
+      apply isaprop_is_invertible_2cell.
+    }
+    induction p ; cbn.
+    apply idpath.
+Qed.
+
 Lemma two_cat_is_strict_bicat
            (C : two_cat)
   : is_strict_bicat (two_cat_to_bicat C).
@@ -1009,7 +1080,7 @@ Definition two_cat_equiv_strict_bicat
 Proof.
   use make_weq.
   - exact two_cat_to_strict_bicat.
-  - use gradth.
+  - use isweq_iso.
     + exact strict_bicat_to_two_cat.
     + exact two_cat_to_strict_bicat_to_two_cat.
     + exact strict_bicat_to_two_cat_to_strict_bicat.

@@ -9,7 +9,6 @@
 Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.PartA.
 Require Import UniMath.CategoryTheory.Core.Categories.
-Require Import UniMath.CategoryTheory.DisplayedCats.Auxiliary.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
 Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
@@ -254,6 +253,21 @@ Section FullSubBicat.
       apply fullsub_left_adjoint_equivalence_is_bicat_left_adjoint_equivalence.
   Defined.
 
+  Definition disp_left_adjoint_equivalence_fullsubbicat
+             {x y : C}
+             {l : x --> y}
+             (Hl : left_adjoint_equivalence l)
+             {Hx : disp_fullsubbicat x}
+             {Hy : disp_fullsubbicat y}
+             (ll : Hx -->[ l ] Hy)
+    : disp_left_adjoint_equivalence Hl ll.
+  Proof.
+    simple refine ((tt ,, (tt ,, tt)) ,, ((_ ,, _)
+                   ,,
+                   ((tt ,, (_ ,, _)) ,, (tt ,, (_ ,, _)))))
+    ; apply isapropunit.
+  Defined.
+
   Definition disp_univalent_2_0_fullsubbicat
              (HC : is_univalent_2 C)
              (HP : ∏ (x : C), isaprop (P x))
@@ -306,6 +320,12 @@ Section FullSubBicat.
     use make_disp_locally_groupoid.
     - intro; intros. exact tt.
     - exact disp_2cells_isaprop_fullsubbicat.
+  Qed.
+
+  Definition disp_2cells_iscontr_fullsubbicat
+    : disp_2cells_iscontr disp_fullsubbicat.
+  Proof.
+    intro ; intros ; exact iscontrunit.
   Qed.
 
 End FullSubBicat.

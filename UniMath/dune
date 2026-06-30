@@ -1,0 +1,21 @@
+
+(include_subdirs qualified)
+
+(coq.theory
+ (name UniMath)
+ (package coq-unimath)
+ (theories Ltac2)
+ (coqdoc_flags
+        :standard
+        -interpolate
+        --charset utf-8)
+ (flags :standard
+        -noinit
+        -indices-matter
+        -w -notation-overridden))
+
+(rule
+ (deps (source_tree .))
+ (action
+  (with-stdout-to All.v
+   (run %{project_root}/util/generate-exports UniMath "%{deps}"))))

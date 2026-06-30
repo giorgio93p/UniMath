@@ -12,12 +12,13 @@ Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.Core.TransportLaws.
 Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
+
 Local Open Scope cat.
 Local Open Scope bicategory_scope.
 
@@ -577,6 +578,40 @@ Proof.
   assumption.
 Qed.
 
+Definition isaprop_left_adjoint
+           {B : bicat}
+           (HB : is_univalent_2_1 B)
+           {x y : B}
+           (l : x --> y)
+  : isaprop (left_adjoint l).
+Proof.
+  use invproofirrelevance.
+  intros Hl₁ Hl₂.
+  use subtypePath.
+  {
+    intro.
+    apply isapropdirprod ; apply cellset_property.
+  }
+  use total2_paths_f.
+  - apply (isotoid_2_1 HB).
+    refine (adjoint_unique_map l Hl₁ Hl₂ ,, _).
+    exact (adjoint_unique_map_iso l Hl₁ Hl₂).
+  - rewrite transportf_dirprod.
+    apply pathsdirprod.
+    + rewrite transport_two_cell_FlFr.
+      rewrite maponpaths_for_constant_function ; cbn.
+      rewrite id2_left.
+      rewrite isotoid_2_1_lwhisker.
+      rewrite idtoiso_2_1_isotoid_2_1 ; cbn.
+      exact (transport_unit l Hl₁ Hl₂).
+    + rewrite transport_two_cell_FlFr.
+      rewrite maponpaths_for_constant_function ; cbn.
+      rewrite id2_right.
+      rewrite isotoid_2_1_rwhisker.
+      rewrite idtoiso_2_1_isotoid_2_1 ; cbn.
+      exact (transport_counit l Hl₂ Hl₁).
+Qed.
+
 (** As a corollary, in a univalent bicategory 0-cells are 2-types. *)
 Lemma univalent_bicategory_0_cell_hlevel_4
       (C : bicat) (HC : is_univalent_2 C) : isofhlevel 4 C.
@@ -610,26 +645,4 @@ Section AdjointEquivUniqueCompInv.
     }
     apply idpath.
   Qed.
-
-  Lemma unique_adjoint_equivalence_comp
-             {a b c : B}
-    : ∏ (f : adjoint_equivalence a b) (g : adjoint_equivalence b c),
-      comp_adjequiv f g = comp_adjoint_equivalence (pr1 HB) a b c f g.
-  Proof.
-    use (J_2_0 (pr1 HB) (λ a b f, _)).
-    intros x g; simpl.
-    unfold comp_adjoint_equivalence.
-    rewrite J_2_0_comp.
-    use subtypePath.
-    {
-      intro.
-      exact (isaprop_left_adjoint_equivalence _ (pr2 HB)).
-    }
-    cbn.
-    apply (isotoid_2_1 (pr2 HB)).
-    use make_invertible_2cell.
-    - exact (lunitor (pr1 g)).
-    - is_iso.
-  Qed.
-
 End AdjointEquivUniqueCompInv.

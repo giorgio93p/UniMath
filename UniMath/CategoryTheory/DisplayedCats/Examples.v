@@ -17,16 +17,23 @@ Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Univalence.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
 Require Import UniMath.CategoryTheory.Monads.Monads.
+Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
 Local Open Scope cat.
 
-Require Import UniMath.CategoryTheory.DisplayedCats.Auxiliary.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.CategoryTheory.DisplayedCats.Total.
+Require Import UniMath.CategoryTheory.DisplayedCats.Isos.
+Require Import UniMath.CategoryTheory.DisplayedCats.Univalence.
 Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
 Require Import UniMath.CategoryTheory.DisplayedCats.Limits.
+Require Import UniMath.CategoryTheory.DisplayedCats.Fiber.
 Require Import UniMath.CategoryTheory.DisplayedCats.Fibrations.
 Require Import UniMath.CategoryTheory.DisplayedCats.SIP.
+Require Import UniMath.CategoryTheory.DisplayedCats.Examples.Reindexing.
+Require Import UniMath.CategoryTheory.DisplayedCats.Examples.Sigma.
 
 Local Open Scope mor_disp_scope.
 
@@ -84,12 +91,12 @@ Definition is_grp_hom {X Y : hSet} (f : X -> Y)
               (f (e GX) = e GY).
 Definition grp_hom_mult {X Y : hSet} {f : X -> Y}
            {GX : grp_structure X} {GY : grp_structure Y}
-           (is : is_grp_hom f GX GY)
-           : ∏ x x', f (mult GX x x') = mult GY (f x) (f x') := pr1 is.
+           (isc : is_grp_hom f GX GY)
+           : ∏ x x', f (mult GX x x') = mult GY (f x) (f x') := pr1 isc.
 Definition grp_hom_e {X Y : hSet} {f : X -> Y}
            {GX : grp_structure X} {GY : grp_structure Y}
-           (is : is_grp_hom f GX GY)
-           : f (e GX) = e GY := pr2 is.
+           (isc : is_grp_hom f GX GY)
+           : f (e GX) = e GY := pr2 isc.
 
 Definition isaprop_is_grp_hom {X Y : hSet} (f : X -> Y)
            (GX : grp_structure X) (GY : grp_structure Y)
@@ -128,7 +135,7 @@ Section Arrow_Disp.
 
 Context (C:category).
 
-Definition arrow_disp_ob_mor : disp_cat_ob_mor (prod_category C C).
+Definition arrow_disp_ob_mor : disp_cat_ob_mor (category_binproduct C C).
 Proof.
   exists (λ xy : (C × C), (pr1 xy) --> (pr2 xy)).
   simpl; intros xx' yy' g h ff'.
@@ -151,13 +158,13 @@ Qed.
 Definition arrow_data : disp_cat_data _
   := (arrow_disp_ob_mor ,, arrow_id_comp).
 
-Lemma arrow_axioms : disp_cat_axioms (prod_category C C) arrow_data.
+Lemma arrow_axioms : disp_cat_axioms (category_binproduct C C) arrow_data.
 Proof.
   repeat apply tpair; intros; try apply homset_property.
   apply isasetaprop, homset_property.
 Qed.
 
-Definition arrow_disp : disp_cat (prod_category C C)
+Definition arrow_disp : disp_cat (category_binproduct C C)
   := (arrow_data ,, arrow_axioms).
 
 End Arrow_Disp.
@@ -246,6 +253,69 @@ Definition elements_universal : disp_cat HSET
 Definition disp_cat_of_elements {C : category} (P : functor C HSET)
   := reindex_disp_cat P elements_universal.
 
+Definition elements_universal_mor_eq
+           {X Y : HSET}
+           {f : X --> Y}
+           {x : elements_universal X}
+           {y : elements_universal Y}
+           (ff₁ ff₂ : x -->[ f ] y)
+  : ff₁ = ff₂.
+Proof.
+  apply Y.
+Qed.
+
+Definition is_z_iso_disp_elements_universal
+           {X Y : HSET}
+           {f : X --> Y}
+           (Hf : is_z_isomorphism f)
+           {x : elements_universal X}
+           {y : elements_universal Y}
+           (ff : x -->[ f ] y)
+  : is_z_iso_disp (make_z_iso' _ Hf) ff.
+Proof.
+  simple refine (_ ,, _ ,, _).
+  - pose (eqtohomot (z_iso_inv_after_z_iso (make_z_iso' f Hf)) x) as p.
+    cbn in *.
+    refine (_ @ p).
+    apply maponpaths.
+    exact (!ff).
+  - apply elements_universal_mor_eq.
+  - apply elements_universal_mor_eq.
+Qed.
+
+Definition is_opcartesian_disp_elements_universal
+           {X Y : HSET}
+           {f : X --> Y}
+           {x : elements_universal X}
+           {y : elements_universal Y}
+           (p : x -->[ f ] y)
+  : is_opcartesian p.
+Proof.
+  intros Z z g q.
+  use iscontraprop1.
+  - use invproofirrelevance.
+    intros φ₁ φ₂.
+    use subtypePath.
+    {
+      intro.
+      apply elements_universal.
+    }
+    apply elements_universal_mor_eq.
+  - simple refine (_ ,, _).
+    + exact (maponpaths g (!p) @ q).
+    + apply elements_universal_mor_eq.
+Qed.
+
+Definition opcleaving_elements_universal
+  : opcleaving elements_universal.
+Proof.
+  intros X Y x f.
+  simple refine (_ ,, _).
+  - exact (f x).
+  - refine (idpath _ ,, _) ; cbn.
+    apply is_opcartesian_disp_elements_universal.
+Defined.
+
 (* TODO: compare to other definitions of this in the library! *)
 Definition precat_of_elements {C : category} (P : functor C HSET)
   := total_category (disp_cat_of_elements P).
@@ -253,8 +323,8 @@ Definition precat_of_elements {C : category} (P : functor C HSET)
 End Elements_Disp.
 
 
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
-Require Import UniMath.CategoryTheory.limits.graphs.limits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Limits.
 
 
 Section functor_algebras.
@@ -331,21 +401,21 @@ Proof.
   intros c c' i d.
   cbn in *.
   use tpair.
-  - exact (compose (compose (functor_on_iso F i) d) (iso_inv_from_iso i)).
-  - cbn. unfold iso_disp. cbn.
+  - exact (compose (compose (functor_on_z_iso F i) d) (z_iso_inv_from_z_iso i)).
+  - cbn. unfold z_iso_disp. cbn.
     use tpair.
     + abstract (
           etrans; [eapply pathsinv0; apply id_right |];
           repeat rewrite <- assoc;
           do 2 apply maponpaths;
-          apply pathsinv0; apply iso_after_iso_inv
+          apply pathsinv0; apply z_iso_after_z_iso_inv
         ).
     + use tpair.
       * unfold functor_alg_mor.
         cbn. repeat rewrite assoc.
         unfold functor_alg_mor. cbn.
         rewrite <- functor_comp.
-        rewrite iso_after_iso_inv.
+        rewrite z_iso_after_z_iso_inv.
         rewrite functor_id.
         rewrite id_left. apply idpath.
       * split; apply homset_property.
@@ -355,9 +425,12 @@ Defined.
 Local Notation "'π'" := (pr1_category disp_cat_functor_alg).
 
 Definition creates_limits_functor_alg
-  : creates_limits disp_cat_functor_alg.
+  : creates_limits_unique disp_cat_functor_alg.
 Proof.
-  intros J D x L isL.
+  unfold creates_limits_unique.
+  intros J D L.
+  induction L as [tmp isL].
+  induction tmp as [x L].
   unfold creates_limit. cbn.
   transparent assert (FC : (cone (mapdiagram π D) (F x))).
   { use make_cone.
@@ -493,148 +566,5 @@ Definition disp_cat_monad_alg : disp_cat C
   := sigma_disp_cat disp_cat_monad_alg_over_functor_alg.
 
 End monad_algebras.
-
-(** * Any category is a displayed category over unit *)
-
-Require Import UniMath.CategoryTheory.categories.StandardCategories.
-
-Section over_terminal_category.
-
-Variable C : category.
-
-Definition disp_over_unit_data : disp_cat_data unit_category.
-Proof.
-  use tpair.
-  - use tpair.
-    + intro. apply (ob C).
-    + simpl. intros x y c c' e. apply (C ⟦c, c'⟧).
-  - use tpair.
-    + simpl. intros. apply identity.
-    + intros ? ? ? ? ? a b c f g.
-      apply (compose (C:=C) f g ).
-Defined.
-
-Definition disp_over_unit_axioms : disp_cat_axioms _ disp_over_unit_data.
-Proof.
-  repeat split; cbn; intros.
-  - apply id_left.
-  - etrans. apply id_right.
-    apply pathsinv0. unfold mor_disp. cbn.
-    apply (eqtohomot (transportf_const _ _)).
-  - etrans. apply assoc.
-    apply pathsinv0. unfold mor_disp. cbn.
-    apply (eqtohomot (transportf_const _ _)).
-  - apply homset_property.
-Qed.
-
-Definition disp_over_unit : disp_cat _ := _ ,, disp_over_unit_axioms.
-
-End over_terminal_category.
-
-Section cartesian_product_pb.
-
-Variable C C' : category.
-
-(* TODO: use a better name here (this one is baffling out of context) *)
-Definition disp_cartesian : disp_cat C
-  := reindex_disp_cat (functor_to_unit C) (disp_over_unit C').
-
-Definition cartesian : category := total_category disp_cartesian.
-
-End cartesian_product_pb.
-
-Section arrow.
-
-Variable C : category.
-
-Definition disp_arrow_data : disp_cat_data (cartesian C C).
-Proof.
-  use tpair.
-  - use tpair.
-    + intro H.
-      exact (pr1 H --> pr2 H).
-    + cbn. intros xy ab f g h.
-      exact (compose f (pr2 h) = compose (pr1 h) g ).
-  - split; intros.
-    + cbn.
-      apply pathsinv0.
-      etrans. apply id_left.
-      cbn in xx.
-      unfold mor_disp. cbn.
-      etrans. eapply pathsinv0. apply id_right.
-      apply maponpaths, pathsinv0.
-      apply (eqtohomot (transportf_const _ _)).
-    + cbn in *.
-      unfold mor_disp. cbn.
-      etrans. apply maponpaths, (eqtohomot (transportf_const _ _)).
-      etrans. apply assoc.
-      etrans. apply maponpaths_2. apply X.
-      etrans. eapply pathsinv0, assoc.
-      etrans. apply maponpaths. apply X0.
-      apply assoc.
-Defined.
-
-Definition disp_arrow_axioms : disp_cat_axioms _ disp_arrow_data.
-Proof.
-  repeat split; intros; cbn;
-    try apply homset_property.
-  apply isasetaprop.
-  apply homset_property.
-Qed.
-
-Definition disp_arrow : disp_cat (cartesian C C) := _ ,, disp_arrow_axioms.
-
-Definition arrow : category := total_category disp_arrow.
-
-Definition disp_domain : disp_cat C := sigma_disp_cat disp_arrow.
-
-Definition total_domain := total_category disp_domain.
-
-End arrow.
-
-Section cartesian_product.
-
-Variables C C' : category.
-
-Definition disp_cartesian_ob_mor : disp_cat_ob_mor C.
-Proof.
-  use tpair.
-  - exact (λ c, C').
-  - cbn. intros x y x' y' f. exact (C'⟦x', y'⟧).
-Defined.
-
-Definition disp_cartesian_data : disp_cat_data C.
-Proof.
-  exists disp_cartesian_ob_mor.
-  use tpair; cbn.
-  - intros; apply identity.
-  - intros ? ? ? ? ? ? ? ? f g. apply (f · g).
-Defined.
-
-Definition disp_cartesian_axioms : disp_cat_axioms _ disp_cartesian_data.
-Proof.
-  repeat split; intros; cbn.
-  - etrans. apply id_left.
-    apply pathsinv0.
-    etrans. unfold mor_disp. cbn. apply (eqtohomot (transportf_const _ _)).
-    apply idpath.
-  - etrans. apply id_right.
-    apply pathsinv0.
-    etrans. unfold mor_disp. cbn. apply (eqtohomot (transportf_const _ _)).
-    apply idpath.
-  - etrans. apply assoc.
-    apply pathsinv0.
-    etrans. unfold mor_disp. cbn. apply (eqtohomot (transportf_const _ _)).
-    apply idpath.
-  - apply homset_property.
-Qed.
-
-Definition disp_cartesian' : disp_cat C := _ ,, disp_cartesian_axioms.
-
-End cartesian_product.
-
-
-
-
 
 (* *)

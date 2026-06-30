@@ -51,6 +51,7 @@ This file contains proofs that the following functors are (omega-)cocontinuous:
 Written by: Anders Mörtberg and Benedikt Ahrens, 2015-2016
 *)
 
+
 Require Import UniMath.Foundations.PartD.
 Require Import UniMath.Foundations.Propositions.
 Require Import UniMath.Foundations.Sets.
@@ -64,25 +65,25 @@ Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.FunctorCategory.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
-Require Import UniMath.CategoryTheory.categories.HSET.Slice.
-Require Import UniMath.CategoryTheory.categories.HSET.Limits.
-Require Import UniMath.CategoryTheory.categories.HSET.Colimits.
-Require Import UniMath.CategoryTheory.categories.HSET.Structures.
-Require Import UniMath.CategoryTheory.limits.initial.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Slice.
+Require Import UniMath.CategoryTheory.Categories.HSET.Limits.
+Require Import UniMath.CategoryTheory.Categories.HSET.Colimits.
+Require Import UniMath.CategoryTheory.Categories.HSET.Structures.
+Require Import UniMath.CategoryTheory.Limits.Initial.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.limits.binproducts.
-Require Import UniMath.CategoryTheory.limits.products.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.coproducts.
-Require Import UniMath.CategoryTheory.limits.terminal.
-Require Import UniMath.CategoryTheory.limits.graphs.limits.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+Require Import UniMath.CategoryTheory.Limits.Products.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Coproducts.
+Require Import UniMath.CategoryTheory.Limits.Terminal.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Limits.
 Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
 Require Import UniMath.CategoryTheory.ProductCategory.
 Require Import UniMath.CategoryTheory.Adjunctions.Core.
 Require Import UniMath.CategoryTheory.Adjunctions.Examples.
-Require Import UniMath.CategoryTheory.exponentials.
+Require Import UniMath.CategoryTheory.Exponentials.
 Require Import UniMath.CategoryTheory.whiskering.
 Require Import UniMath.CategoryTheory.RightKanExtension.
 Require Import UniMath.CategoryTheory.slicecat.
@@ -111,15 +112,15 @@ Section cocont_iso.
 (* As this section is proving a proposition, the hypothesis can be weakened from a specified iso to
 F and G being isomorphic. *)
 Context {C D : category} {F G : functor C D}
-        (αiso : @iso [C, D] F G).
+        (αiso : @z_iso [C, D] F G).
 
 Section preserves_colimit_iso.
 
 Context {g : graph} (d : diagram g C) (L : C) (cc : cocone d L) (HF : preserves_colimit F d L cc).
 
-Let αinv := inv_from_iso αiso.
+Let αinv := inv_from_z_iso αiso.
 Let α := pr1 αiso.
-Let Hα : is_iso α := pr2 αiso.
+Let Hα : is_z_isomorphism α := pr2 αiso.
 
 Local Definition ccFy y (ccGy : cocone (mapdiagram G d) y) : cocone (mapdiagram F d) y.
 Proof.
@@ -138,7 +139,7 @@ eapply pathscomp0; [apply cancel_postcomposition, nat_trans_ax|].
 rewrite <- assoc; eapply pathscomp0; [apply maponpaths, (Hf v)|]; simpl; rewrite assoc.
 eapply pathscomp0.
   apply cancel_postcomposition.
-  apply (nat_trans_eq_pointwise (@iso_after_iso_inv [C, D] _ _ (make_iso _ Hα))).
+  apply (nat_trans_eq_pointwise (@z_iso_after_z_iso_inv [C, D] _ _ (make_z_iso' _ Hα))).
 now rewrite id_left.
 Qed.
 
@@ -158,11 +159,11 @@ generalize (maponpaths pr1 (HHf HH)); intro Htemp; simpl in *.
 rewrite <- Htemp; simpl; rewrite assoc.
 eapply pathscomp0.
   apply cancel_postcomposition.
-  apply (nat_trans_eq_pointwise (@iso_after_iso_inv [C, D] _ _ (make_iso _ Hα))).
+  apply (nat_trans_eq_pointwise (@z_iso_after_z_iso_inv [C, D] _ _ (make_z_iso' _ Hα))).
 now apply id_left.
 Qed.
 
-Lemma preserves_colimit_iso  : preserves_colimit G d L cc.
+Lemma preserves_colimit_z_iso  : preserves_colimit G d L cc.
 Proof.
 intros HccL y ccGy.
 set (H := HF HccL y (ccFy y ccGy)).
@@ -177,14 +178,14 @@ Defined.
 
 End preserves_colimit_iso.
 
-Lemma is_cocont_iso : is_cocont F -> is_cocont G.
+Lemma is_cocont_z_iso : is_cocont F -> is_cocont G.
 Proof.
-now intros H g d c cc; apply (preserves_colimit_iso).
+now intros H g d c cc; apply (preserves_colimit_z_iso).
 Defined.
 
-Lemma is_omega_cocont_iso : is_omega_cocont F -> is_omega_cocont G.
+Lemma is_omega_cocont_z_iso : is_omega_cocont F -> is_omega_cocont G.
 Proof.
-now intros H g d c cc; apply (preserves_colimit_iso).
+now intros H g d c cc; apply (preserves_colimit_z_iso).
 Defined.
 
 End cocont_iso.
@@ -902,7 +903,7 @@ Definition omega_cocont_constprod_functor1 (x : C) :
 Lemma is_cocont_constprod_functor2 (x : C) : is_cocont (constprod_functor2 PC x).
 Proof.
   apply left_adjoint_cocont.
-  apply (is_left_adjoint_constprod_functor2 PC), hE.
+  apply (is_exponentiable_to_is_exponentiable' PC), hE.
 Defined.
 
 Lemma is_omega_cocont_constprod_functor2 (x : C) : is_omega_cocont (constprod_functor2 PC x).
@@ -927,7 +928,7 @@ Variable omega_cocont_constprod_functor1 :
 Let omega_cocont_constprod_functor2 :
   ∏ x : C, is_omega_cocont (constprod_functor2 PC x).
 Proof.
-now intro x; apply (is_omega_cocont_iso (flip_iso PC x)).
+now intro x; apply (is_omega_cocont_z_iso (flip_z_iso PC x)).
 Defined.
 
 Local Definition fun_lt (cAB : chain (category_binproduct C C)) :
@@ -977,7 +978,7 @@ destruct (natlthorgeh i j) as [h|h].
     rewrite BinProductOfArrows_comp, id_left.
     eapply pathscomp0; [apply BinProductOfArrows_comp|].
     rewrite id_right.
-    apply maponpaths_12; trivial; rewrite id_left; simpl.
+    apply maponpaths_12; try apply idpath; rewrite id_left; simpl.
     destruct (natlehchoice4 i j h0) as [h1|h1].
     + apply cancel_postcomposition, maponpaths, maponpaths, isasetbool.
     + destruct h1; destruct (isirreflnatlth _ h).
@@ -992,7 +993,7 @@ destruct (natlthorgeh i j) as [h|h].
       eapply pathscomp0; [apply cancel_postcomposition, BinProductOfArrows_comp|].
       rewrite id_left, id_right.
       apply cancel_postcomposition,
-        (maponpaths_12 (BinProductOfArrows _ _ _)); trivial.
+        (maponpaths_12 (BinProductOfArrows _ _ _)); try apply idpath.
       simpl; destruct (natlehchoice4 i i h0) as [h1|h1]; [destruct (isirreflnatlth _ h1)|].
       apply maponpaths, maponpaths, isasetnat.
   * destruct (natgehchoice i j h) as [h1|h1].
@@ -1000,13 +1001,14 @@ destruct (natlthorgeh i j) as [h|h].
       { unfold fun_gt; rewrite assoc.
         eapply pathscomp0; [eapply cancel_postcomposition, BinProductOfArrows_comp|].
         rewrite id_right.
-        apply cancel_postcomposition, maponpaths_12; trivial.
+        apply cancel_postcomposition, maponpaths_12; try apply idpath.
         now rewrite <- (chain_mor_right h1 h2). }
       { destruct h; unfold fun_gt; simpl.
-        generalize h1; clear h1.
-        rewrite h2; intro h1.
+        destruct (!h2).
+        assert (eq: h2 = (idpath _)). { apply isasetnat. }
+        rewrite eq.
         apply cancel_postcomposition.
-        apply maponpaths_12; trivial; simpl.
+        apply maponpaths_12; try apply idpath; simpl.
         destruct (natlehchoice4 j j h1); [destruct (isirreflnatlth _ h)|].
         apply maponpaths, maponpaths, isasetnat. }
     + destruct h1; destruct (negnatgehnsn _ h0).
@@ -1130,14 +1132,14 @@ Proof.
             unfold f, fun_gt.
             eapply pathscomp0; [apply BinProductOfArrows_comp|].
             rewrite id_left, id_right.
-            apply (maponpaths_12 (BinProductOfArrows _ _ _)); trivial; simpl.
+            apply (maponpaths_12 (BinProductOfArrows _ _ _)); try apply idpath; simpl.
             destruct (natlehchoice4 i i h0); [destruct (isirreflnatlth _ h1)|].
             apply maponpaths, maponpaths, isasetnat.
        }
     * destruct p, h.
       destruct (natlthorgeh i (S i)); [|destruct (negnatgehnsn _ h)].
       apply cancel_postcomposition; unfold f, fun_lt.
-      apply maponpaths_12; trivial; simpl.
+      apply maponpaths_12; try apply idpath; simpl.
       destruct (natlehchoice4 i i h); [destruct (isirreflnatlth _ h0)|].
       assert (H : idpath (S i) = maponpaths S p). apply isasetnat.
       now rewrite H.
@@ -1193,7 +1195,7 @@ Proof.
       apply pathsinv0.
       eapply pathscomp0; [apply BinProductOfArrows_comp|].
       rewrite !id_left, id_right.
-      apply maponpaths_12; trivial.
+      apply maponpaths_12; try apply idpath.
       apply (maponpaths pr1 (chain_mor_coconeIn cAB LM ccLM i j h)).
     * destruct (natgehchoice i j h).
       { unfold fun_gt; rewrite <- (p i), !assoc.
@@ -1444,7 +1446,8 @@ Proof.
     apply funextsec; intro x; cbn.
     now etrans; [apply maponpaths,
         (toforallpaths _ _ _ (maponpaths pr1 (colimArrowCommutes CC c cc n)) x)|].
-  - intros z; apply impred_isaprop; intro n; apply setproperty.
+  - intro ; apply impred_isaprop.
+    intro ; apply homset_property.
   - simpl; intros f Hf.
     apply funextsec; intro l.
     transparent assert (k : (HSET/X⟦colim CC,c⟧)).
@@ -1456,7 +1459,7 @@ Proof.
     }
     assert (Hk : (∏ n, colimIn CC n · k = coconeIn cc n)).
     { intros n.
-      apply subtypePath; [intros x; apply setproperty|].
+      apply subtypePath; [intros x; apply homset_property|].
       apply funextsec; intro z.
       use total2_paths_f; [apply idpath|].
       now rewrite idpath_transportf; cbn; rewrite <- (toforallpaths _ _ _ (Hf n) z).

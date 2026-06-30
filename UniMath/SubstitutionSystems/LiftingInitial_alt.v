@@ -24,15 +24,15 @@ Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.whiskering.
 Require Import UniMath.CategoryTheory.Monads.Monads.
-Require Import UniMath.CategoryTheory.limits.binproducts.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.initial.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Initial.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
 Require Import UniMath.CategoryTheory.Chains.All.
 Require Import UniMath.CategoryTheory.opp_precat.
 Require Import UniMath.CategoryTheory.yoneda.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
 Require Import UniMath.CategoryTheory.PointedFunctors.
 Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
 Require Import UniMath.CategoryTheory.HorizontalComposition.
@@ -40,7 +40,7 @@ Require Import UniMath.CategoryTheory.PointedFunctorsComposition.
 Require Import UniMath.SubstitutionSystems.Signatures.
 Require Import UniMath.SubstitutionSystems.SubstitutionSystems.
 Require Import UniMath.SubstitutionSystems.GenMendlerIteration_alt.
-Require Import UniMath.CategoryTheory.UnitorsAndAssociatorsForEndofunctors.
+Require Import UniMath.CategoryTheory.BicatOfCatsElementary.
 Require Import UniMath.SubstitutionSystems.Notation.
 Local Open Scope subsys.
 
@@ -50,8 +50,8 @@ Local Coercion alg_carrier : algebra_ob >-> ob.
 
 Section category_Algebra.
 
-Variables (C : category) (CP : BinCoproducts C).
-Variables (IC : Initial C) (CC : Colims_of_shape nat_graph C).
+Context (C : category) (CP : BinCoproducts C)
+        (IC : Initial C) (CC : Colims_of_shape nat_graph C).
 
 Local Notation "'EndC'":= ([C, C]) .
 Local Notation "'Ptd'" := (category_Ptd C).
@@ -74,20 +74,20 @@ Section fix_an_H.
 
   Context (H : functor [C, C] [C, C]) (HH : is_omega_cocont H).
 
-  Definition Const_plus_H (X : EndC) : functor EndC EndC
-    := BinCoproduct_of_functors _ _ CPEndC (constant_functor _ _ X) H.
+  Let Const_plus_H (X : EndC) : functor EndC EndC := Const_plus_H C CP H X.
 
-  Definition Id_H :  functor [C, C] [C, C]
-    := Const_plus_H (functor_identity _ : EndC).
+  Let Id_H : functor [C, C] [C, C] := Id_H C CP H.
 
   Let Alg : precategory := FunctorAlg Id_H.
 
-Lemma is_omega_cocont_Id_H : is_omega_cocont Id_H.
+Lemma is_omega_cocont_Const_plus_H (X : EndC) : is_omega_cocont (Const_plus_H X).
 Proof.
   apply is_omega_cocont_BinCoproduct_of_functors; try apply functor_category_has_homsets.
   - apply is_omega_cocont_constant_functor.
   - apply HH.
 Defined.
+
+Definition is_omega_cocont_Id_H : is_omega_cocont Id_H := is_omega_cocont_Const_plus_H (functor_identity C).
 
 Definition InitAlg : Alg :=
   InitialObject (colimAlgInitial InitialEndC is_omega_cocont_Id_H (Colims_of_shape_nat_graph_EndC _)).
@@ -136,7 +136,7 @@ Local Lemma aux_iso_1_is_nat_trans :
       BinCoproductOfArrows [C, C]
         (CPEndC (functor_composite (U Z) (functor_identity C))
            ((θ_source H) (X ⊗ Z))) (CPEndC (U Z) ((θ_source H) (X ⊗ Z)))
-        (ρ_functors (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
+        (runitor_CAT (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
 Proof.
   intros X X' α.
   apply nat_trans_eq_alt; intro c; simpl.
@@ -157,7 +157,7 @@ Definition aux_iso_1
 Proof.
 use tpair.
 - intro X.
-  exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (ρ_functors (U Z))
+  exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (runitor_CAT (U Z))
            (nat_trans_id (θ_source H (X⊗Z):functor C C))).
 - exact aux_iso_1_is_nat_trans.
 Defined.
@@ -172,7 +172,7 @@ Local Lemma aux_iso_1_inv_is_nat_trans :
       BinCoproductOfArrows [C, C]
         (CPEndC (functor_composite (functor_identity C) (U Z))
            ((θ_source H) (X ⊗ Z))) (CPEndC (U Z) ((θ_source H) (X ⊗ Z)))
-        (λ_functors (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
+        (lunitor_CAT (U Z)) (nat_trans_id ((θ_source H) (X ⊗ Z):functor C C))).
 Proof.
   intros X X' α.
   apply nat_trans_eq_alt; intro c; simpl.
@@ -193,7 +193,7 @@ Local Definition aux_iso_1_inv
 Proof.
 use tpair.
 - intro X.
-  exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (λ_functors (U Z))
+  exact (BinCoproductOfArrows EndC (CPEndC _ _) (CPEndC _ _) (lunitor_CAT (U Z))
          (nat_trans_id (θ_source H (X⊗Z):functor C C))).
 - exact aux_iso_1_inv_is_nat_trans.
 Defined.
@@ -215,7 +215,7 @@ rewrite id_left, id_right.
 apply nat_trans_eq_alt; intro c; simpl.
 unfold coproduct_nat_trans_data; simpl.
 unfold coproduct_nat_trans_in1_data, coproduct_nat_trans_in2_data; simpl.
-apply (maponpaths_12 (BinCoproductOfArrows _ _ _)); trivial.
+apply (maponpaths_12 (BinCoproductOfArrows _ _ _)); try apply idpath.
 unfold functor_fix_snd_arg_mor; simpl.
 revert c; apply nat_trans_eq_pointwise, maponpaths.
 apply nat_trans_eq_alt; intro c; simpl.
@@ -370,7 +370,7 @@ End fix_a_Z.
 End fix_an_H.
 
 Context (H :  @Presignature C C C) (HH : is_omega_cocont H).
-Let Id_H := Id_H H.
+Let Id_H := Id_H C CP H.
 Let θ := theta H.
 Let InitAlg := InitAlg H HH.
 Let ptdInitAlg := ptdInitAlg H HH.
@@ -398,7 +398,7 @@ exists InitAlg.
 exact bracket_for_InitAlg.
 Defined.
 
-Local Definition Ghat : EndEndC := Const_plus_H H (pr1 InitAlg).
+Local Definition Ghat : EndEndC := Const_plus_H C CP H (pr1 InitAlg).
 
 Definition constant_nat_trans (C' D : category) (d d' : D) (m : D⟦d,d'⟧)
     : [C', D] ⟦constant_functor C' D d, constant_functor C' D d'⟧.
@@ -447,7 +447,7 @@ rewrite id_left, id_right.
 apply nat_trans_eq_alt; intro c; simpl.
 unfold coproduct_nat_trans_data; simpl.
 unfold coproduct_nat_trans_in1_data, coproduct_nat_trans_in2_data; simpl.
-apply (maponpaths_12 (BinCoproductOfArrows _ _ _)); trivial.
+apply (maponpaths_12 (BinCoproductOfArrows _ _ _)); try apply idpath.
 unfold functor_fix_snd_arg_mor; simpl.
 revert c; apply nat_trans_eq_pointwise, maponpaths.
 apply nat_trans_eq_alt; intro c; simpl.
@@ -476,7 +476,7 @@ exact (iso1' Z · thetahat_0 Z f · iso2' Z).
 Defined.
 
 
-Local Notation "C '^op'" := (opp_precat C) (at level 3, format "C ^op").
+Local Notation "C '^op'" := (opp_precat C) (format "C ^op").
 
 Let Yon (X : EndC) : functor EndC^op HSET := yoneda_objects EndC X.
 
@@ -490,7 +490,7 @@ use tpair.
   exact (a · b).
 - abstract (intros ? ? ?; simpl; apply funextsec; intro;
             unfold yoneda_objects_ob; simpl; unfold compose; simpl;
-            apply nat_trans_eq; [apply homset_property |]; simpl; intros ?;
+            apply nat_trans_eq; [apply homset_property |]; simpl; intro;
             apply assoc').
 Defined.
 
@@ -509,7 +509,7 @@ set (X:= SpecializedGMIt H HH Z _ Ghat rhohat (thetahat Z f)).
 intermediate_path (pr1 (pr1 X)).
 - set (TT := @fusion_law EndC InitialEndC Colims_of_shape_nat_graph_EndC
                          Id_H (is_omega_cocont_Id_H H HH) _ (pr1 (InitAlg)) T').
-  set (Psi := ψ_from_comps (Id_H) _ (ℓ (U Z)) (Const_plus_H H (U Z)) (ρ_Thm15 H HH Z f)
+  set (Psi := ψ_from_comps (Id_H) _ (ℓ (U Z)) (Const_plus_H C CP H (U Z)) (ρ_Thm15 H HH Z f)
                              (aux_iso_1 H Z · θ'_Thm15 H Z (nat_trans_fix_snd_arg _ _ _ _ _ θ Z) · aux_iso_2_inv H Z) ).
   set (T2 := TT _ (HU Z) (isInitial_pre_comp Z) Psi).
   set (T3 := T2 (ℓ (U Z)) (HU Z)).
@@ -518,7 +518,7 @@ intermediate_path (pr1 (pr1 X)).
   set (T4 := T3 (isInitial_pre_comp Z) Psi').
   set (Φ := (Phi_fusion Z T' β)).
   set (T5 := T4 Φ).
-  intermediate_path (Φ _ (fbracket InitHSS f)); trivial.
+  intermediate_path (Φ _ (fbracket InitHSS f)); try apply idpath.
   etrans; [| apply T5 ]; clear TT T2 T3 T4 T5 X.
   * now apply cancel_postcomposition.
   * (* hypothesis of fusion law *)

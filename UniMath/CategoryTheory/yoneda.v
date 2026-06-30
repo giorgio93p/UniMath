@@ -33,8 +33,8 @@ Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Export UniMath.CategoryTheory.FunctorCategory.
 Local Open Scope cat.
 Require Import UniMath.CategoryTheory.opp_precat.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
-Require Import UniMath.CategoryTheory.categories.HSET.MonoEpiIso.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.MonoEpiIso.
 Require Import UniMath.CategoryTheory.whiskering.
 
 Local Notation "'hom' C" := (precategory_morphisms (C := C)) (at level 2).
@@ -43,12 +43,6 @@ Ltac unf := unfold identity,
                    compose,
                    precategory_morphisms;
                    simpl.
-
-(** The following lemma is already in precategories.v . It should be transparent? *)
-
-Lemma iso_comp_left_isweq {C:category} {a b:ob C} (h:iso a b) (c:C) :
-  isweq (λ f : hom _ c a, f · h).
-Proof. intros. apply (@iso_comp_right_isweq C^op b a (opp_iso h)). Qed.
 
 (** * Yoneda functor *)
 
@@ -63,7 +57,7 @@ Definition yoneda_objects_mor (C : category) (c : C)
     λ g, f · g.
 
 Definition yoneda_ob_functor_data (C : category) (c : C) :
-    functor_data (C^op) HSET.
+    functor_data C^op HSET.
 Proof.
   exists (λ c', make_hSet (yoneda_objects_ob C c c') (homset_property C _ _ ) ).
   intros a b f g. unfold yoneda_objects_ob in *. simpl in *.
@@ -221,16 +215,16 @@ Qed.
 
 Lemma yoneda_iso_sets (C : category) (c : C)
    (F : functor C^op HSET) :
-   is_iso (C:=HSET)
+   is_z_isomorphism (C:=HSET)
      (a := make_hSet (hom _ ((yoneda C) c) F) (isaset_nat_trans_yoneda C c F))
      (b := F c)
      (yoneda_map_1 C c F).
 Proof.
   set (T:=yoneda_map_2 C c F). simpl in T.
   set (T':= T : hom HSET (F c) (make_hSet (hom _ ((yoneda C) c) F)
-                                         (isaset_nat_trans_yoneda C c F))).
-  apply (is_iso_qinv (C:=HSET) _ T' ).
-  repeat split; simpl.
+                                  (isaset_nat_trans_yoneda C c F))).
+  exists T'.
+  split; simpl.
   - apply funextsec; intro alpha.
     unf; simpl.
     apply (yoneda_map_1_2 C c F).
@@ -379,14 +373,14 @@ Defined.
 
 Variable Fff : fully_faithful F.
 
-Lemma is_iso_yoneda_functor_precomp : is_iso yoneda_functor_precomp.
+Lemma is_z_iso_yoneda_functor_precomp : is_z_isomorphism yoneda_functor_precomp.
 Proof.
-  apply functor_iso_if_pointwise_iso.
+  apply nat_trafo_z_iso_if_pointwise_z_iso.
   intro a. simpl.
   set (T:= make_weq _ (Fff a c)).
   set (TA := make_hSet (hom C a c) (homset_property C _ _)).
   set (TB := make_hSet (hom D (F a) (F c)) (homset_property _ _ _ )).
-  apply (hset_equiv_is_iso TA TB T).
+  apply (hset_equiv_is_z_iso TA TB T).
 Defined.
 
 End fix_object.

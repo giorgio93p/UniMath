@@ -33,12 +33,11 @@ Require Import UniMath.CategoryTheory.FunctorCategory.
 Local Open Scope cat.
 Require Import UniMath.CategoryTheory.whiskering.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
 Require Import UniMath.CategoryTheory.PointedFunctors.
 Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
 Require Import UniMath.CategoryTheory.HorizontalComposition.
 Require Import UniMath.CategoryTheory.PointedFunctorsComposition.
-Require Import UniMath.CategoryTheory.UnitorsAndAssociatorsForEndofunctors.
 Require Import UniMath.SubstitutionSystems.Signatures.
 Require Import UniMath.SubstitutionSystems.Notation.
 Local Open Scope subsys.
@@ -63,20 +62,20 @@ Section prep_hss.
 
 Context (H : functor [C, C] [C, C]).
 
-Definition Id_H
-: functor EndC EndC
-  := BinCoproduct_of_functors _ _ CPEndC
-                       (constant_functor _ _ (functor_identity _ : EndC))
-                       H.
+Definition Const_plus_H (X : EndC) : functor EndC EndC
+  := BinCoproduct_of_functors _ _ CPEndC (constant_functor _ _ X) H.
 
-(* An Id_H algebra is a pointed functor *)
+Definition Id_H : functor EndC EndC
+  := Const_plus_H (functor_identity _ : EndC).
 
-Definition eta_from_alg (T : algebra_ob Id_H) : EndC ⟦ functor_identity _,  `T ⟧.
+Definition eta_from_alg {X : EndC} (T : algebra_ob (Const_plus_H X)) : EndC ⟦ X ,  `T ⟧.
 Proof.
-  exact (BinCoproductIn1 (CPEndC _ _) · alg_map _ T).
+  exact (tau1_from_alg CPEndC (constant_functor _ _ X) H T).
 Defined.
 
 Local Notation η := eta_from_alg.
+
+(* An Id_H algebra is a pointed functor *)
 
 Definition ptd_from_alg (T : algebra_ob Id_H) : Ptd.
 Proof.
@@ -84,10 +83,11 @@ Proof.
   exact (η T).
 Defined.
 
-Definition tau_from_alg (T : algebra_ob Id_H) : EndC ⟦H `T, `T⟧.
+Definition tau_from_alg {X : EndC} (T : algebra_ob (Const_plus_H X)) : EndC ⟦H `T, `T⟧.
 Proof.
-  exact (BinCoproductIn2 (CPEndC _ _) · alg_map _ T).
+  exact (tau2_from_alg CPEndC (constant_functor _ _ X) H T).
 Defined.
+
 Local Notation τ := tau_from_alg.
 
 (*
@@ -332,7 +332,7 @@ Arguments bracket_parts {_} _ _ .
   Local Notation τ := (tau_from_alg H).
 
   Let θ : PrestrengthForSignature H := theta H.
-  Let Id_H := Id_H H.
+  Let Id_H : [C, C] ⟶ [C, C] := Id_H H.
 
 (** the notion of a heterogeneous substitution system that asks for more operations to uniquely exist *)
 Definition hss : UU := ∑ (T: algebra_ob Id_H), bracket H θ T.
@@ -610,13 +610,13 @@ Proof.
   assert (X:=pr2 β).
   assert (X':= nat_trans_eq_pointwise X c).
   simpl in *.
-  eapply pathscomp0. apply maponpaths. apply X'.
+  etrans. { apply maponpaths. apply X'. }
   unfold coproduct_nat_trans_in1_data.
   repeat rewrite assoc.
   unfold coproduct_nat_trans_data.
-  eapply pathscomp0.
-  apply cancel_postcomposition.
-  apply BinCoproductIn1Commutes.
+  etrans.
+  { apply cancel_postcomposition.
+    apply BinCoproductIn1Commutes. }
   simpl.
   repeat rewrite <- assoc.
   apply id_left.
@@ -696,8 +696,8 @@ Section hssMor_equality.
 
 (** Show that equality of hssMor is equality of underlying nat. transformations *)
 
-Variables T T' : hss.
-Variables β β' : hssMor T T'.
+Context (T T' : hss) (β β' : hssMor T T').
+
 Definition hssMor_eq1 : β = β' ≃ (pr1 β = pr1 β').
 Proof.
   apply subtypeInjectivity.
@@ -759,13 +759,13 @@ Proof.
   intros Z f.
   eapply pathscomp0; [apply assoc|].
   (* match goal with | [|- ?l = _ ] => assert (Hyp : l = fbracket T f· pr1 β· pr1 γ) end. *)
-  eapply pathscomp0.
-    apply cancel_postcomposition.
-    apply isbracketMor_hssMor.
+  etrans.
+  { apply cancel_postcomposition.
+    apply isbracketMor_hssMor. }
   rewrite <- assoc.
-  eapply pathscomp0.
-    apply maponpaths.
-    apply isbracketMor_hssMor.
+  etrans.
+  { apply maponpaths.
+    apply isbracketMor_hssMor. }
   rewrite assoc.
   rewrite functor_comp.
   rewrite assoc.
@@ -827,8 +827,8 @@ Arguments fbracket_unique {_ _ _ } _ {_} _ {_} _ .
 (* Arguments Alg {_ _} _. *)
 Arguments hss_precategory {_} _ _ .
 Arguments hss_category {_} _ _ .
-Arguments eta_from_alg {_ _ _} _.
-Arguments tau_from_alg {_ _ _} _.
+Arguments eta_from_alg {_ _ _ _} _.
+Arguments tau_from_alg {_ _ _ _} _.
 Arguments ptd_from_alg {_ _ _} _.
 Arguments ptd_from_alg_functor {_} _ _ .
 Arguments bracket_property {_ _ _ _ } _ _ _ _ .

@@ -31,15 +31,15 @@ Proof.
 Defined.
 
 Definition iscontrretract_compute {X Y} (p:X->Y) (s:Y->X)
-           (eps:∏ y : Y, p (s y) = y) (is:iscontr X) :
-  iscontrpr1 (iscontrretract p s eps is) = p (iscontrpr1 is).
+           (eps:∏ y : Y, p (s y) = y) (isc:iscontr X) :
+  iscontrpr1 (iscontrretract p s eps isc) = p (iscontrpr1 isc).
 Proof.
-  intros. unfold iscontrretract. destruct is as [ctr uni].
+  intros. unfold iscontrretract. destruct isc as [ctr uni].
   simpl. reflexivity.
 Defined.
 
-Definition iscontrweqb_compute {X Y} (w:X ≃ Y) (is:iscontr Y) :
-  iscontrpr1 (iscontrweqb w is) = invmap w (iscontrpr1 is).
+Definition iscontrweqb_compute {X Y} (w:X ≃ Y) (isc:iscontr Y) :
+  iscontrpr1 (iscontrweqb w isc) = invmap w (iscontrpr1 isc).
 Proof.
   intros. unfold iscontrweqb. rewrite iscontrretract_compute.
   reflexivity.
@@ -47,10 +47,10 @@ Defined.
 
 Definition compute_iscontrweqb_weqfibtototal_1 {T} {P Q:T->Type}
            (f:∏ t, (P t) ≃ (Q t))
-           (is:iscontr (total2 Q)) :
-  pr1 (iscontrpr1 (iscontrweqb (weqfibtototal P Q f) is)) = pr1 (iscontrpr1 is).
+           (isc:iscontr (total2 Q)) :
+  pr1 (iscontrpr1 (iscontrweqb (weqfibtototal P Q f) isc)) = pr1 (iscontrpr1 isc).
 Proof.
-  intros. destruct is as [ctr uni]. reflexivity.
+  intros. destruct isc as [ctr uni]. reflexivity.
 Defined.
 
 Definition compute_pr1_invmap_weqfibtototal {T} {P Q:T->Type}
@@ -71,12 +71,12 @@ Defined.
 
 Definition compute_iscontrweqb_weqfibtototal_3 {T} {P Q:T->Type}
            (f:∏ t, (P t) ≃ (Q t))
-           (is:iscontr (total2 Q)) :
-  maponpaths pr1 (iscontrweqb_compute (weqfibtototal P Q f) is)
+           (isc:iscontr (total2 Q)) :
+  maponpaths pr1 (iscontrweqb_compute (weqfibtototal P Q f) isc)
   =
-  compute_iscontrweqb_weqfibtototal_1 f is.
+  compute_iscontrweqb_weqfibtototal_1 f isc.
 Proof.
-  intros. destruct is as [ctr uni]. reflexivity.
+  intros. destruct isc as [ctr uni]. reflexivity.
 Defined.
 
 Definition iscontrcoconustot_comp {X} {x:X} :
@@ -210,8 +210,23 @@ Proof.
   intros. destruct ni, mi, l. simpl. rewrite pathscomp0rid. reflexivity.
 Defined.
 
-(*
-Local Variables:
-compile-command: "make -C ../.. TAGS TAGS-Ktheory UniMath/Ktheory/Equivalences.vo"
-End:
-*)
+Definition total2_contr
+  {X : UU}
+  (P : X → UU)
+  (H : ∏ x, iscontr (P x))
+  : (∑ x, P x) ≃ X.
+Proof.
+  use weq_iso.
+  - exact pr1.
+  - intro x.
+    exact (x ,, iscontrpr1 (H x)).
+  - abstract (
+      intro x;
+      apply subtypePath;
+      [ intro;
+        apply isapropifcontr;
+        apply H
+      | reflexivity ]
+    ).
+  - reflexivity.
+Defined.

@@ -25,6 +25,7 @@ Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.Core.Functors.
+Require Import UniMath.CategoryTheory.Core.Setcategories.
 Require Import UniMath.CategoryTheory.FunctorCategory.
 
 Local Open Scope cat.
@@ -45,7 +46,7 @@ Definition is_precat_opp_precat_data (C : precategory) : is_precategory (opp_pre
 Definition opp_precat (C : precategory) : precategory :=
   tpair _ (opp_precat_data C) (is_precat_opp_precat_data C).
 
-Local Notation "C '^op'" := (opp_precat C) (at level 3, format "C ^op") : cat.
+Local Notation "C '^op'" := (opp_precat C) (at level 1, format "C ^op") : cat.
 
 Goal ∏ C:precategory, C^op^op = C. reflexivity. Qed.
 
@@ -135,9 +136,17 @@ Proof.
   intros H.
   use make_z_iso.
   - exact (z_iso_mor H).
-  - exact (z_iso_inv_mor H).
+  - exact (inv_from_z_iso H).
   - exact (opp_is_inverse_in_precat (is_inverse_in_precat_inv H)).
 Defined.
+
+Definition z_iso_from_opp {C : precategory} {a b : C} (f : a --> b) :
+  @is_z_isomorphism C^op b a f → @is_z_isomorphism C a b f.
+Proof.
+  intros H.
+  exists (pr1 H).
+  split; [ apply (pr2 (pr2 H)) | apply (pr1 (pr2 H)) ].
+Qed.
 
 Lemma has_homsets_opp {C : precategory} (hsC : has_homsets C) : has_homsets C^op.
 Proof. intros a b; apply hsC. Defined.
@@ -183,19 +192,19 @@ Lemma opp_functor_essentially_surjective :
 Proof.
   intros HF d.
   set (TH := HF d).
-  set (X:=@hinhuniv  (∑ a : C, iso (F a) d)).
+  set (X:=@hinhuniv  (∑ a : C, z_iso (F a) d)).
   use (X _ _ TH).
   intro H. clear TH. clear X.
   apply hinhpr.
   destruct H as [a X].
   exists a. simpl in *.
-  apply  opp_iso.
-  apply (iso_inv_from_iso X).
+  apply  opp_z_iso.
+  apply (z_iso_inv_from_z_iso X).
 Qed.
 
 End opp_functor_properties.
 
-Notation "C '^op'" := (opp_precat C) (at level 3, format "C ^op") : cat.
+Notation "C '^op'" := (opp_precat C) (at level 1, format "C ^op") : cat.
 
 Lemma functor_opp_identity {C : precategory} (hsC : has_homsets C) :
   functor_opp (functor_identity C) = functor_identity C^op.
@@ -266,6 +275,22 @@ Proof.
        apply (! (nat_trans_ax a _ _ _ ))).
 Defined.
 
+Lemma op_nt_is_z_iso {C D : category} {f g : functor C D} (a : nat_trans f g) (isc : is_nat_z_iso a)
+  : is_nat_z_iso (op_nt a).
+Proof.
+  intro c.
+  use opp_is_z_isomorphism.
+  exact (isc c).
+Defined.
+
+Lemma op_nt_is_iso {C D : category} {f g : functor C D} (a : nat_trans f g) (isc : is_nat_iso a) : is_nat_iso (op_nt a).
+Proof.
+  intro c.
+  use opp_is_iso.
+  exact (isc c).
+Defined.
+
+
 (** It's univalent *)
 
 Definition op_iso_is_cat_iso
@@ -282,13 +307,27 @@ Proof.
   - apply isaprop_is_iso.
 Defined.
 
-Definition has_homsets_op (C : category) : has_homsets (C^op).
+Definition has_homsets_op (C : category) : has_homsets C^op.
 Proof.
   intros a b.
   apply C.
 Defined.
 
 Definition op_category (C : category) : category := make_category C^op (has_homsets_op C).
+
+Definition op_z_iso_is_cat_z_iso
+           {C : category}
+           (X Y : C^op)
+  : @z_iso C Y X ≃ z_iso X Y.
+Proof.
+  use weqfibtototal.
+  intro f.
+  use weqimplimpl.
+  - apply opp_is_z_isomorphism.
+  - apply z_iso_from_opp.
+  - apply isaprop_is_z_isomorphism.
+  - apply (isaprop_is_z_isomorphism(C:=op_category C)).
+Defined.
 
 Definition from_op_op_to_op (A C : category)
   : functor [op_category A, op_category C] (op_category [A,C])
@@ -299,21 +338,21 @@ Definition op_is_univalent (C : univalent_category)
 Proof.
   intros X Y.
   use weqhomot.
-  + exact ((op_iso_is_cat_iso X Y)
+  + exact ((op_z_iso_is_cat_z_iso X Y)
              ∘ make_weq (@idtoiso C Y X) (pr2( C) Y X)
              ∘ weqpathsinv0 _ _)%weq.
   + intros p.
     induction p ; cbn.
     apply subtypePath.
-    * intro ; apply isaprop_is_iso.
-    * reflexivity.
+    * intro ; apply (isaprop_is_z_isomorphism(C:=op_category C)).
+    * apply idpath.
 Defined.
 
 Definition op_unicat (C : univalent_category)
   : univalent_category
   := (op_category C ,, op_is_univalent C).
 
-Notation "C '^op'" := (op_category C) (at level 3, format "C ^op") : cat.
+Notation "C '^op'" := (op_category C) (at level 1, format "C ^op") : cat.
 
 
 Definition op_ob {C : category} (c : ob C) : ob C^op := c.
@@ -323,3 +362,240 @@ Definition rm_op_ob {C : category} (cop : ob C^op) : ob C := cop.
 Definition op_mor {C : category} {b c : C} (f : C⟦b, c⟧) : C^op⟦c, b⟧ := f.
 
 Definition rm_op_mor {C : category} {b c : C} (f : C^op⟦c, b⟧) : C⟦b, c⟧ := f.
+
+(** Functoriality of taking the opposite *)
+Definition functor_identity_op
+           (C : category)
+  : functor_identity C^op
+    ⟹
+    functor_opp (functor_identity C).
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity x).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition is_nat_z_iso_functor_identity_op
+           (C : category)
+  : is_nat_z_iso (functor_identity_op C).
+Proof.
+  intros x.
+  apply is_z_isomorphism_identity.
+Defined.
+
+Definition functor_identity_op_nat_z_iso
+           (C : category)
+  : nat_z_iso
+      (functor_identity C^op)
+      (functor_opp (functor_identity C)).
+Proof.
+  use make_nat_z_iso.
+  - exact (functor_identity_op C).
+  - exact (is_nat_z_iso_functor_identity_op C).
+Defined.
+
+Definition functor_comp_op
+           {C₁ C₂ C₃ : category}
+           (F : C₁ ⟶ C₂)
+           (G : C₂ ⟶ C₃)
+  : functor_opp F ∙ functor_opp G ⟹ functor_opp (F ∙ G).
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity _).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition is_nat_z_iso_functor_comp_op
+           {C₁ C₂ C₃ : category}
+           (F : C₁ ⟶ C₂)
+           (G : C₂ ⟶ C₃)
+  : is_nat_z_iso (functor_comp_op F G).
+Proof.
+  intros x.
+  apply is_z_isomorphism_identity.
+Defined.
+
+Definition functor_comp_op_nat_z_iso
+           {C₁ C₂ C₃ : category}
+           (F : C₁ ⟶ C₂)
+           (G : C₂ ⟶ C₃)
+  : nat_z_iso
+      (functor_opp F ∙ functor_opp G)
+      (functor_opp (F ∙ G)).
+Proof.
+  use make_nat_z_iso.
+  - exact (functor_comp_op F G).
+  - exact (is_nat_z_iso_functor_comp_op F G).
+Defined.
+
+(** It forms a duality involution *)
+Definition op_unit_nat_trans
+           {C₁ C₂ : category}
+           (F : C₁ ⟶ C₂)
+  : functor_identity _ ∙ functor_opp (functor_opp F)
+    ⟹
+    F ∙ functor_identity _.
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity (F x)).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition op_unit_nat_z_iso
+           {C₁ C₂ : category}
+           (F : C₁ ⟶ C₂)
+  : nat_z_iso
+      (functor_identity _ ∙ functor_opp (functor_opp F))
+      (F ∙ functor_identity _).
+Proof.
+  use make_nat_z_iso.
+  - exact (op_unit_nat_trans F).
+  - intro.
+    apply identity_is_z_iso.
+Defined.
+
+Definition op_unit_inv_nat_trans
+           {C₁ C₂ : category}
+           (F : C₁ ⟶ C₂)
+  : functor_identity _ ∙ F
+    ⟹
+    functor_opp (functor_opp F) ∙ functor_identity _.
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity (F x)).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition op_unit_inv_nat_z_iso
+           {C₁ C₂ : category}
+           (F : C₁ ⟶ C₂)
+  : nat_z_iso
+      (functor_identity _ ∙ F)
+      (functor_opp (functor_opp F) ∙ functor_identity _).
+Proof.
+  use make_nat_z_iso.
+  - exact (op_unit_inv_nat_trans F).
+  - intro.
+    apply identity_is_z_iso.
+Defined.
+
+Definition op_triangle_nat_trans
+           (C : category)
+  : functor_identity _ ⟹ functor_opp (functor_identity C).
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity x).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition op_triangle_nat_z_iso
+           (C : category)
+  : nat_z_iso
+      (functor_identity _)
+      (functor_opp (functor_identity C)).
+Proof.
+  use make_nat_z_iso.
+  - exact (op_triangle_nat_trans C).
+  - intro.
+    apply identity_is_z_iso.
+Defined.
+
+Definition op_unit_unit_inv_nat_trans
+           (C : category)
+  : nat_trans
+      (functor_identity C)
+      (functor_identity C ∙ functor_identity ((C^op)^op)).
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity x).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition op_unit_unit_inv_nat_z_iso
+           (C : category)
+  : nat_z_iso
+      (functor_identity C)
+      (functor_identity C ∙ functor_identity ((C^op)^op)).
+Proof.
+  use make_nat_z_iso.
+  - exact (op_unit_unit_inv_nat_trans C).
+  - intro.
+    apply identity_is_z_iso.
+Defined.
+
+Definition op_unit_inv_unit_nat_trans
+           (C : category)
+  : nat_trans
+      (functor_identity ((C^op)^op) ∙ functor_identity C)
+      (functor_identity ((C^op)^op)).
+Proof.
+  use make_nat_trans.
+  - exact (λ x, identity x).
+  - abstract
+      (intros x y f ; cbn ;
+       rewrite id_left, id_right ;
+       apply idpath).
+Defined.
+
+Definition op_unit_inv_unit_nat_z_iso
+           (C : category)
+  : nat_z_iso
+      (functor_identity ((C^op)^op) ∙ functor_identity C)
+      (functor_identity ((C^op)^op)).
+Proof.
+  use make_nat_z_iso.
+  - exact (op_unit_inv_unit_nat_trans C).
+  - intro.
+    apply identity_is_z_iso.
+Defined.
+
+(**
+ idtoiso in the opposite
+ *)
+Proposition idtoiso_opp
+            {C : category}
+            {x y : C}
+            (p : x = y)
+  : pr1 (@idtoiso C^op _ _ p) = pr1 (@idtoiso C _ _ (!p)).
+Proof.
+  induction p ; cbn.
+  apply idpath.
+Qed.
+
+(** The opposite of a setcategory *)
+Definition is_setcategory_opp
+           {C : category}
+           (HC : is_setcategory C)
+  : is_setcategory C^op.
+Proof.
+  split.
+  - apply HC.
+  - apply homset_property.
+Qed.
+
+Definition opp_setcategory
+           (C : setcategory)
+  : setcategory.
+Proof.
+  use make_setcategory.
+  - exact C^op.
+  - apply C.
+Defined.

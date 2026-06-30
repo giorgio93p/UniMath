@@ -38,13 +38,13 @@ Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Subcategory.Core.
 Require Import UniMath.CategoryTheory.Subcategory.Full.
 
-Require Import UniMath.CategoryTheory.limits.terminal.
-Require Import UniMath.CategoryTheory.limits.binproducts.
-Require Import UniMath.CategoryTheory.limits.initial.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
+Require Import UniMath.CategoryTheory.Limits.Terminal.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+Require Import UniMath.CategoryTheory.Limits.Initial.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
 
-Require Import UniMath.CategoryTheory.limits.graphs.limits.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Limits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
 
 Local Open Scope cat.
 
@@ -157,12 +157,12 @@ Proof.
     cbn beta.
     (** The following line works because of the computational behavior of
         [lift_diagram_full_subcategory], namely:
-        <<
+<<
         (∏ v : vertex g, C' (dob (lift_diagram_full_subcategory d) v))
         → C' c
         → ∏ v : vertex g,
             pr1 (dob d v) = dob (lift_diagram_full_subcategory d) v
-        >>
+>>
       *)
     apply (@weq_hom_in_subcat_from_hom_in_precat C C' (c,, tip) (dob d x)).
   - intro legs.

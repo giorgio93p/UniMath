@@ -11,12 +11,11 @@ started on Nov. 22, 2014 (with Alexander Vishik)
 Require Import UniMath.MoreFoundations.Tactics.
 
 Require Export UniMath.Combinatorics.FiniteSets.
-(* Require Export UniMath.Combinatorics.OrderedSets. *)
 Require Export UniMath.CategoryTheory.Core.Categories.
 Require Export UniMath.CategoryTheory.Core.Functors.
 Require Export UniMath.CategoryTheory.FunctorCategory.
-Require Export UniMath.CategoryTheory.categories.HSET.Core.
-Require Export UniMath.CategoryTheory.categories.HSET.Univalence.
+Require Export UniMath.CategoryTheory.Categories.HSET.Core.
+Require Export UniMath.CategoryTheory.Categories.HSET.Univalence.
 Require Export UniMath.CategoryTheory.opp_precat.
 
 (* To upstream files *)
@@ -28,7 +27,7 @@ Require Export UniMath.CategoryTheory.opp_precat.
 Local Open Scope stn.
 
 Definition monfunstn ( n m : nat ) : UU := ∑ f : ⟦ n ⟧ -> ⟦ m ⟧, ∏ (x y: ⟦n⟧), x ≤ y -> f x ≤ f y.
-Definition make_monfunstn { m n : nat } f is := (f,,is) : monfunstn m n.
+Definition make_monfunstn { m n : nat } f isc := (f,,isc) : monfunstn m n.
 Definition monfunstnpr1 {n m : nat} : monfunstn n m  -> ⟦ n ⟧ -> ⟦ m ⟧ := pr1.
 
 Lemma monfunstnpr1_isInjective {m n} (f g : monfunstn m n) : monfunstnpr1 f = monfunstnpr1 g -> f = g.
@@ -50,7 +49,7 @@ Proof.
   apply isasetaprop, propproperty.
 Defined.
 
-Definition monfunstnid n : monfunstn n n := make_monfunstn (idfun _) (λ x y is, is).
+Definition monfunstnid n : monfunstn n n := make_monfunstn (idfun _) (λ x y isc, isc).
 
 Definition monfunstncomp { n m k : nat } ( f : monfunstn n m ) ( g : monfunstn m k ) :
   monfunstn n k .

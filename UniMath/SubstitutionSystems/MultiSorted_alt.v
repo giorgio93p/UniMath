@@ -9,13 +9,16 @@ This file contains a formalization of multisorted binding signatures:
   signature ([MultiSortedSigToSignature])
 - Proof that the functor obtained from a multisorted binding signature
   is omega-cocontinuous ([is_omega_cocont_MultiSortedSigToFunctor])
-- Construction of a monad on C^sort from a multisorted signature
-  ([MultiSortedSigToMonad])
-- Instantiation of MultiSortedSigToMonad for C = Set
-  ([MultiSortedSigToMonadSet])
+
+The construction of a monad on C^sort from a multisorted signature and the
+instantiation of MultiSortedSigToMonad for C = Set are now found in
+[UniMath.SubstitutionSystems.MultiSortedMonadConstruction_alt].
+
 
 Written by: Anders Mörtberg, 2021. The formalization is an adaptation of
-Multisorted.v
+Multisorted.
+
+some adaptions in preparation of actegorical approach done in 2023 by Ralph Matthes
 
 *)
 Require Import UniMath.Foundations.PartD.
@@ -30,33 +33,32 @@ Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.FunctorCategory.
 Require Import UniMath.CategoryTheory.whiskering.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
-Require Import UniMath.CategoryTheory.limits.binproducts.
-Require Import UniMath.CategoryTheory.limits.products.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.coproducts.
-Require Import UniMath.CategoryTheory.limits.terminal.
-Require Import UniMath.CategoryTheory.limits.initial.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+Require Import UniMath.CategoryTheory.Limits.Products.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Coproducts.
+Require Import UniMath.CategoryTheory.Limits.Terminal.
+Require Import UniMath.CategoryTheory.Limits.Initial.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.exponentials.
+Require Import UniMath.CategoryTheory.Exponentials.
 Require Import UniMath.CategoryTheory.Adjunctions.Core.
 Require Import UniMath.CategoryTheory.Chains.All.
 Require Import UniMath.CategoryTheory.Monads.Monads.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
-Require Import UniMath.CategoryTheory.categories.HSET.Colimits.
-Require Import UniMath.CategoryTheory.categories.HSET.Limits.
-Require Import UniMath.CategoryTheory.categories.HSET.Structures.
-Require Import UniMath.CategoryTheory.categories.StandardCategories.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Colimits.
+Require Import UniMath.CategoryTheory.Categories.HSET.Limits.
+Require Import UniMath.CategoryTheory.Categories.HSET.Structures.
+Require Import UniMath.CategoryTheory.Categories.StandardCategories.
 Require Import UniMath.CategoryTheory.Groupoids.
 
 Require Import UniMath.SubstitutionSystems.Signatures.
 Require Import UniMath.SubstitutionSystems.SumOfSignatures.
 Require Import UniMath.SubstitutionSystems.BinProductOfSignatures.
-Require Import UniMath.SubstitutionSystems.SubstitutionSystems.
-Require Import UniMath.SubstitutionSystems.LiftingInitial_alt.
-Require Import UniMath.SubstitutionSystems.MonadsFromSubstitutionSystems.
 Require Import UniMath.SubstitutionSystems.SignatureExamples.
-Require Import UniMath.SubstitutionSystems.BindingSigToMonad.
+
+Require Import UniMath.SubstitutionSystems.MultiSortedBindingSig.
+Require UniMath.SubstitutionSystems.SortIndexing.
 
 Local Open Scope cat.
 
@@ -74,60 +76,55 @@ Arguments Sum_of_Signatures _ {_ _ _} _ _.
 Section MBindingSig.
 
 (* Interestingly we only need that [sort] is a 1-type *)
-Variables (sort : UU) (Hsort : isofhlevel 3 sort) (C : category).
+Context (sort : UU) (Hsort : isofhlevel 3 sort) (C : category).
 
 (* Assumptions on [C] used to construct the functor *)
 (* Note that there is some redundancy in the assumptions *)
-Variables (TC : Terminal C) (IC : Initial C)
-          (BP : BinProducts C) (BC : BinCoproducts C)
-          (PC : forall (I : UU), Products I C) (CC : forall (I : UU), isaset I → Coproducts I C).
+Context (TC : Terminal C) (IC : Initial C)
+        (BP : BinProducts C) (BC : BinCoproducts C)
+        (* (PC : forall (I : UU), Products I C) *) (eqsetPC : forall (s s' : sort), Products (s=s') C)
+        (CC : forall (I : UU), isaset I → Coproducts I C).
 
 Local Notation "'1'" := (TerminalObject TC).
 Local Notation "a ⊕ b" := (BinCoproductObject (BC a b)).
 
-(** Define the discrete category of sorts *)
-Let sort_cat : category := path_pregroupoid sort Hsort.
+(** Define the category of sorts *)
+Let sort_cat : category := SortIndexing.sort_cat sort Hsort.
 
 (** This represents "sort → C" *)
-Let sortToC : category := [sort_cat,C].
-Let make_sortToC (f : sort → C) : sortToC := functor_path_pregroupoid Hsort f.
+Let sortToC : category := SortIndexing.sortToC sort Hsort C.
 
-Let BCsortToC : BinCoproducts sortToC := BinCoproducts_functor_precat _ _ BC.
-Let BPC : BinProducts [sortToC,C] := BinProducts_functor_precat sortToC C BP.
+Let make_sortToC (f : sort → C) : sortToC := SortIndexing.make_sortToC sort Hsort C f.
+
+Let make_sortToC_mor (ξ ξ' : sortToC) (fam : ∏ s: sort, pr1 ξ s --> pr1 ξ' s) : sortToC⟦ξ,ξ'⟧
+    := SortIndexing.make_sortToC_mor sort Hsort C ξ ξ' fam.
+
+Let BCsortToC : BinCoproducts sortToC := SortIndexing.BCsortToC sort Hsort _ BC.
+
+Let sortToCC : category := SortIndexing.sortToCC sort Hsort C.
+Let TsortToCC : Terminal sortToCC := SortIndexing.TsortToCC sort Hsort C TC.
+
+Let BPsortToCC : BinProducts sortToCC := SortIndexing.BPsortToCC sort Hsort _ BP.
+
+Let sortToC2 : category := SortIndexing.sortToC2 sort Hsort C.
 
 (* Assumptions needed to prove ω-cocontinuity of the functor *)
-Variables (expSortToCC : Exponentials BPC)
-          (HC : Colims_of_shape nat_graph C).
-(* The expSortToCC assumption says that [sortToC,C] has exponentials. It
+Context (EsortToCC : Exponentials BPsortToCC)
+        (HC : Colims_of_shape nat_graph C).
+(* The EsortToCC assumption says that [sortToC,C] has exponentials. It
    could be reduced to exponentials in C, but we only have the case
    for C = Set formalized in
 
-     CategoryTheory.categories.HSET.Structures.Exponentials_functor_HSET
+     CategoryTheory.Categories.HSET.Structures.Exponentials_functor_HSET
 
 *)
 
+Definition CoproductsMultiSortedSig_base (M : MultiSortedSig sort) : Coproducts (ops _ M) sortToC
+  := SortIndexing.CCsortToC sort Hsort C CC _ (setproperty (ops sort M)).
 
-(** Definition of multisorted signatures *)
-Definition MultiSortedSig : UU :=
-  ∑ (I : hSet), I → list (list sort × sort) × sort.
+Definition CoproductsMultiSortedSig (M : MultiSortedSig sort) : Coproducts (ops _ M) [sortToC,sortToC]
+  := SortIndexing.CCsortToC2 sort Hsort C CC _ (setproperty (ops sort M)).
 
-Definition ops (M : MultiSortedSig) : hSet := pr1 M.
-Definition arity (M : MultiSortedSig) : ops M → list (list sort × sort) × sort :=
-  λ x, pr2 M x.
-
-Definition mkMultiSortedSig {I : hSet}
-  (ar : I → list (list sort × sort) × sort) : MultiSortedSig := (I,,ar).
-
-(** Sum of multisorted binding signatures *)
-Definition SumMultiSortedSig : MultiSortedSig → MultiSortedSig → MultiSortedSig.
-Proof.
-intros s1 s2.
-use tpair.
-- apply (setcoprod (ops s1) (ops s2)).
-- induction 1 as [i|i].
-  + apply (arity s1 i).
-  + apply (arity s2 i).
-Defined.
 
 (** * Construction of an endofunctor on [C^sort,C^sort] from a multisorted signature *)
 Section functor.
@@ -135,18 +132,35 @@ Section functor.
 (** Given a sort s this applies the sortToC to s and returns C *)
 Definition projSortToC (s : sort) : functor sortToC C.
 Proof.
-use tpair.
-+ use tpair.
-  - intro f; apply (pr1 f s).
-  - simpl; intros a b f; apply (f s).
-+ abstract (split; intros f *; apply idpath).
+use make_functor.
++ use make_functor_data.
+  - intro ξ; apply (pr1 ξ s).
+  - simpl; intros a b ξ; apply (ξ s).
++ abstract (split; intros ξ *; apply idpath).
+Defined.
+
+(** not needed here - illustration that also the sort can vary *)
+Definition projSortToCvariable (f: sort -> sort) : functor sortToC sortToC.
+Proof.
+  use make_functor.
+  - use make_functor_data.
+    + intro ξ.
+      apply make_sortToC.
+      intro s.
+      exact (pr1 ξ (f s)).
+    + intros ξ ξ' h.
+      apply make_sortToC_mor.
+      intro s.
+      exact (pr1 h (f s)).
+  - abstract (split; red; intros; apply nat_trans_eq; try (apply C);
+      intro t; apply idpath).
 Defined.
 
 (* The left adjoint to projSortToC *)
 Definition hat_functor (t : sort) : functor C sortToC.
 Proof.
-use tpair.
-+ use tpair.
+use make_functor.
++ use make_functor_data.
   - intros A.
     use make_sortToC; intros s.
     use (CoproductObject (t = s) C (CC _ (Hsort t s) (λ _, A))).
@@ -197,11 +211,11 @@ End Sorted_Option_Functor.
 
 
 (** Sorted option functor for lists *)
-Definition option_list (xs : list sort) : [sortToC,sortToC].
+Definition option_list (xs : list sort) : sortToC2.
 Proof.
-(* This should be foldr1 in order to avoid composing with the
+(* This should be [foldr1] or [foldr1_map] in order to avoid composing with the
    identity functor on the right in the base case *)
-use (foldr1 (λ F G, F ∙ G) (functor_identity _) (map sorted_option_functor xs)).
+use (foldr1_map (λ F G, F ∙ G) (functor_identity _) sorted_option_functor xs).
 Defined.
 
 
@@ -215,7 +229,7 @@ F^(l,t)(X) := projSortToC(t) ∘ X
 
 otherwise
  *)
-Definition exp_functor (lt : list sort × sort) : functor [sortToC,sortToC] [sortToC,C].
+Definition exp_functor (lt : list sort × sort) : functor sortToC2 sortToCC.
 Proof.
 induction lt as [l t].
 (* use list_ind to do a case on whether l is empty or not *)
@@ -228,29 +242,33 @@ Defined.
 (** This defines F^lts where lts is a list of (l,t). Outputs a product of
     functors if the list is nonempty and otherwise the constant functor. *)
 Definition exp_functor_list (xs : list (list sort × sort)) :
-  functor [sortToC,sortToC] [sortToC,C].
+  functor sortToC2 sortToCC.
 Proof.
-(* If the list is empty we output the constant functor *)
-set (T := constant_functor [sortToC,sortToC] [sortToC,C]
-                           (constant_functor sortToC C TC)).
-set (XS := map exp_functor xs).
-(* This should be foldr1 in order to avoid composing with the
+  (* If the list is empty we output the constant functor *)
+set (T := constant_functor sortToC2 _ TsortToCC).
+(* This should be [foldr1] or [foldr1_map] in order to avoid composing with the
    constant functor in the base case *)
-exact (foldr1 (λ F G, BinProduct_of_functors BPC F G) T XS).
+exact (foldr1_map (λ F G, BinProduct_of_functors BPsortToCC F G) T exp_functor xs).
 Defined.
 
+Local Lemma exp_functor_list_cons (lt1 lt2 : list sort × sort) (xs : list (list sort × sort)) :
+  exp_functor_list (cons lt2 (cons lt1 xs)) =
+    BinProduct_of_functors BPsortToCC (exp_functor lt2) (exp_functor_list (cons lt1 xs)).
+Proof.
+  apply idpath.
+Qed.
+
 Definition hat_exp_functor_list (xst : list (list sort × sort) × sort) :
-  functor [sortToC,sortToC] [sortToC,sortToC] :=
+  functor sortToC2 sortToC2 :=
     exp_functor_list (pr1 xst) ∙ post_comp_functor (hat_functor (pr2 xst)).
 
 (** The function from multisorted signatures to functors *)
-Definition MultiSortedSigToFunctor (M : MultiSortedSig) :
-  functor [sortToC,sortToC] [sortToC,sortToC].
+Definition MultiSortedSigToFunctor (M : MultiSortedSig sort) :
+  functor sortToC2 sortToC2.
 Proof.
-use (coproduct_of_functors (ops M)).
-+ apply Coproducts_functor_precat, Coproducts_functor_precat, CC, setproperty.
-+ intros op.
-  exact (hat_exp_functor_list (arity M op)).
+  use (coproduct_of_functors (ops _ M) _ _ (CoproductsMultiSortedSig M)).
+  intros op.
+  exact (hat_exp_functor_list (arity _ M op)).
 Defined.
 
 End functor.
@@ -331,14 +349,13 @@ apply idpath.
 Qed.
 
 (* The signature for MultiSortedSigToFunctor *)
-Definition MultiSortedSigToSignature (M : MultiSortedSig) : Signature sortToC sortToC sortToC.
+Definition MultiSortedSigToSignature (M : MultiSortedSig sort) : Signature sortToC sortToC sortToC.
 Proof.
-set (Hyps := λ (op : ops M), Sig_hat_exp_functor_list (arity M op)).
-use (Sum_of_Signatures (ops M) _ Hyps).
-apply Coproducts_functor_precat, CC, setproperty.
+set (Hyps := λ (op : ops _ M), Sig_hat_exp_functor_list (arity _ M op)).
+apply (Sum_of_Signatures (ops _ M) (CoproductsMultiSortedSig_base M) Hyps).
 Defined.
 
-Local Lemma functor_in_MultiSortedSigToSignature_ok (M : MultiSortedSig) :
+Local Lemma functor_in_MultiSortedSigToSignature_ok (M : MultiSortedSig sort) :
   Signature_Functor (MultiSortedSigToSignature M) = MultiSortedSigToFunctor M.
 Proof.
 apply idpath.
@@ -353,11 +370,11 @@ Section omega_cocont.
 (* Direct definition of the right adjoint to projSortToC *)
 Local Definition projSortToC_rad (t : sort) : functor C sortToC.
 Proof.
-use tpair.
-+ use tpair.
+use make_functor.
++ use make_functor_data.
   - intros A.
     use make_sortToC; intros s.
-    exact (ProductObject (t = s) C (PC _ (λ _, A))).
+    exact (ProductObject (t = s) C (eqsetPC _ _ (λ _, A))).
   - intros a b f.
     apply (nat_trans_functor_path_pregroupoid); intros s.
     apply ProductOfArrows; intros p; apply f.
@@ -381,14 +398,14 @@ use make_are_adjoints.
   + abstract (intros A B F; apply nat_trans_eq_alt; intros t; cbn;
     rewrite precompWithProductArrow, postcompWithProductArrow;
     apply ProductArrowUnique; intros []; cbn;
-    now rewrite (ProductPrCommutes _ _ _ (PC _ (λ _, pr1 B s))), id_left, id_right).
+    now rewrite (ProductPrCommutes _ _ _ (eqsetPC _ _ (λ _, pr1 B s))), id_left, id_right).
 - use make_nat_trans.
   + intros A.
-    exact (ProductPr _ _ (PC _ (λ _, A)) (idpath _)).
-  + abstract (now intros a b f; cbn; rewrite (ProductOfArrowsPr _ _ (PC _ (λ _, b)))).
+    exact (ProductPr _ _ (eqsetPC _  _ (λ _, A)) (idpath _)).
+  + abstract (now intros a b f; cbn; rewrite (ProductOfArrowsPr _ _ (eqsetPC _  _ (λ _, b)))).
 - use make_form_adjunction.
   + intros A; cbn.
-    now rewrite (ProductPrCommutes _ _ _ (PC _ (λ _, pr1 A s))).
+    now rewrite (ProductPrCommutes _ _ _ (eqsetPC _  _ (λ _, pr1 A s))).
   + intros c; apply nat_trans_eq_alt; intros t; cbn.
     rewrite postcompWithProductArrow.
     apply pathsinv0, ProductArrowUnique; intros [].
@@ -408,7 +425,7 @@ Proof.
 induction a as [xs t]; revert xs.
 use list_ind.
 - apply is_omega_cocont_post_comp_projSortToC.
-- intros x xs H; simpl.
+- intros x xs H.
   apply is_omega_cocont_functor_composite.
   + apply (is_omega_cocont_pre_composition_functor (option_list _)).
     apply (ColimsFunctorCategory_of_shape nat_graph sort_cat _ HC).
@@ -418,19 +435,16 @@ Defined.
 Local Lemma is_omega_cocont_exp_functor_list (xs : list (list sort × sort)) :
   is_omega_cocont (exp_functor_list xs).
 Proof.
-induction xs as [[|n] xs].
-- induction xs.
-  apply is_omega_cocont_constant_functor.
-- induction n as [|n IHn].
-  + induction xs as [m []].
-    apply is_omega_cocont_exp_functor.
-  + induction xs as [m [k xs]].
+  refine (foldr1_map_ind_nodep _ _ _ is_omega_cocont _ _ _ xs).
+  - apply is_omega_cocont_constant_functor.
+  - intro lt. apply is_omega_cocont_exp_functor.
+  - intros lt F Hyp.
     apply is_omega_cocont_BinProduct_of_functors.
-    * apply BinProducts_functor_precat, BinProducts_functor_precat, BP.
-    * apply is_omega_cocont_constprod_functor1.
-      apply expSortToCC.
-    * apply is_omega_cocont_exp_functor.
-    * apply (IHn (k,,xs)).
+    + apply BinProducts_functor_precat, BinProducts_functor_precat, BP.
+    + apply is_omega_cocont_constprod_functor1.
+      apply EsortToCC.
+    + apply is_omega_cocont_exp_functor.
+    + exact Hyp.
 Defined.
 
 (* The hat_functor is left adjoint to projSortToC *)
@@ -477,14 +491,14 @@ Proof.
 Defined.
 
 (** The functor obtained from a multisorted binding signature is omega-cocontinuous *)
-Lemma is_omega_cocont_MultiSortedSigToFunctor (M : MultiSortedSig) :
+Lemma is_omega_cocont_MultiSortedSigToFunctor (M : MultiSortedSig sort) :
   is_omega_cocont (MultiSortedSigToFunctor M).
 Proof.
   apply is_omega_cocont_coproduct_of_functors.
   intros op; apply is_omega_cocont_hat_exp_functor_list.
 Defined.
 
-Lemma is_omega_cocont_MultiSortedSigToSignature (M : MultiSortedSig) :
+Lemma is_omega_cocont_MultiSortedSigToSignature (M : MultiSortedSig sort) :
   is_omega_cocont (MultiSortedSigToSignature M).
 Proof.
   apply is_omega_cocont_MultiSortedSigToFunctor.
@@ -492,93 +506,4 @@ Defined.
 
 End omega_cocont.
 
-
-(** * Construction of a monad from a multisorted signature *)
-Section monad.
-
-Let Id_H := Id_H sortToC BCsortToC.
-
-(* ** Construction of initial algebra for a signature with strength on C^sort *)
-Definition SignatureInitialAlgebra
-  (H : Signature sortToC sortToC sortToC) (Hs : is_omega_cocont H) :
-  Initial (FunctorAlg (Id_H H)).
-Proof.
-use colimAlgInitial.
-- apply Initial_functor_precat, Initial_functor_precat, IC.
-- apply (is_omega_cocont_Id_H), Hs.
-- apply ColimsFunctorCategory_of_shape, ColimsFunctorCategory_of_shape, HC.
-Defined.
-
-Let HSS := @hss_category _ BCsortToC.
-
-(* ** Multisorted signature to a HSS *)
-Definition MultiSortedSigToHSS (sig : MultiSortedSig) :
-  HSS (MultiSortedSigToSignature sig).
-Proof.
-apply SignatureToHSS.
-+ apply Initial_functor_precat, IC.
-+ apply ColimsFunctorCategory_of_shape, HC.
-+ apply is_omega_cocont_MultiSortedSigToSignature.
-Defined.
-
-(* The above HSS is initial *)
-Definition MultiSortedSigToHSSisInitial (sig : MultiSortedSig) :
-  isInitial _ (MultiSortedSigToHSS sig).
-Proof.
-now unfold MultiSortedSigToHSS, SignatureToHSS; destruct InitialHSS.
-Qed.
-
-(** ** Function from multisorted binding signatures to monads *)
-Definition MultiSortedSigToMonad (sig : MultiSortedSig) : Monad sortToC.
-Proof.
-use Monad_from_hss.
-- apply BCsortToC.
-- apply (MultiSortedSigToSignature sig).
-- apply MultiSortedSigToHSS.
-Defined.
-
-End monad.
 End MBindingSig.
-
-Section MBindingSigMonadHSET.
-
-(* Assume a set of sorts *)
-Context (sort : hSet) (Hsort : isofhlevel 3 sort).
-
-Let sortToSet : category := [path_pregroupoid sort Hsort, HSET].
-
-Definition projSortToSet : sort → functor sortToSet HSET :=
-  projSortToC sort Hsort HSET.
-
-Definition hat_functorSet : sort → HSET ⟶ sortToSet :=
-  hat_functor sort (isofhlevelssnset 1 _ (setproperty sort)) HSET CoproductsHSET.
-
-Definition sorted_option_functorSet : sort → sortToSet ⟶ sortToSet :=
-  sorted_option_functor _ (isofhlevelssnset 1 _ (setproperty sort)) HSET
-                        TerminalHSET BinCoproductsHSET CoproductsHSET.
-
-Definition MultiSortedSigToSignatureSet : MultiSortedSig sort → Signature sortToSet sortToSet sortToSet.
-Proof.
-use MultiSortedSigToSignature.
-- apply TerminalHSET.
-- apply BinProductsHSET.
-- apply BinCoproductsHSET.
-- apply CoproductsHSET.
-Defined.
-
-Definition MultiSortedSigToMonadSet (ms : MultiSortedSig sort) :
-  Monad sortToSet.
-Proof.
-use MultiSortedSigToMonad.
-- apply TerminalHSET.
-- apply InitialHSET.
-- apply BinProductsHSET.
-- apply BinCoproductsHSET.
-- apply ProductsHSET.
-- apply CoproductsHSET.
-- apply Exponentials_functor_HSET.
-- apply ColimsHSET_of_shape.
-- apply ms.
-Defined.
-
-End MBindingSigMonadHSET.

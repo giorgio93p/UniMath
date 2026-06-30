@@ -3,6 +3,7 @@
  ********************************************************************************* *)
 Require Import UniMath.Foundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
+Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
@@ -24,35 +25,20 @@ Proof.
   - exact (λ C, op_unicat C).
   - exact (λ _ _ f, functor_opp f).
   - exact (λ _ _ _ _ x, op_nt x).
-  - intro C.
-    use tpair.
-    + cbn.
-      intro.
-      apply identity.
-    + cbn.
-      intros a b f.
-      cbn in *.
-      etrans. { apply id_left. } apply (! id_right _ ).
-  - intros C D E F G.
-    use tpair.
-    + cbn.
-      intro.
-      apply identity.
-    + intros a b f.
-      cbn in *.
-      etrans. { apply id_left. } apply (! id_right _ ).
+  - exact (λ C, functor_identity_op _).
+  - exact (λ _ _ _ F G, functor_comp_op F G).
 Defined.
 
 Definition op_psfunctor_laws : psfunctor_laws op_psfunctor_data.
 Proof.
-  repeat (use tpair).
+  repeat split.
   - intros C D F. cbn in *.
     apply nat_trans_eq; [apply (homset_property (op_cat D) )|].
     intro. apply idpath.
   - intros C D F G H α β ; cbn in *.
     apply nat_trans_eq ; [apply (homset_property (op_cat D) )|].
     intro x ; cbn in *.
-    reflexivity.
+    apply idpath.
   - intros C D F. cbn in *.
     apply nat_trans_eq; [apply (homset_property (op_cat D) )|].
     intro. cbn. apply pathsinv0.
@@ -67,7 +53,7 @@ Proof.
     intro. cbn. apply pathsinv0.
     rewrite id_left. rewrite !id_right.
     rewrite functor_id.
-    reflexivity.
+    apply idpath.
   - intros C1 C2 C3  F G H alpha. cbn in *.
     apply nat_trans_eq; [apply (homset_property (op_cat C3) )|].
     intro. cbn. apply pathsinv0.
@@ -77,37 +63,25 @@ Proof.
     apply nat_trans_eq; [apply (homset_property (op_cat C3) )|].
     intros x ; cbn.
     rewrite id_left, id_right.
-    reflexivity.
+    apply idpath.
 Qed.
+
+Definition op_psfunctor_invertible_cells
+  : invertible_cells op_psfunctor_data.
+Proof.
+  split.
+  - intro C.
+    use is_nat_z_iso_to_is_invertible_2cell.
+    apply is_nat_z_iso_functor_identity_op.
+  - intros C₁ C₂ C₃ F G.
+    use is_nat_z_iso_to_is_invertible_2cell.
+    apply is_nat_z_iso_functor_comp_op.
+Defined.
 
 Definition op_psfunctor : psfunctor (op2_bicat ∁) ∁.
 Proof.
   use make_psfunctor.
   - exact op_psfunctor_data.
   - exact op_psfunctor_laws.
-  - split.
-    + cbn ; intros.
-      use tpair.
-      * use tpair.
-        ** cbn. intro. apply identity.
-        ** intro ; intros.
-           cbn in *.
-           etrans. { apply id_left. } apply (! id_right _ ).
-      * split.
-        ** apply nat_trans_eq. apply homset_property.
-           cbn. intro. apply id_left.
-        ** apply nat_trans_eq. apply homset_property.
-           cbn. intro. apply id_left.
-    + intro ; intros.
-      use tpair.
-      * use tpair.
-        ** cbn. intro. apply identity.
-        ** intro ; intros.
-           cbn in *.
-           etrans. { apply id_left. } apply (! id_right _ ).
-      * split.
-        ** apply nat_trans_eq. apply homset_property.
-           cbn. intro. apply id_left.
-        ** apply nat_trans_eq. apply homset_property.
-           cbn. intro. apply id_left.
+  - exact op_psfunctor_invertible_cells.
 Defined.

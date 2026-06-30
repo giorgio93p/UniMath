@@ -16,7 +16,7 @@ Require Import UniMath.Bicategories.DisplayedBicats.DispBicat.
 Import DispBicat.Notations.
 Require Import UniMath.Bicategories.DisplayedBicats.DispUnivalence.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Univalence.
 
 Local Open Scope cat.
@@ -258,7 +258,7 @@ Section DispDepprod.
   Proof.
     use make_weq.
     - exact (disp_depprod_bicat_disp_invertible_2cell_map ff gg).
-    - use gradth.
+    - use isweq_iso.
       + exact (disp_depprod_bicat_disp_invertible_2cell_inv_map ff gg).
       + intros x.
         use funextsec.
@@ -384,7 +384,7 @@ Section DispDepprod.
   Proof.
     use make_weq.
     - exact (disp_depprod_bicat_disp_adjequiv_map aa bb).
-    - use gradth.
+    - use isweq_iso.
       + exact (disp_depprod_bicat_disp_adjequiv_inv aa bb).
       + intros f.
         use funextsec.

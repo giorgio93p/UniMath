@@ -25,16 +25,16 @@ Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Isos.
 Local Open Scope cat.
 
-Require Import UniMath.CategoryTheory.limits.zero.
-Require Import UniMath.CategoryTheory.limits.binproducts.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.equalizers.
-Require Import UniMath.CategoryTheory.limits.coequalizers.
-Require Import UniMath.CategoryTheory.limits.kernels.
-Require Import UniMath.CategoryTheory.limits.cokernels.
-Require Import UniMath.CategoryTheory.limits.pushouts.
-Require Import UniMath.CategoryTheory.limits.pullbacks.
-Require Import UniMath.CategoryTheory.limits.BinDirectSums.
+Require Import UniMath.CategoryTheory.Limits.Zero.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Equalizers.
+Require Import UniMath.CategoryTheory.Limits.Coequalizers.
+Require Import UniMath.CategoryTheory.Limits.Kernels.
+Require Import UniMath.CategoryTheory.Limits.Cokernels.
+Require Import UniMath.CategoryTheory.Limits.Pushouts.
+Require Import UniMath.CategoryTheory.Limits.Pullbacks.
+Require Import UniMath.CategoryTheory.Limits.BinDirectSums.
 Require Import UniMath.CategoryTheory.Monics.
 Require Import UniMath.CategoryTheory.Epis.
 Require Import UniMath.CategoryTheory.Core.Functors.
@@ -42,7 +42,7 @@ Require Import UniMath.CategoryTheory.Equivalences.Core.
 
 Require Import UniMath.CategoryTheory.Abelian.
 Require Import UniMath.CategoryTheory.ShortExactSequences.
-Require Import UniMath.CategoryTheory.categories.abgrs.
+Require Import UniMath.CategoryTheory.Categories.AbelianGroup.
 
 Require Import UniMath.CategoryTheory.CategoriesWithBinOps.
 Require Import UniMath.CategoryTheory.PrecategoriesWithAbgrops.
@@ -372,7 +372,7 @@ Section KAPreTriangulated.
       + exact (RotMorphism_is_z_isomorphism A _).
   Defined.
 
-  Lemma KARotDTris : ∏ D : DTri, @isDTri KAPreTriangData (RotTri D).
+  Lemma KARotDTrisc : ∏ D : DTri, @isDTri KAPreTriangData (RotTri D).
   Proof.
     intros D.
     use (squash_to_prop (DTriisDTri D) (propproperty _)). intros I.
@@ -398,7 +398,7 @@ Section KAPreTriangulated.
     use (pathscomp0 _ (! (functor_comp
                             (ComplexHomotFunctor A)
                             (to_inv (# (InvTranslationFunctor A) (MappingConePr1 A I')))
-                            (z_iso_inv_mor (AddEquivUnitIso (TranslationEquiv A)
+                            (inv_from_z_iso (AddEquivUnitIso (TranslationEquiv A)
                                                             (Source (KADTriDataMor I))))))).
     set (tmp''' := @AdditiveFunctorInv
                      _ _ (ComplexHomotFunctor A)
@@ -406,7 +406,7 @@ Section KAPreTriangulated.
     apply (maponpaths
              (postcompose
                 (# (ComplexHomotFunctor A)
-                   (z_iso_inv_mor
+                   (inv_from_z_iso
                       (AddEquivUnitIso (TranslationEquiv A) (Source (KADTriDataMor I)))))))
       in tmp'''.
     use (pathscomp0 _ (! tmp''')). clear tmp'''. unfold postcompose.
@@ -454,11 +454,11 @@ Section KAPreTriangulated.
            (MappingConeTri
               (# (ComplexHomotFunctor A)
                  ((to_inv (# (InvTranslationFunctor A) (MappingConePr1 A I')))
-                    · z_iso_inv_mor (AddEquivUnitIso (TranslationEquiv A)
+                    · inv_from_z_iso (AddEquivUnitIso (TranslationEquiv A)
                                                       (Source (KADTriDataMor I)))))
               (KAFiber
                  ((to_inv (# (InvTranslationFunctor A) (MappingConePr1 A I')))
-                    · z_iso_inv_mor (AddEquivUnitIso (TranslationEquiv A)
+                    · inv_from_z_iso (AddEquivUnitIso (TranslationEquiv A)
                                                       (Source (KADTriDataMor I)))))).
   Proof.
     use (TriIso_comp (InvRotTriIso (KADTriDataIso I))).
@@ -479,7 +479,7 @@ Section KAPreTriangulated.
       + exact (InvRotMorphism_is_z_isomorphism A _).
   Defined.
 
-  Lemma KAInvRotDTris : ∏ D : DTri, @isDTri KAPreTriangData (InvRotTri D).
+  Lemma KAInvRotDTrisc : ∏ D : DTri, @isDTri KAPreTriangData (InvRotTri D).
   Proof.
     intros D.
     use (squash_to_prop (DTriisDTri D) (propproperty _)). intros I.
@@ -490,11 +490,11 @@ Section KAPreTriangulated.
                (# (ComplexHomotFunctor A)
                   (to_inv (# (InvTranslationFunctor A)
                              (MappingConePr1 A i')) ·
-                          z_iso_inv_mor (AddEquivUnitIso (TranslationEquiv A)
+                          inv_from_z_iso (AddEquivUnitIso (TranslationEquiv A)
                                                          (Source (KADTriDataMor I)))))).
     - exact (KAFiber (to_inv (# (InvTranslationFunctor A)
                              (MappingConePr1 A i')) ·
-                             z_iso_inv_mor (AddEquivUnitIso (TranslationEquiv A)
+                             inv_from_z_iso (AddEquivUnitIso (TranslationEquiv A)
                                                             (Source (KADTriDataMor I))))).
     - exact (KAInvRotDTris_Iso D I).
   Qed.
@@ -703,8 +703,8 @@ Section KAPreTriangulated.
     - use make_isPreTriang.
       + exact KATrivialDistinguished.
       + exact KADTrisIsos.
-      + exact KARotDTris.
-      + exact KAInvRotDTris.
+      + exact KARotDTrisc.
+      + exact KAInvRotDTrisc.
       + exact KAConeDTri.
       + exact KAExt.
   Defined.

@@ -465,6 +465,8 @@ Proof.
   - exact (is_inverse_in_precat_comp H1 H2).
 Defined.
 
+Arguments is_z_isomorphism_comp {C a b c f1 f2} H1 H2 /.
+
 Definition is_z_isomorphism_identity {C : precategory} (c : C) : is_z_isomorphism (identity c).
 Proof.
   use make_is_z_isomorphism.
@@ -498,22 +500,27 @@ Qed.
 Definition z_iso {C : precategory_data} (a b : ob C) := ∑ f : a --> b, is_z_isomorphism f.
 
 Definition make_z_iso {C : precategory_data} {a b : C} (f : a --> b) (g : b --> a)
-           (H : is_inverse_in_precat f g) : z_iso a b := (f,,make_is_z_isomorphism f g H).
+  (H : is_inverse_in_precat f g) : z_iso a b := (f,,make_is_z_isomorphism f g H).
+
+Definition make_z_iso' {C : precategory_data} {a b : C} (f : a --> b) (H : is_z_isomorphism f) :
+  z_iso a b := (f,,H).
 
 Definition z_iso_mor {C : precategory_data} {a b : ob C} (f : z_iso a b) : a --> b := pr1 f.
 Coercion z_iso_mor : z_iso >-> precategory_morphisms.
 
-Definition z_iso_inv_mor {C : precategory_data} {a b : C} (i : z_iso a b) : b --> a :=
+Definition inv_from_z_iso {C : precategory_data} {a b : C} (i : z_iso a b) : b --> a :=
   is_z_isomorphism_mor (pr2 i).
 
+
+
 Definition z_iso_is_inverse_in_precat {C : precategory_data} {a b : C} (i : z_iso a b) :
-  is_inverse_in_precat i (z_iso_inv_mor i) := pr2 i.
+  is_inverse_in_precat i (inv_from_z_iso i) := pr2 i.
 Coercion z_iso_is_inverse_in_precat : z_iso >-> is_inverse_in_precat.
 
 Definition z_iso_inv {C : precategory_data} {a b : C} (I : z_iso a b) : z_iso b a.
 Proof.
   use make_z_iso.
-  - exact (z_iso_inv_mor I).
+  - exact (inv_from_z_iso I).
   - exact I.
   - exact (is_inverse_in_precat_inv I).
 Defined.
@@ -523,16 +530,8 @@ Definition z_iso_comp {C : precategory} {a b c : C} (I1 : z_iso a b) (I2 : z_iso
 Proof.
   use make_z_iso.
   - exact (I1 · I2).
-  - exact ((z_iso_inv_mor I2) · (z_iso_inv_mor I1)).
+  - exact ((inv_from_z_iso I2) · (inv_from_z_iso I1)).
   - exact (is_inverse_in_precat_comp I1 I2).
-Defined.
-
-Lemma is_z_iso_comp_of_is_z_isos {C : precategory} {a b c : ob C}
-      (f : a --> b) (g : b --> c) (H1 : is_z_isomorphism f) (H2 : is_z_isomorphism g) : is_z_isomorphism (f · g).
-Proof.
-  set (i1 := make_z_iso f _ H1).
-  set (i2 := make_z_iso g _ H2).
-  exact (pr2 (z_iso_comp i1 i2)).
 Defined.
 
 (* see below [identity_z_iso]
@@ -543,18 +542,19 @@ Proof.
   - exact (identity c).
   - exact (is_inverse_in_precat_identity c).
 Defined.
-*)
+ *)
 
-Definition z_iso_is_z_isomorphism1 {C : precategory} {a b : C} (I : z_iso a b) :
+
+Definition z_iso_is_z_isomorphism {C : precategory_data} {a b : C} (I : z_iso a b) :
   is_z_isomorphism I.
 Proof.
   use make_is_z_isomorphism.
-  - exact (z_iso_inv_mor I).
+  - exact (inv_from_z_iso I).
   - exact I.
 Defined.
 
-Definition z_iso_is_z_isomorphism2 {C : precategory} {a b : C} (I : z_iso a b) :
-  is_z_isomorphism (z_iso_inv_mor I).
+Definition is_z_iso_inv_from_z_iso {C : precategory_data} {a b : C} (I : z_iso a b) :
+  is_z_isomorphism (inv_from_z_iso I).
 Proof.
   use make_is_z_isomorphism.
   - exact I.
@@ -618,10 +618,10 @@ Proof.
 Qed.
 
 Lemma z_iso_eq_inv {C : category} {a b : C} (i i' : z_iso a b)
-      (e2 : z_iso_inv_mor i = z_iso_inv_mor i') : i = i'.
+      (e2 : inv_from_z_iso i = inv_from_z_iso i') : i = i'.
 Proof.
   use z_iso_eq.
-  assert (H : is_inverse_in_precat (z_iso_inv_mor i) i').
+  assert (H : is_inverse_in_precat (inv_from_z_iso i) i').
   {
     use make_is_inverse_in_precat.
     - rewrite e2. exact (is_inverse_in_precat2 i').
@@ -629,15 +629,6 @@ Proof.
   }
   exact (inverse_unique_precat _ _ _ _ _ (z_iso_inv i) H).
 Qed.
-
-Lemma eq_z_iso {C : category} (a b : ob C)
-   (f g : z_iso a b) : pr1 f = pr1 g -> f = g.
-Proof.
-  intro H.
-  apply (total2_paths_f H).
-  apply proofirrelevance.
-  apply isaprop_is_z_isomorphism.
-Defined.
 
 Definition morphism_from_z_iso {C : precategory_data} (a b : ob C)
    (f : z_iso a b) : a --> b := pr1 f.
@@ -663,18 +654,6 @@ Defined.
 
 Definition identity_z_iso {C : precategory} (a : ob C) :
    z_iso a a := tpair _ _ (identity_is_z_iso a).
-
-Definition inv_from_z_iso {C : precategory_data} {a b : ob C}
-  (f : z_iso a b) : b --> a := pr1 (pr2 f).
-
-Lemma is_z_iso_inv_from_z_iso {C : precategory_data} (a b : ob C)
-  (f : z_iso a b) : is_z_isomorphism (inv_from_z_iso f).
-Proof.
-  exists (pr1 f).
-  simpl; split; simpl.
-  - apply (pr2 (pr2 (pr2 f))).
-  - apply (pr1 (pr2 (pr2 f))).
-Defined.
 
 Definition z_iso_inv_from_z_iso {C : precategory_data} {a b : ob C}
   (f : z_iso a b) : z_iso b a.
@@ -773,6 +752,20 @@ Proof.
   assumption.
 Qed.
 
+Definition are_z_isomorphic {C : precategory_data} : hrel C := λ a b, ∥z_iso a b∥.
+
+Lemma iseqrel_are_z_isomorphic {C : precategory} : iseqrel (are_z_isomorphic(C:=C)).
+  Proof.
+  repeat split.
+  - intros x y z h1.
+    apply hinhuniv; intros h2; generalize h1; clear h1.
+    now apply hinhuniv; intros h1; apply hinhpr, (z_iso_comp h1 h2).
+  - now intros x; apply hinhpr, identity_z_iso.
+  - now intros x y; apply hinhuniv; intro h1; apply hinhpr, z_iso_inv_from_z_iso.
+  Qed.
+
+Definition z_iso_eqrel {C : precategory} : eqrel C := (are_z_isomorphic,,iseqrel_are_z_isomorphic).
+
 
 (** ** Properties of 0-isomorphisms *)
 
@@ -792,7 +785,7 @@ Lemma inv_z_iso_unique {C : category} (a b : ob C)
   is_inverse_in_precat f g -> g = z_iso_inv_from_z_iso f.
 Proof.
   intro H.
-  apply eq_z_iso.
+  apply z_iso_eq.
   apply (inverse_unique_precat _ _ f).
     - assumption.
     - split.
@@ -802,7 +795,7 @@ Proof.
 Qed.
 
 Lemma inv_z_iso_unique' (C : precategory) (a b : C) (f : z_iso a b) (g : b --> a) :
-  precomp_with f g = identity _ -> g = z_iso_inv_from_z_iso f.
+  precomp_with f g = identity _ -> g = inv_from_z_iso f.
 Proof.
   intro H.
   apply (cancel_z_iso' f).
@@ -817,21 +810,21 @@ Lemma z_iso_inv_of_z_iso_comp {C : category} (a b c : ob C)
    z_iso_inv_from_z_iso (z_iso_comp f g) =
        z_iso_comp (z_iso_inv_from_z_iso g) (z_iso_inv_from_z_iso f).
 Proof.
-  apply eq_z_iso.
+  apply z_iso_eq.
   apply idpath.
 Defined.
 
 Lemma z_iso_inv_of_z_iso_id {C : category} (a : ob C) :
    z_iso_inv_from_z_iso (identity_z_iso a) = identity_z_iso a.
 Proof.
-  apply eq_z_iso.
+  apply z_iso_eq.
   apply idpath.
 Qed.
 
 Lemma z_iso_inv_z_iso_inv {C : category} (a b : ob C) (f : z_iso a b) :
      z_iso_inv_from_z_iso (z_iso_inv_from_z_iso f) = f.
 Proof.
-  apply eq_z_iso.
+  apply z_iso_eq.
   apply idpath.
 Defined.
 
@@ -908,6 +901,34 @@ Defined.
 Definition iso_to_z_iso {C : precategory} {b c : C} : iso b c -> z_iso b c
   := λ f, pr1 f ,, is_z_iso_from_is_iso (pr1 f) (pr2 f).
 
+Lemma roundtrip1_iso_z_iso {C : precategory} {b c : C} (f: iso b c) :
+  z_iso_to_iso (iso_to_z_iso f) = f.
+Proof.
+  destruct f as [f H].
+  use total2_paths_f.
+  - apply idpath.
+  - apply isaprop_is_iso.
+Qed.
+
+Lemma roundtrip2_iso_z_iso {C : category} {b c : C} (f: z_iso b c) :
+  iso_to_z_iso (z_iso_to_iso f) = f.
+Proof.
+  destruct f as [f H].
+  use total2_paths_f.
+  - apply idpath.
+  - apply isaprop_is_z_isomorphism.
+Qed.
+
+Definition weq_iso_z_iso {C : category} {b c : C} : iso b c ≃ z_iso b c.
+Proof.
+  exists iso_to_z_iso.
+  use isweq_iso.
+  - apply z_iso_to_iso.
+  - apply roundtrip1_iso_z_iso.
+  - apply roundtrip2_iso_z_iso.
+Defined.
+
+
 (** The right inverse of an invertible morphism must be equal to the known (two-sided) inverse. *)
 (** TODO: Did I switch up right and left here vis a vis the conventional use? *)
 Lemma right_inverse_of_iso_is_inverse {C : precategory} {c c' : C}
@@ -935,3 +956,22 @@ Proof.
   refine (maponpaths (fun z => z · g) HH @ _).
   apply id_left.
 Qed.
+
+Definition is_z_isomorphism_path
+           {C : category}
+           {x y : C}
+           {f f' : x --> y}
+           (p : f = f')
+           (Hf : is_z_isomorphism f)
+  : is_z_isomorphism f'.
+Proof.
+  use make_is_z_isomorphism.
+  - exact (inv_from_z_iso (_ ,, Hf)).
+  - split.
+    + abstract
+        (rewrite <- p ;
+         apply (z_iso_inv_after_z_iso (_ ,, Hf))).
+    + abstract
+        (rewrite <- p ;
+         apply (z_iso_after_z_iso_inv (_ ,, Hf))).
+Defined.

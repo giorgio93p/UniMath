@@ -14,7 +14,7 @@ Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Univalence.
 Local Open Scope bicategory_scope.
 
@@ -68,7 +68,7 @@ Lemma full_spec
            (α : f ∘ k₁ ==> f ∘ k₂)
   : f ◅ (representable_full η θ Hη k₁ k₂ α) = α.
 Proof.
-  refine (representable_faithful (Hθ^-1) (f ∘ k₁) (f ∘ k₂) _ α _ _).
+  refine (representable_faithful Hθ^-1 (f ∘ k₁) (f ∘ k₂) _ α _ _).
   { is_iso. }
   apply (vcomp_lcancel (lassociator _ _ _)).
   { is_iso. }
@@ -104,7 +104,7 @@ Section EquivToAdjEquiv.
 
   Local Definition ε : f ∘ g ==> id₁ Y.
   Proof.
-    refine (representable_full (θiso^-1) (ηiso^-1) _ (f ∘ g) (id₁ Y) _).
+    refine (representable_full θiso^-1 ηiso^-1 _ (f ∘ g) (id₁ Y) _).
     { is_iso. }
     exact ((linvunitor g)
              o runitor g
@@ -136,7 +136,7 @@ Section EquivToAdjEquiv.
   Proof.
     rewrite !vassocr.
     unfold ε.
-    rewrite (full_spec (θiso^-1) (ηiso^-1) _ (is_invertible_2cell_inv _) (f ∘ g) (id₁ Y) _).
+    rewrite (full_spec θiso^-1 ηiso^-1 _ (is_invertible_2cell_inv _) (f ∘ g) (id₁ Y) _).
     rewrite <- !vassocr.
     rewrite linvunitor_lunitor, id2_right.
     rewrite !vassocr.
@@ -284,7 +284,7 @@ Section EquivToAdjEquiv.
   Proof.
     use (representable_faithful _ _ _ _ _ _ help2).
     - exact f.
-    - exact (εiso^-1).
+    - exact εiso^-1.
     - is_iso.
   Qed.
 
@@ -320,84 +320,7 @@ Section EquivToAdjEquiv.
 
   Definition equiv_to_adjequiv : adjoint_equivalence X Y
     := (f ,, equiv_to_isadjequiv).
-
 End EquivToAdjEquiv.
-
-Section CompositionEquivalence.
-  Context {C : bicat}
-          {X Y Z : C}.
-  Variable (f : C⟦X,Y⟧)
-           (g : C⟦Y,Z⟧)
-           (A₁ : left_equivalence f)
-           (A₂ : left_equivalence g).
-
-  Local Notation finv := (left_adjoint_right_adjoint A₁).
-  Local Notation ginv := (left_adjoint_right_adjoint A₂).
-
-  Local Definition comp_unit
-    : id₁ X ==> (finv ∘ ginv) ∘ (g ∘ f).
-  Proof.
-    refine (rassociator (g ∘ f) _ _ o _).
-    refine ((_ ◅ _) o (left_adjoint_unit A₁)).
-    refine (lassociator f g _ o _).
-    exact (((left_adjoint_unit A₂) ▻ f) o rinvunitor f).
-  Defined.
-
-  Local Definition comp_unit_isiso
-    : is_invertible_2cell comp_unit.
-  Proof.
-    unfold comp_unit.
-    is_iso.
-    - exact (left_equivalence_unit_iso A₁).
-    - exact (left_equivalence_unit_iso A₂).
-  Defined.
-
-  Local Definition comp_counit
-    : (g ∘ f) ∘ (finv ∘ ginv) ==> (id₁ Z).
-  Proof.
-    refine (_ o lassociator _ f g).
-    refine (left_adjoint_counit A₂ o (g ◅ _)).
-    refine (_ o rassociator _ _ _).
-    refine (runitor _ o _).
-    exact (left_adjoint_counit A₁ ▻ _).
-  Defined.
-
-  Local Definition comp_counit_isiso
-    : is_invertible_2cell comp_counit.
-  Proof.
-    unfold comp_counit.
-    is_iso.
-    - exact (left_equivalence_counit_iso A₁).
-    - exact (left_equivalence_counit_iso A₂).
-  Defined.
-
-  Definition comp_equiv
-    : left_equivalence (f · g).
-  Proof.
-    use tpair.
-    - repeat (use tpair).
-      * exact (finv ∘ ginv).
-      * exact comp_unit.
-      * exact comp_counit.
-    - split.
-      * exact comp_unit_isiso.
-      * exact comp_counit_isiso.
-  Defined.
-
-End CompositionEquivalence.
-
-Definition comp_adjequiv
-           {C : bicat}
-           {X Y Z : C}
-           (f : adjoint_equivalence X Y)
-           (g : adjoint_equivalence Y Z)
-  : adjoint_equivalence X Z.
-Proof.
-  use (equiv_to_adjequiv (f · g)).
-  use comp_equiv.
-  - exact f.
-  - exact g.
-Defined.
 
 Definition inv_equiv
            {C : bicat}
@@ -413,6 +336,17 @@ Proof.
       * exact ((left_equivalence_counit_iso Hf)^-1).
       * exact ((left_equivalence_unit_iso Hf)^-1).
   - split ; cbn ; is_iso.
+Defined.
+
+Definition inv_left_adjoint_equivalence
+           {B : bicat}
+           {x y : B}
+           {f : x --> y}
+           (Hf : left_adjoint_equivalence f)
+  : left_adjoint_equivalence (left_adjoint_right_adjoint Hf).
+Proof.
+  use equiv_to_adjequiv.
+  exact (inv_equiv (left_equivalence_of_left_adjoint_equivalence Hf)).
 Defined.
 
 Definition inv_adjequiv

@@ -10,10 +10,10 @@ Require Import UniMath.Foundations.Sets.
 Require Import UniMath.MoreFoundations.Univalence.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Functors.
-Require Import UniMath.CategoryTheory.categories.Type.Core.
+Require Import UniMath.CategoryTheory.Categories.Type.Core.
 
-Require Import UniMath.CategoryTheory.limits.graphs.limits.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Limits.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
 Require Import UniMath.CategoryTheory.Chains.Cochains.
 
 Local Open Scope cat.
@@ -68,7 +68,7 @@ Section StandardLimitHomot.
     refine (transport_lemma _ @ _).
     apply funextsec; intro u; apply funextsec; intro v; apply funextsec; intro ed.
     rewrite toforallpaths_funextsec.
-    replace (pr2 y u v ed) with (idpath _ @ (pr2 y u v ed)) by reflexivity.
+    change (pr2 y u v ed) with (idpath _ @ (pr2 y u v ed)).
     refine (_ @ maponpaths (λ p, p @ _) (pathsinv0l (maponpaths _ (pr1 h u)))).
     refine (_ @ (path_assoc (! maponpaths _ _) (maponpaths _ _) _)).
     rewrite maponpathsinv0.
@@ -105,8 +105,8 @@ Section StandardLimitUP.
   Qed.
 
   (** A weak equivalence expressing the above universal property. *)
-  Definition limit_up_weq {X L} {C : cone d L} {is : is_limit_cone C} :
-    (X → L) ≃ cone d X := make_weq (into_cone_to_cone C) (is X).
+  Definition limit_up_weq {X L} {C : cone d L} {isc : is_limit_cone C} :
+    (X → L) ≃ cone d X := make_weq (into_cone_to_cone C) (isc X).
 
   (** The universal property of a limit.
 

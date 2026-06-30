@@ -5,11 +5,13 @@
   - Setcategories: objects and morphisms are sets [setcategory]
  *)
 
-Require Import UniMath.Foundations.Preamble.
-Require Import UniMath.Foundations.Propositions.
-Require Import UniMath.Foundations.Sets.
+Require Import UniMath.Foundations.All.
+Require Import UniMath.MoreFoundations.All.
 
 Require Import UniMath.CategoryTheory.Core.Categories.
+Require Import UniMath.CategoryTheory.Core.Univalence.
+Require Import UniMath.CategoryTheory.Core.Isos.
+Require Import UniMath.CategoryTheory.Core.Functors.
 
 Local Open Scope cat.
 
@@ -30,6 +32,15 @@ Definition category_from_setcategory (C : setcategory) : category :=
   (pr1 C,, (dirprod_pr2 (pr2 C))).
 Coercion category_from_setcategory : setcategory >-> category.
 
+Definition make_setcategory
+           (C : category)
+           (H : isaset C)
+  : setcategory.
+Proof.
+  refine (pr1 C ,, H ,, _).
+  apply homset_property.
+Defined.
+
 Lemma isaprop_is_setcategory (C : precategory) : isaprop (is_setcategory C).
 Proof.
   apply isapropdirprod.
@@ -49,4 +60,42 @@ Proof.
   assert (h : e = e').
   apply uip. apply (pr2 C).
   apply (maponpaths (idtomor _ _ ) h).
+Qed.
+
+Definition setcategory_eq_idtoiso
+          {C : setcategory}
+          {x y : C}
+          (p q : x = y)
+  : pr1 (idtoiso p) = pr1 (idtoiso q).
+Proof.
+  do 2 apply maponpaths.
+  apply C.
+Qed.
+
+Definition setcategory_refl_idtoiso
+          {C : setcategory}
+          {x : C}
+          (p : x = x)
+  : pr1 (idtoiso p) = identity _.
+Proof.
+  apply (setcategory_eq_idtoiso p (idpath x)).
+Qed.
+
+Definition setcategory_eq_idtoiso_comp
+           {C : setcategory}
+           {x x' y y' : C}
+           (p p' : x = x')
+           (f : x' --> y)
+           (q q' : y = y')
+  : idtoiso p · f · idtoiso q
+    =
+    idtoiso p' · f · idtoiso q'.
+Proof.
+  etrans.
+  {
+    apply maponpaths.
+    exact (setcategory_eq_idtoiso q q').
+  }
+  do 2 apply maponpaths_2.
+  apply setcategory_eq_idtoiso.
 Qed.

@@ -1,10 +1,7 @@
-(* -*- coding: utf-8 *)
-
 (** * Metric trees *)
 
 Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.Nat.
-Import UniMath.MoreFoundations.Nat.Discern.
 Require Import UniMath.MoreFoundations.Notations.
 
 (** ** Definitions *)
@@ -52,7 +49,7 @@ Definition tree_induction (T:Tree) (x:T) (P:T->Type)
   ∏ z, P z.
 Proof.
   assert(d_ind : ∏ n z, mt_dist _ x z = n -> P z).
-  { intros ?.
+  { intro.
     induction n as [|n IH].
     { intros. assert (k:x=z).
       { apply mt_anti. assumption. } destruct k. assumption. }
@@ -103,9 +100,3 @@ Proof.
           assert (c := natlthtolehsn _ _ b).
           exact (nat_dist_minus 1 n c). } } } }
 Defined.
-
-(*
-Local Variables:
-compile-command: "make -C ../.. TAGS UniMath/Ktheory/MetricTree.vo"
-End:
-*)

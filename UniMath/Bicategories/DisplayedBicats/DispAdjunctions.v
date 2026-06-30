@@ -10,9 +10,12 @@ Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
 Require Import UniMath.Bicategories.DisplayedBicats.DispBicat. Import DispBicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Export UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Core.Univalence.
+Require Import UniMath.Bicategories.Core.AdjointUnique.
+Require Export UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.DisplayedBicats.DispInvertibles.
 
@@ -153,7 +156,19 @@ Definition disp_left_equivalence_axioms
   := is_disp_invertible_2cell (left_equivalence_unit_iso _)
        (disp_left_adjoint_unit αe ααd)
    × is_disp_invertible_2cell (left_equivalence_counit_iso _)
-       (disp_left_adjoint_counit αe ααd).
+   (disp_left_adjoint_counit αe ααd).
+
+Definition disp_left_equivalence
+           {x y : C}
+           {f : x --> y}
+           (Hf : left_equivalence f)
+           {xx : D x}
+           {yy : D y}
+           (ff : xx -->[ f ] yy)
+  : UU
+  := ∑ (d : disp_left_adjoint_data Hf ff),
+     disp_left_equivalence_axioms Hf d.
+
 
 Definition disp_left_adjoint_equivalence
          {a b : C}
@@ -286,7 +301,7 @@ Proof.
           apply disp_mor_transportf_prewhisker. }
         etrans. { apply (transport_f_f (λ x, _ ==>[x] _)). }
         etrans.
-        apply maponpaths. apply disp_vassocl.
+        { apply maponpaths. apply disp_vassocl. }
         etrans. { apply (transport_f_f (λ x, _ ==>[x] _)). }
         etrans.
         { apply maponpaths. apply maponpaths.
@@ -495,12 +510,12 @@ Proof.
     use tpair.
     + (* Units *)
       use tpair; simpl.
-      apply (left_adjoint_unit j).
-      apply (disp_left_adjoint_unit _ jj).
+      * apply (left_adjoint_unit j).
+      * apply (disp_left_adjoint_unit _ jj).
     + (* Counits *)
       use tpair; simpl.
-      apply (left_adjoint_counit j).
-      apply (disp_left_adjoint_counit _ jj).
+      * apply (left_adjoint_counit j).
+      * apply (disp_left_adjoint_counit _ jj).
 Defined.
 
 Definition left_adjoint_data_total_weq
@@ -512,10 +527,10 @@ Definition left_adjoint_data_total_weq
   ∑ (α : left_adjoint_data f), disp_left_adjoint_data α ff.
 Proof.
   exists (left_adjoint_data_total_to_disp ff).
-  use gradth.
+  use isweq_iso.
   - exact (left_adjoint_data_disp_to_total ff).
-  - intros ?. reflexivity.
-  - intros ?. reflexivity.
+  - intro. reflexivity.
+  - intro. reflexivity.
 Defined.
 
 (** The equivalence for adjunction laws *)
@@ -609,7 +624,7 @@ Proof.
   - apply isofhleveltotal2; try intro; apply cellset_property.
   - apply isofhleveltotal2.
     { apply isofhleveltotal2; try intro; apply cellset_property. }
-    intros ?.
+    intro.
     apply isofhleveltotal2; try intro; apply disp_cellset_property.
 Defined.
 
@@ -713,7 +728,7 @@ Proof.
   - apply isapropdirprod; apply isaprop_is_invertible_2cell.
   - apply isofhleveltotal2.
     { apply isapropdirprod; apply isaprop_is_invertible_2cell. }
-    intros ?.
+    intro.
     apply isapropdirprod; apply isaprop_is_disp_invertible_2cell.
 Defined.
 
@@ -874,3 +889,103 @@ Defined.
 (* Defined. *)
 
 End Total_Internal_Adjunction.
+
+Definition disp_left_equivalence_to_total
+           {B : bicat}
+           {D : disp_bicat B}
+           {x y : B}
+           {f : x --> y}
+           {Hf : left_equivalence f}
+           {xx : D x}
+           {yy : D y}
+           {ff : xx -->[ f ] yy}
+           (Hff : disp_left_equivalence Hf ff)
+  : @left_equivalence (total_bicat D) (x ,, xx) (y ,, yy) (f ,, ff).
+Proof.
+  simple refine (_ ,, _).
+  - exact (left_adjoint_data_disp_to_total ff (pr1 Hf ,, pr1 Hff)).
+  - use (left_equivalence_axioms_disp_to_total _ (_ ,, _)).
+    + exact (pr2 Hf).
+    + exact (pr2 Hff).
+Defined.
+
+Definition disp_left_equivalence_to_left_adjoint_equivalence
+           {B : bicat}
+           {D : disp_bicat B}
+           {x y : B}
+           {f : x --> y}
+           {Hf : left_equivalence f}
+           {xx : D x}
+           {yy : D y}
+           {ff : xx -->[ f ] yy}
+           (Hff : disp_left_equivalence Hf ff)
+  : ∑ (Hf' : left_adjoint_equivalence f),
+    disp_left_adjoint_equivalence Hf' ff
+  := left_adjoint_equivalence_total_disp_weq
+       f ff
+       (pr2 (equiv_to_adjequiv _ (disp_left_equivalence_to_total Hff))).
+
+Definition disp_left_equivalence_to_left_adjoint_equivalence_over_id
+           {B : bicat}
+           {D : disp_bicat B}
+           (HB : is_univalent_2_1 B)
+           {x : B}
+           {xx yy : D x}
+           {ff : xx -->[ id₁ x ] yy}
+           (Hff : disp_left_equivalence (internal_adjoint_equivalence_identity _) ff)
+  : disp_left_adjoint_equivalence (internal_adjoint_equivalence_identity _) ff.
+Proof.
+  refine (transportf
+            (λ z, disp_left_adjoint_equivalence z ff)
+            _
+            (pr2 (disp_left_equivalence_to_left_adjoint_equivalence Hff))).
+  apply (isaprop_left_adjoint_equivalence _ HB).
+Qed.
+
+(** Convenient builders for displayed adjoint equivalences *)
+Definition make_disp_adjequiv_prop_grpd
+           {B : bicat}
+           {D : disp_bicat B}
+           (HD₁ : disp_2cells_isaprop D)
+           (HD₂ : disp_locally_groupoid D)
+           {x y : B}
+           {f : x --> y}
+           (Hf : left_adjoint_equivalence f)
+           {xx : D x}
+           {yy : D y}
+           (ff : xx -->[ f ] yy)
+           (gg : yy -->[ left_adjoint_right_adjoint Hf ] xx)
+           (ηη : id_disp xx ==>[ left_adjoint_unit Hf ] ff ;; gg)
+           (εε : gg ;; ff ==>[ left_adjoint_counit Hf ] id_disp yy)
+  : disp_left_adjoint_equivalence Hf ff.
+Proof.
+  simple refine ((_ ,, _ ,, _) ,, _ ,, _).
+  - exact gg.
+  - exact ηη.
+  - exact εε.
+  - abstract
+      (split ; apply HD₁).
+  - abstract
+      (split ; apply HD₂).
+Defined.
+
+Definition make_disp_adjequiv_contr
+           {B : bicat}
+           {D : disp_bicat B}
+           (HD : disp_2cells_iscontr D)
+           {x y : B}
+           {f : x --> y}
+           (Hf : left_adjoint_equivalence f)
+           {xx : D x}
+           {yy : D y}
+           (ff : xx -->[ f ] yy)
+           (gg : yy -->[ left_adjoint_right_adjoint Hf ] xx)
+  : disp_left_adjoint_equivalence Hf ff.
+Proof.
+  use make_disp_adjequiv_prop_grpd.
+  - exact (disp_2cells_isaprop_from_disp_2cells_iscontr _ HD).
+  - exact (disp_2cells_isgroupoid_from_disp_2cells_iscontr _ HD).
+  - exact gg.
+  - apply HD.
+  - apply HD.
+Defined.

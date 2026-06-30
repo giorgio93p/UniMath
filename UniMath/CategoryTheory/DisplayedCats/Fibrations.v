@@ -7,10 +7,10 @@ Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.Core.Univalence. (* only coercions *)
 Require Import UniMath.CategoryTheory.Core.Functors.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
-Require Import UniMath.CategoryTheory.categories.HSET.MonoEpiIso.
-Require Import UniMath.CategoryTheory.categories.HSET.Univalence.
-Require Import UniMath.CategoryTheory.limits.pullbacks.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.MonoEpiIso.
+Require Import UniMath.CategoryTheory.Categories.HSET.Univalence.
+Require Import UniMath.CategoryTheory.Limits.Pullbacks.
 Require Import UniMath.CategoryTheory.Adjunctions.Core.
 Require Import UniMath.CategoryTheory.Equivalences.Core.
 Require Import UniMath.CategoryTheory.FunctorCategory.
@@ -18,9 +18,13 @@ Require Import UniMath.CategoryTheory.opp_precat.
 Require Import UniMath.CategoryTheory.Presheaf.
 Local Open Scope cat.
 
-Require Import UniMath.CategoryTheory.DisplayedCats.Auxiliary.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
-Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
+Require Import UniMath.CategoryTheory.DisplayedCats.Functors.
+Require Import UniMath.CategoryTheory.DisplayedCats.NaturalTransformations.
+Require Import UniMath.CategoryTheory.DisplayedCats.Fiber.
+Require Import UniMath.CategoryTheory.DisplayedCats.Isos.
+Require Import UniMath.CategoryTheory.DisplayedCats.Univalence.
+
 Require Import UniMath.CategoryTheory.DisplayedCats.Examples.Opposite.
 
 Local Open Scope type_scope.
@@ -48,16 +52,16 @@ there’s some object d' in D c', and an iso φbar : d' =~ d over φ.
 
 Definition iso_cleaving {C : category} (D : disp_cat C) : UU
 :=
-  forall (c c' : C) (i : iso c' c) (d : D c),
-          ∑ d' : D c', iso_disp i d' d.
+  forall (c c' : C) (i : z_iso c' c) (d : D c),
+          ∑ d' : D c', z_iso_disp i d' d.
 
 Definition iso_fibration (C : category) : UU
   := ∑ D : disp_cat C, iso_cleaving D.
 
 Definition is_uncloven_iso_cleaving {C : category} (D : disp_cat C) : UU
 :=
-  forall (c c' : C) (i : iso c' c) (d : D c),
-          ∃ d' : D c', iso_disp i d' d.
+  forall (c c' : C) (i : z_iso c' c) (d : D c),
+          ∃ d' : D c', z_iso_disp i d' d.
 
 Definition weak_iso_fibration (C : category) : UU
   := ∑ D : disp_cat C, is_uncloven_iso_cleaving D.
@@ -67,8 +71,8 @@ Definition weak_iso_fibration (C : category) : UU
 
 Definition is_op_isofibration {C : category} (D : disp_cat C) : UU
 :=
-  forall (c c' : C) (i : iso c c') (d : D c),
-          ∑ d' : D c', iso_disp i d d'.
+  forall (c c' : C) (i : z_iso c c') (d : D c),
+          ∑ d' : D c', z_iso_disp i d d'.
 
 Lemma is_isofibration_iff_is_op_isofibration
     {C : category} (D : disp_cat C)
@@ -105,6 +109,17 @@ Definition cartesian_factorisation_commutes
   : cartesian_factorisation H g hh ;; ff = hh
 := pr2 (pr1 (H _ g _ hh)).
 
+(** While [cartesian_factorisation_commutes] shows that composition with and factorisation through a cartesian morphism are one-sided inverses in one direction, the following shows the other direction. **)
+Definition cartesian_factorisation_of_composite
+    {C : category} {D : disp_cat C}
+    {c c' : C} {f : c' --> c}
+    {d : D c} {d' : D c'} {ff : d' -->[f] d} (H : is_cartesian ff)
+    {c'' : C} {g : c'' --> c'} {d'' : D c''} (gg : d'' -->[g] d')
+  : gg = cartesian_factorisation H g (gg ;; ff).
+Proof.
+  exact (maponpaths pr1 (pr2 (H _ _ _ _) (_,, idpath _))).
+Defined.
+
 (** This is essentially the third access function for [is_cartesian], but given in a more usable form than [pr2 (H …)] would be. *)
 Definition cartesian_factorisation_unique
     {C : category} {D : disp_cat C}
@@ -113,18 +128,10 @@ Definition cartesian_factorisation_unique
     {c''} {g : c'' --> c'} {d'' : D c''} (gg gg' : d'' -->[g] d')
   : (gg ;; ff = gg' ;; ff) -> gg = gg'.
 Proof.
-  revert gg gg'.
-  assert (goal' : forall gg : d'' -->[g] d',
-                    gg = cartesian_factorisation H g (gg ;; ff)).
-  {
-    intros gg.
-    exact (maponpaths pr1
-      (pr2 (H _ g _ (gg ;; ff)) (gg,,idpath _))).
-  }
-  intros gg gg' Hggff.
-  eapply pathscomp0. apply goal'.
+  intro Hggff.
+  eapply pathscomp0. apply (cartesian_factorisation_of_composite H).
   eapply pathscomp0. apply maponpaths, Hggff.
-  apply pathsinv0, goal'.
+  apply pathsinv0, cartesian_factorisation_of_composite.
 Qed.
 
 Definition cartesian_factorisation' {C : category} {D : disp_cat C}
@@ -183,7 +190,129 @@ Definition is_cartesian_disp_functor
   {D : disp_cat C} {D' : disp_cat C'} (FF : disp_functor F D D') : UU
 := ∏  (c c' : C) (f : c' --> c)
       (d : D c) (d' : D c') (ff : d' -->[f] d),
-   is_cartesian ff -> is_cartesian (#FF ff).
+   is_cartesian ff -> is_cartesian (♯ FF ff).
+
+Definition disp_functor_identity_is_cartesian_disp_functor
+           {C : category}
+           (D : disp_cat C)
+  : is_cartesian_disp_functor (disp_functor_identity D).
+Proof.
+  intros x y f xx yy ff Hff.
+  exact Hff.
+Defined.
+
+Definition disp_functor_composite_is_cartesian_disp_functor
+           {C₁ C₂ C₃ : category}
+           {F : C₁ ⟶ C₂}
+           {G : C₂ ⟶ C₃}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           {D₃ : disp_cat C₃}
+           {FF : disp_functor F D₁ D₂}
+           {GG : disp_functor G D₂ D₃}
+           (HFF : is_cartesian_disp_functor FF)
+           (HGG : is_cartesian_disp_functor GG)
+  : is_cartesian_disp_functor (disp_functor_composite FF GG).
+Proof.
+  intros x y f xx yy ff Hff.
+  apply HGG.
+  apply HFF.
+  exact Hff.
+Defined.
+
+Definition disp_functor_over_id_composite_is_cartesian
+           {C : category}
+           {D₁ D₂ D₃ : disp_cat C}
+           {FF : disp_functor (functor_identity C) D₁ D₂}
+           {GG : disp_functor (functor_identity C) D₂ D₃}
+           (HFF : is_cartesian_disp_functor FF)
+           (HGG : is_cartesian_disp_functor GG)
+  : is_cartesian_disp_functor (disp_functor_over_id_composite FF GG).
+Proof.
+  intros x y f xx yy ff Hff.
+  apply HGG.
+  apply HFF.
+  exact Hff.
+Defined.
+
+Definition cartesian_disp_functor
+           {C₁ C₂ : category}
+           (F : C₁ ⟶ C₂)
+           (D₁ : disp_cat C₁)
+           (D₂ : disp_cat C₂)
+  : UU
+  := ∑ (FF : disp_functor F D₁ D₂), is_cartesian_disp_functor FF.
+
+Coercion disp_functor_of_cartesian_disp_functor
+         {C₁ C₂ : category}
+         {F : C₁ ⟶ C₂}
+         {D₁ : disp_cat C₁}
+         {D₂ : disp_cat C₂}
+         (FF : cartesian_disp_functor F D₁ D₂)
+  : disp_functor F D₁ D₂
+  := pr1 FF.
+
+Definition make_cartesian_disp_functor
+           {C₁ C₂ : category}
+           {F : C₁ ⟶ C₂}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           (FF : disp_functor F D₁ D₂)
+           (HFF : is_cartesian_disp_functor FF)
+  : cartesian_disp_functor F D₁ D₂
+  := FF ,, HFF.
+
+Definition cartesian_disp_functor_is_cartesian
+           {C₁ C₂ : category}
+           {F : C₁ ⟶ C₂}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           (FF : cartesian_disp_functor F D₁ D₂)
+  : is_cartesian_disp_functor FF
+  := pr2 FF.
+
+Definition cartesian_disp_functor_on_cartesian
+           {C₁ C₂ : category}
+           {F : C₁ ⟶ C₂}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           (FF : cartesian_disp_functor F D₁ D₂)
+           {x y : C₁}
+           {f : x --> y}
+           {xx : D₁ x}
+           {yy : D₁ y}
+           {ff : xx -->[ f ] yy}
+           (Hff : is_cartesian ff)
+  : is_cartesian (♯FF ff)
+  := pr2 FF y x f yy xx ff Hff.
+
+Definition id_cartesian_disp_functor
+           {C : category}
+           (D : disp_cat C)
+  : cartesian_disp_functor (functor_identity C) D D.
+Proof.
+  use make_cartesian_disp_functor.
+  - exact (disp_functor_identity D).
+  - apply disp_functor_identity_is_cartesian_disp_functor.
+Defined.
+
+Definition comp_cartesian_disp_functor
+           {C₁ C₂ C₃ : category}
+           {F : C₁ ⟶ C₂}
+           {G : C₂ ⟶ C₃}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           {D₃ : disp_cat C₃}
+           (FF : cartesian_disp_functor F D₁ D₂)
+           (GG : cartesian_disp_functor G D₂ D₃)
+  : cartesian_disp_functor (F ∙ G) D₁ D₃.
+Proof.
+  use make_cartesian_disp_functor.
+  - exact (disp_functor_composite FF GG).
+  - exact (disp_functor_composite_is_cartesian_disp_functor
+             (cartesian_disp_functor_is_cartesian FF)
+             (cartesian_disp_functor_is_cartesian GG)).
+Defined.
 
 Lemma isaprop_is_cartesian
     {C : category} {D : disp_cat C}
@@ -194,6 +323,19 @@ Proof.
   repeat (apply impred_isaprop; intro).
   apply isapropiscontr.
 Defined.
+
+
+Proposition isaprop_is_cartesian_disp_functor
+            {C₁ C₂ : category}
+            {F : C₁ ⟶ C₂}
+            {D₁ : disp_cat C₁}
+            {D₂ : disp_cat C₂}
+            (FF : disp_functor F D₁ D₂)
+  : isaprop (is_cartesian_disp_functor FF).
+Proof.
+  do 7 (use impred ; intro).
+  apply isaprop_is_cartesian.
+Qed.
 
 (* TODO: should the arguments be re-ordered as in [cartesian_lift]? If so, reorder in [isofibration] etc as well, for consistency. *)
 (* TODO: consider renaming to e.g. [cleaving] to follow convention that [is_] is reserved for hprops. *)
@@ -221,15 +363,15 @@ Definition weak_fibration (C : category) : UU
 
 (** ** Connection with isofibrations *)
 
-Lemma is_iso_from_is_cartesian {C : category} {D : disp_cat C}
-    {c c' : C} (i : iso c' c) {d : D c} {d'} (ff : d' -->[i] d)
-  : is_cartesian ff -> is_iso_disp i ff.
+Lemma is_z_iso_from_is_cartesian {C : category} {D : disp_cat C}
+    {c c' : C} (i : z_iso c' c) {d : D c} {d'} (ff : d' -->[i] d)
+  : is_cartesian ff -> is_z_iso_disp i ff.
 Proof.
   intros Hff.
   use (_,,_); try split.
   - use
-      (cartesian_factorisation' Hff (inv_from_iso i) (id_disp _)).
-    apply iso_after_iso_inv.
+      (cartesian_factorisation' Hff (inv_from_z_iso i) (id_disp _)).
+    apply z_iso_after_z_iso_inv.
   - apply cartesian_factorisation_commutes'.
   - apply (cartesian_factorisation_unique Hff).
     etrans. apply assoc_disp_var.
@@ -250,7 +392,7 @@ Proof.
   assert (fd := D_fib _ _ f d).
   exists (fd : D _).
   exists (fd : _ -->[_] _).
-  apply is_iso_from_is_cartesian; exact fd.
+  apply is_z_iso_from_is_cartesian; exact fd.
 Defined.
 
 (** ** Uniqueness of cartesian lifts *)
@@ -258,7 +400,7 @@ Defined.
 (* TODO: show that when [D] is _univalent_, cartesian lifts are literally unique, and so any uncloven fibration (isofibration, etc) is in fact cloven. *)
 Definition cartesian_lifts_iso {C : category} {D : disp_cat C}
     {c} {d : D c} {c' : C} {f : c' --> c} (fd fd' : cartesian_lift d f)
-  : iso_disp (identity_iso c') fd fd'.
+  : z_iso_disp (identity_z_iso c') fd fd'.
 Proof.
   use (_,,(_,,_)).
   - exact (cartesian_factorisation' fd' (identity _) fd (id_left _)).
@@ -314,10 +456,10 @@ Proof.
   cbn. etrans. apply transportf_precompose_disp.
   rewrite idtoiso_isotoid_disp.
   use (pathscomp0 (maponpaths _ _) (transportfbinv _ _ _)).
-  apply (precomp_with_iso_disp_is_inj (cartesian_lifts_iso fd fd')).
+  apply (precomp_with_z_iso_disp_is_inj (cartesian_lifts_iso fd fd')).
   etrans. apply assoc_disp.
   etrans. eapply transportf_bind, cancel_postcomposition_disp.
-    use inv_mor_after_iso_disp.
+    use inv_mor_after_z_iso_disp.
   etrans. eapply transportf_bind, id_left_disp.
   apply pathsinv0.
   etrans. apply mor_disp_transportf_prewhisker.
@@ -370,12 +512,12 @@ Definition isaset_fiber_discrete_fibration {C} (D : discrete_fibration C)
            (c : C) : isaset (D c) := pr2 (pr2 D) c.
 
 (** TODO: move upstream *)
-Lemma pair_inj {A : UU} {B : A -> UU} (is : isaset A) {a : A}
+Lemma pair_inj {A : UU} {B : A -> UU} (isc : isaset A) {a : A}
    {b b' : B a} : (a,,b) = (a,,b') -> b = b'.
 Proof.
   intro H.
   use (invmaponpathsincl _ _ _ _ H).
-  apply isofhlevelffib. intro. apply is.
+  apply isofhlevelffib. intro. apply isc.
 Defined.
 
 Lemma disp_mor_unique_disc_fib C (D : discrete_fibration C)
@@ -563,7 +705,7 @@ Proof.
         intros x y f; cbn in *;
         apply funextsec; intro d;
         apply path_to_ctr;
-        apply #a;
+        apply ♯a;
         apply (pr2 (iscontrpr1 (unique_lift f _ )))
       ).
 Defined.
@@ -719,12 +861,11 @@ Lemma forms_equivalence_disc_fib
 Proof.
   split.
   - intro F.
-    apply functor_iso_if_pointwise_iso.
+    apply nat_trafo_z_iso_if_pointwise_z_iso.
     intro c. cbn.
-    set (XR := hset_equiv_is_iso _ _ (idweq (pr1 F c : hSet) )).
+    set (XR := hset_equiv_is_z_iso _ _ (idweq (pr1 F c : hSet) )).
     apply XR.
   - intro F.
-    apply is_iso_from_is_z_iso.
     use (_ ,, (_,,_ )).
     + apply ε_inv_disc_fib.
     + apply eq_discrete_fib_mor.
@@ -734,7 +875,7 @@ Proof.
 Qed.
 
 Definition adj_equivalence_disc_fib : adj_equivalence_of_cats _ :=
-  adjointificiation (_ ,, forms_equivalence_disc_fib).
+  adjointification (_ ,, forms_equivalence_disc_fib).
 
 End Equivalence_disc_fibs_presheaves.
 
@@ -813,7 +954,7 @@ Definition is_cartesian_weq_is_opcartesian
 Proof.
   use make_weq.
   - exact (λ Hff c₃ cc₃ g hh, Hff c₃ g cc₃ hh).
-  - use gradth.
+  - use isweq_iso.
     + exact (λ Hff c₃ cc₃ g hh, Hff c₃ g cc₃ hh).
     + intro ; apply idpath.
     + intro ; apply idpath.
@@ -831,7 +972,7 @@ Definition is_opcartesian_weq_is_cartesian
 Proof.
   use make_weq.
   - exact (λ Hff c₃ cc₃ g hh, Hff c₃ g cc₃ hh).
-  - use gradth.
+  - use isweq_iso.
     + exact (λ Hff c₃ cc₃ g hh, Hff c₃ g cc₃ hh).
     + intro ; apply idpath.
     + intro ; apply idpath.
@@ -942,8 +1083,14 @@ Proof.
   use make_weq.
   - exact (λ HD c₁ c₂ cc₁ f,
            let ℓ := HD c₁ c₂ f cc₁ in
-           pr1 ℓ ,, pr12 ℓ ,, is_cartesian_weq_is_opcartesian _ ℓ).
-  - use gradth.
+(* TODO: see #1470 *)
+           tpair
+             (fun cc₂ => total2 (fun ff => @is_opcartesian _ _ _ _ _ cc₁ cc₂ ff))
+             (pr1 ℓ)
+             (tpair
+                (@is_opcartesian _ _ _ _ _ cc₁ ℓ) (pr12 ℓ)
+                (pr1weq (is_cartesian_weq_is_opcartesian ℓ) ℓ))).
+  - use isweq_iso.
     + refine (λ HD c₁ c₂ cc₁ f,
               let ℓ := HD c₁ c₂ f cc₁ in
               pr1 ℓ ,, pr12 ℓ ,, _).
@@ -960,8 +1107,16 @@ Proof.
   use make_weq.
   - exact (λ HD c₁ c₂ cc₁ f,
            let ℓ := HD c₁ c₂ f cc₁ in
-           pr1 ℓ ,, pr12 ℓ ,, is_opcartesian_weq_is_cartesian _ (pr22 ℓ)).
-  - use gradth.
+(* TODO: see #1470 *)
+           tpair
+             (fun d' => total2 (fun ff => @is_cartesian _ _ _ _ _ f d' ff))
+             (pr1 ℓ)
+             (tpair
+                (@is_cartesian _ _ _ _ _ f (pr1 ℓ)) (pr12 ℓ)
+                (pr1weq
+                   (@is_opcartesian_weq_is_cartesian _ D _ _ _ _ _ (pr12 ℓ))
+                   (pr22 ℓ)))).
+  - use isweq_iso.
     + refine (λ HD c₁ c₂ cc₁ f,
               let ℓ := HD c₁ c₂ f cc₁ in
               pr1 ℓ ,, pr12 ℓ ,, _).
@@ -969,6 +1124,21 @@ Proof.
     + intro ; apply idpath.
     + intro ; apply idpath.
 Defined.
+
+Definition isaprop_opcleaving
+           {C : univalent_category}
+           (D : disp_cat C)
+           (HD : is_univalent_disp D)
+  : isaprop (opcleaving D).
+Proof.
+  use (isofhlevelweqb
+         1
+         (opcleaving_weq_cleaving D)).
+  use (@isaprop_cleaving (op_unicat C) (op_disp_cat _) _).
+  apply is_univalent_op_disp_cat.
+  exact HD.
+Defined.
+
 
 (** Cloven opfibration *)
 Definition opfibration
@@ -994,7 +1164,157 @@ Definition is_opcartesian_disp_functor
         (d : D c)
         (d' : D c')
         (ff : d' -->[f] d),
-     is_opcartesian ff -> is_opcartesian (#FF ff).
+     is_opcartesian ff -> is_opcartesian (♯ FF ff).
+
+Proposition isaprop_is_opcartesian_disp_functor
+            {C₁ C₂ : category}
+            {F : C₁ ⟶ C₂}
+            {D₁ : disp_cat C₁}
+            {D₂ : disp_cat C₂}
+            (FF : disp_functor F D₁ D₂)
+  : isaprop (is_opcartesian_disp_functor FF).
+Proof.
+  do 7 (use impred ; intro).
+  apply isaprop_is_opcartesian.
+Qed.
+
+Definition disp_functor_identity_is_opcartesian_disp_functor
+           {C : category}
+           (D : disp_cat C)
+  : is_opcartesian_disp_functor (disp_functor_identity D).
+Proof.
+  intros x y f xx yy ff Hff.
+  exact Hff.
+Defined.
+
+Definition disp_functor_composite_is_opcartesian_disp_functor
+           {C₁ C₂ C₃ : category}
+           {F : C₁ ⟶ C₂}
+           {G : C₂ ⟶ C₃}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           {D₃ : disp_cat C₃}
+           {FF : disp_functor F D₁ D₂}
+           {GG : disp_functor G D₂ D₃}
+           (HFF : is_opcartesian_disp_functor FF)
+           (HGG : is_opcartesian_disp_functor GG)
+  : is_opcartesian_disp_functor (disp_functor_composite FF GG).
+Proof.
+  intros x y f xx yy ff Hff.
+  apply HGG.
+  apply HFF.
+  exact Hff.
+Defined.
+
+Definition disp_functor_over_id_composite_is_opcartesian
+           {C : category}
+           {D₁ D₂ D₃ : disp_cat C}
+           {FF : disp_functor (functor_identity C) D₁ D₂}
+           {GG : disp_functor (functor_identity C) D₂ D₃}
+           (HFF : is_opcartesian_disp_functor FF)
+           (HGG : is_opcartesian_disp_functor GG)
+  : is_opcartesian_disp_functor (disp_functor_over_id_composite FF GG).
+Proof.
+  intros x y f xx yy ff Hff.
+  apply HGG.
+  apply HFF.
+  exact Hff.
+Defined.
+
+Definition opcartesian_disp_functor
+           {C₁ C₂ : category}
+           (F : C₁ ⟶ C₂)
+           (D₁ : disp_cat C₁)
+           (D₂ : disp_cat C₂)
+  : UU
+  := ∑ (FF : disp_functor F D₁ D₂), is_opcartesian_disp_functor FF.
+
+Coercion disp_functor_of_opcartesian_disp_functor
+         {C₁ C₂ : category}
+         {F : C₁ ⟶ C₂}
+         {D₁ : disp_cat C₁}
+         {D₂ : disp_cat C₂}
+         (FF : opcartesian_disp_functor F D₁ D₂)
+  : disp_functor F D₁ D₂
+  := pr1 FF.
+
+Definition opcartesian_disp_functor_is_opcartesian
+           {C₁ C₂ : category}
+           {F : C₁ ⟶ C₂}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           (FF : opcartesian_disp_functor F D₁ D₂)
+  : is_opcartesian_disp_functor FF
+  := pr2 FF.
+
+(** Opfibrations are isofibrations *)
+Section IsoCleavingFromOpcleaving.
+  Context {C : category}
+          (D : disp_cat C)
+          (HD : opcleaving D).
+
+  Section Lift.
+    Context {x y : C}
+            (f : z_iso x y)
+            (d : D y).
+
+    Definition z_iso_cleaving_from_opcleaving_ob
+      : D x
+      := opcleaving_ob HD (inv_from_z_iso f) d.
+
+    Let ℓ : d -->[ inv_from_z_iso f ] z_iso_cleaving_from_opcleaving_ob
+      := opcleaving_mor HD (inv_from_z_iso f) d.
+    Let ℓ_opcart : is_opcartesian (pr12 (HD y x d (inv_from_z_iso f)))
+      := pr22 (HD _ _ d (inv_from_z_iso f)).
+
+    Definition z_iso_cleaving_from_opcleaving_ob_disp_iso_map
+      : z_iso_cleaving_from_opcleaving_ob -->[ f ] d.
+    Proof.
+      use (opcartesian_factorisation ℓ_opcart).
+      refine (transportb
+                (λ z, _ -->[ z ] _)
+                _
+                (id_disp d)).
+      apply z_iso_after_z_iso_inv.
+    Defined.
+
+    Definition z_iso_cleaving_from_opcleaving_ob_disp_iso
+      : z_iso_disp f z_iso_cleaving_from_opcleaving_ob d.
+    Proof.
+      use make_z_iso_disp.
+      - exact z_iso_cleaving_from_opcleaving_ob_disp_iso_map.
+      - simple refine (_ ,, _ ,, _).
+        + exact ℓ.
+        + abstract
+            (apply opcartesian_factorisation_commutes).
+        + abstract
+            (apply (opcartesian_factorisation_unique ℓ_opcart) ;
+             unfold transportb ;
+             rewrite mor_disp_transportf_prewhisker ;
+             rewrite assoc_disp ;
+             unfold transportb ;
+             etrans ;
+               [ apply maponpaths ;
+                 apply maponpaths_2 ;
+                 apply (opcartesian_factorisation_commutes ℓ_opcart)
+               | ] ;
+             unfold transportb ;
+             rewrite mor_disp_transportf_postwhisker ;
+             rewrite id_left_disp, id_right_disp ;
+             unfold transportb ;
+             rewrite !transport_f_f ;
+             apply maponpaths_2 ;
+             apply homset_property).
+    Defined.
+  End Lift.
+
+  Definition iso_cleaving_from_opcleaving
+    : iso_cleaving D
+    := λ x y f d,
+       z_iso_cleaving_from_opcleaving_ob f d
+       ,,
+       z_iso_cleaving_from_opcleaving_ob_disp_iso f d.
+End IsoCleavingFromOpcleaving.
 
 Section isofibration_from_disp_over_univalent.
 
@@ -1014,7 +1334,7 @@ Proof.
     cbn.
     rewrite isotoid_identity_iso.
     cbn.
-    apply identity_iso_disp.
+    apply identity_z_iso_disp.
 Defined.
 
 End isofibration_from_disp_over_univalent.
@@ -1084,80 +1404,6 @@ Proof.
     + apply  (disp_mor_unique_disc_fib _ (D,,X)).
   - apply isaset_fiber_discrete_fibration.
 Defined.
-
-
-Section fiber_functor_from_cleaving.
-
-Context {C : category} (D : disp_cat C) (F : cleaving D).
-Context {c c' : C} (f : C⟦c', c⟧).
-
-Let lift_f :  ∏ d : D c, cartesian_lift d f := F _ _ f.
-
-Definition fiber_functor_from_cleaving_data : functor_data (D [{c}]) (D [{c'}]).
-Proof.
-  use tpair.
-  + intro d. exact (object_of_cartesian_lift _ _ (lift_f d)).
-  + intros d' d ff. cbn.
-
-    set (XR' := @cartesian_factorisation C D _ _ f).
-    specialize (XR' _ _ _ (lift_f d)).
-    use XR'.
-    * use (transportf (mor_disp _ _ )
-                      _
-                      (mor_disp_of_cartesian_lift _ _ (lift_f d') ;; ff)).
-      etrans; [ apply id_right |]; apply pathsinv0; apply id_left.
-Defined.
-
-Lemma is_functor_from_cleaving_data : is_functor fiber_functor_from_cleaving_data.
-Proof.
-  split.
-  - intro d; cbn.
-    apply pathsinv0.
-    apply path_to_ctr.
-    etrans; [apply id_left_disp |].
-    apply pathsinv0.
-    etrans. { apply maponpaths. apply id_right_disp. }
-    etrans; [ apply transport_f_f |].
-    unfold transportb.
-    apply maponpaths_2.
-    apply homset_property.
-  - intros d'' d' d ff' ff; cbn.
-    apply pathsinv0.
-    apply path_to_ctr.
-    etrans; [apply mor_disp_transportf_postwhisker |].
-    apply pathsinv0.
-    etrans. { apply maponpaths; apply mor_disp_transportf_prewhisker. }
-    etrans; [apply transport_f_f |].
-    apply transportf_comp_lemma.
-    apply pathsinv0.
-    etrans; [apply assoc_disp_var |].
-    apply pathsinv0.
-    apply transportf_comp_lemma.
-    apply pathsinv0.
-    etrans ; [ apply maponpaths, cartesian_factorisation_commutes |].
-    etrans ; [ apply mor_disp_transportf_prewhisker |].
-    apply pathsinv0.
-    apply transportf_comp_lemma.
-    apply pathsinv0.
-    etrans; [ apply assoc_disp |].
-    apply pathsinv0.
-    apply transportf_comp_lemma.
-    apply pathsinv0.
-    etrans; [ apply maponpaths_2, cartesian_factorisation_commutes |].
-    etrans; [ apply mor_disp_transportf_postwhisker |].
-    etrans. { apply maponpaths. apply assoc_disp_var. }
-    etrans. { apply transport_f_f. }
-    apply maponpaths_2, homset_property.
-Qed.
-
-Definition fiber_functor_from_cleaving : D [{c}] ⟶ D [{c'}]
-  := make_functor _  is_functor_from_cleaving_data.
-
-
-End fiber_functor_from_cleaving.
-
-
-(* *)
 
 (** Some standard cartesian cells *)
 Definition is_cartesian_id_disp
@@ -1233,7 +1479,7 @@ Proof.
          apply homset_property).
 Defined.
 
-Definition is_cartesian_iso_disp
+Definition is_cartesian_z_iso_disp
            {C : category}
            {D : disp_cat C}
            {x : C}
@@ -1241,9 +1487,9 @@ Definition is_cartesian_iso_disp
            {y : C}
            {yy : D y}
            {f : x --> y}
-           {Hf : is_iso f}
+           {Hf : is_z_isomorphism f}
            {ff : xx -->[ f ] yy}
-           (Hff : is_iso_disp (make_iso f Hf) ff)
+           (Hff : is_z_iso_disp (make_z_iso' f Hf) ff)
   : is_cartesian ff.
 Proof.
   intros z g zz gf.
@@ -1254,7 +1500,7 @@ Proof.
        use subtypePath ; [ intro ; apply D | ] ;
        pose (pr2 φ₁ @ !(pr2 φ₂)) as r ;
        refine (id_right_disp_var _ @ _ @ !(id_right_disp_var _)) ;
-       pose (transportf_transpose_left (inv_mor_after_iso_disp Hff)) as r' ;
+       pose (transportf_transpose_left (inv_mor_after_z_iso_disp Hff)) as r' ;
        rewrite <- !r' ; clear r' ;
        rewrite !mor_disp_transportf_prewhisker ;
        rewrite !assoc_disp ;
@@ -1267,12 +1513,12 @@ Proof.
     + refine (transportf
                 (λ z, _ -->[ z ] _)
                 _
-                (gf ;; inv_mor_disp_from_iso Hff)%mor_disp).
+                (gf ;; inv_mor_disp_from_z_iso Hff)%mor_disp).
       abstract
         (rewrite assoc' ;
          refine (_ @ id_right _) ;
          apply maponpaths ;
-         apply (iso_inv_after_iso (make_iso f Hf))).
+         apply (z_iso_inv_after_z_iso (make_z_iso' f Hf))).
     + abstract
         (simpl ;
          rewrite mor_disp_transportf_postwhisker ;
@@ -1280,7 +1526,7 @@ Proof.
          rewrite transport_f_f ;
          etrans ;
            [ do 2 apply maponpaths ;
-             apply (iso_disp_after_inv_mor Hff)
+             apply (z_iso_disp_after_inv_mor Hff)
            | ] ;
          unfold transportb ;
          rewrite mor_disp_transportf_prewhisker ;
@@ -1392,14 +1638,14 @@ Proof.
          apply homset_property).
 Defined.
 
-Definition iso_disp_to_is_cartesian
+Definition z_iso_disp_to_is_cartesian
            {C : category}
            {D : disp_cat C}
            {x y z : C}
            {f : x --> z}
            {g : y --> z}
            {h : y --> x}
-           (Hh : is_iso h)
+           (Hh : is_z_isomorphism h)
            {p : h · f = g}
            {xx : D x}
            {yy : D y}
@@ -1408,21 +1654,21 @@ Definition iso_disp_to_is_cartesian
            {gg : yy -->[ g ] zz}
            {hh : yy -->[ h ] xx}
            (Hff : is_cartesian ff)
-           (Hhh : is_iso_disp (make_iso h Hh) hh)
+           (Hhh : is_z_iso_disp (make_z_iso' h Hh) hh)
            (pp : (hh ;; ff = transportb _ p gg)%mor_disp)
   : is_cartesian gg.
 Proof.
   intros q k qq kg.
-  assert (f = inv_from_iso (make_iso h Hh) · g) as r.
+  assert (f = inv_from_z_iso (make_z_iso' h Hh) · g) as r.
   {
     abstract
       (refine (!_) ;
-       use iso_inv_on_right ;
+       use z_iso_inv_on_right ;
        exact (!p)).
   }
   assert (transportf (λ z, _ -->[ z ] _) r ff
           =
-          inv_mor_disp_from_iso Hhh ;; gg)%mor_disp as rr.
+          inv_mor_disp_from_z_iso Hhh ;; gg)%mor_disp as rr.
   {
     abstract
       (rewrite <- (transportb_transpose_left pp) ;
@@ -1433,7 +1679,7 @@ Proof.
        etrans ;
        [ do 2 apply maponpaths ;
          apply maponpaths_2 ;
-         exact (iso_disp_after_inv_mor Hhh)
+         exact (z_iso_disp_after_inv_mor Hhh)
        | ] ;
        unfold transportb ;
        rewrite mor_disp_transportf_postwhisker ;
@@ -1448,7 +1694,7 @@ Proof.
       (use invproofirrelevance ;
        intros φ₁ φ₂ ;
        use subtypePath ; [ intro ; apply D | ] ;
-       use (postcomp_with_iso_disp_is_inj Hh (idpath _) Hhh) ; cbn ;
+       use (postcomp_with_z_iso_disp_is_inj Hh (idpath _) Hhh) ; cbn ;
        use (cartesian_factorisation_unique Hff) ;
        rewrite !assoc_disp_var ;
        rewrite pp ;
@@ -1468,10 +1714,10 @@ Proof.
                       (λ z, _ -->[ z ] _)
                       _
                       kg)
-                 ;; inv_mor_disp_from_iso Hhh)%mor_disp).
+                 ;; inv_mor_disp_from_z_iso Hhh)%mor_disp).
       * abstract
           (rewrite assoc' ;
-           etrans ; [ apply maponpaths ; apply (iso_inv_after_iso (make_iso h Hh)) | ] ;
+           etrans ; [ apply maponpaths ; apply (z_iso_inv_after_z_iso (make_z_iso' h Hh)) | ] ;
            apply id_right).
       * abstract
           (rewrite assoc' ;
@@ -1550,7 +1796,7 @@ Proof.
     exact Hhh.
 Defined.
 
-Definition is_opcartesian_iso_disp
+Definition is_opcartesian_z_iso_disp
            {C : category}
            {D : disp_cat C}
            {x : C}
@@ -1558,15 +1804,15 @@ Definition is_opcartesian_iso_disp
            {y : C}
            {yy : D y}
            {f : x --> y}
-           {Hf : is_iso f}
+           {Hf : is_z_isomorphism f}
            {ff : xx -->[ f ] yy}
-           (Hff : is_iso_disp (make_iso f Hf) ff)
+           (Hff : is_z_iso_disp (make_z_iso' f Hf) ff)
   : is_opcartesian ff.
 Proof.
   apply is_cartesian_to_is_opcartesian.
-  use (@is_cartesian_iso_disp _ (op_disp_cat D) _ _ _ _ _ _ ff).
-  - exact (pr2 (@opp_iso C _ _ (make_iso f Hf))).
-  - use (@to_iso_disp_op_disp_cat C D y x (make_iso f Hf) yy xx ff).
+  use (@is_cartesian_z_iso_disp _ (op_disp_cat D) _ _ _ _ _ _ ff).
+  - exact (pr2 (@opp_z_iso C _ _ (make_z_iso' f Hf))).
+  - use (@to_z_iso_disp_op_disp_cat C D y x (make_z_iso' f Hf) yy xx ff).
     exact Hff.
 Defined.
 
@@ -1670,7 +1916,7 @@ Section CartesianFactorisationDispFunctor.
                (transportb
                   (λ z, _ -->[ z ] _)
                   (nat_trans_ax α _ _ f)
-                  (pr12 (HD₁ (G x) (F x) (α x) (GG x xx)) ;; #GG ff)%mor_disp)).
+                  (pr12 (HD₁ (G x) (F x) (α x) (GG x xx)) ;; ♯ GG ff))).
   Defined.
 
   Definition cartesian_factorisation_disp_functor_axioms
@@ -1866,7 +2112,7 @@ Section OpCartesianFactorisationDispFunctor.
                (transportf
                   (λ z, _ -->[ z ] _)
                   (nat_trans_ax α _ _ f)
-                  (#FF ff
+                  (♯ FF ff
                    ;;
                    mor_of_opcartesian_lift
                      _
@@ -1981,3 +2227,827 @@ Section OpCartesianFactorisationDispFunctor.
     exact (pr22 (HD₁ (F x) (G x) (FF x xx) (α x))).
   Defined.
 End OpCartesianFactorisationDispFunctor.
+
+Section fiber_functor_from_cleaving.
+
+  Context {C : category} (D : disp_cat C) (F : cleaving D).
+  Context {c c' : C} (f : C⟦c', c⟧).
+
+  Let lift_f :  ∏ d : D c, cartesian_lift d f := F _ _ f.
+
+  Definition fiber_functor_from_cleaving_data : functor_data (D [{c}]) (D [{c'}]).
+  Proof.
+    use tpair.
+    + intro d. exact (object_of_cartesian_lift _ _ (lift_f d)).
+    + intros d' d ff. cbn.
+
+      set (XR' := @cartesian_factorisation C D _ _ f).
+      specialize (XR' _ _ _ (lift_f d)).
+      use XR'.
+      * use (transportf (mor_disp _ _ )
+                        _
+                        (mor_disp_of_cartesian_lift _ _ (lift_f d') ;; ff)).
+        etrans; [ apply id_right |]; apply pathsinv0; apply id_left.
+  Defined.
+
+  Lemma is_functor_from_cleaving_data : is_functor fiber_functor_from_cleaving_data.
+  Proof.
+    split.
+    - intro d; cbn.
+      apply pathsinv0.
+      apply path_to_ctr.
+      etrans; [apply id_left_disp |].
+      apply pathsinv0.
+      etrans. { apply maponpaths. apply id_right_disp. }
+      etrans; [ apply transport_f_f |].
+      unfold transportb.
+      apply maponpaths_2.
+      apply homset_property.
+    - intros d'' d' d ff' ff; cbn.
+      apply pathsinv0.
+      apply path_to_ctr.
+      etrans; [apply mor_disp_transportf_postwhisker |].
+      apply pathsinv0.
+      etrans. { apply maponpaths; apply mor_disp_transportf_prewhisker. }
+      etrans; [apply transport_f_f |].
+      apply transportf_comp_lemma.
+      apply pathsinv0.
+      etrans; [apply assoc_disp_var |].
+      apply pathsinv0.
+      apply transportf_comp_lemma.
+      apply pathsinv0.
+      etrans ; [ apply maponpaths, cartesian_factorisation_commutes |].
+      etrans ; [ apply mor_disp_transportf_prewhisker |].
+      apply pathsinv0.
+      apply transportf_comp_lemma.
+      apply pathsinv0.
+      etrans; [ apply assoc_disp |].
+      apply pathsinv0.
+      apply transportf_comp_lemma.
+      apply pathsinv0.
+      etrans; [ apply maponpaths_2, cartesian_factorisation_commutes |].
+      etrans; [ apply mor_disp_transportf_postwhisker |].
+      etrans. { apply maponpaths. apply assoc_disp_var. }
+      etrans. { apply transport_f_f. }
+      apply maponpaths_2, homset_property.
+  Qed.
+
+  Definition fiber_functor_from_cleaving : D [{c}] ⟶ D [{c'}]
+    := make_functor _  is_functor_from_cleaving_data.
+
+End fiber_functor_from_cleaving.
+
+Section Essential_Surjectivity.
+
+  Definition fiber_functor_ess_split_surj
+             {C C' : category} {D} {D'}
+             {F : functor C C'} (FF : disp_functor F D D')
+             (H : disp_functor_ff FF)
+             {X : disp_functor_ess_split_surj FF}
+             {Y : is_op_isofibration D}
+             (* TODO: change to [is_isofibration], once [is_isofibration_iff_is_op_isofibration] is provided *)
+             (x : C)
+    : ∏ yy : D'[{F x}], ∑ xx : D[{x}],
+          z_iso (fiber_functor FF _ xx) yy.
+  Proof.
+    intro yy.
+    set (XR := X _ yy).
+    destruct XR as [c'' [i [xx' ii]]].
+    set (YY := Y _ _ i xx').
+    destruct YY as [ dd pe ].
+    use tpair.
+    - apply dd.
+    - (* now need disp_functor_on_iso_disp *)
+      set (XR := disp_functor_on_z_iso_disp FF pe).
+      set (XR' := z_iso_inv_from_z_iso_disp XR).
+      (* now need composition of iso_disps *)
+      apply  (invweq (z_iso_disp_z_iso_fiber _ _ _ _)).
+      set (XRt := z_iso_disp_comp XR' ii).
+      transparent assert (XH :
+                           (z_iso_comp (z_iso_inv_from_z_iso (functor_on_z_iso F i))
+                                     (functor_on_z_iso F i) = identity_z_iso _ )).
+      { apply z_iso_eq. cbn.
+        etrans.
+        { apply pathsinv0, functor_comp. }
+        apply functor_id_id.
+        apply z_iso_after_z_iso_inv.
+      }
+      set (XRT := transportf (λ r, z_iso_disp r (FF x dd) yy )
+                             XH).
+      apply XRT.
+      assumption.
+  Defined.
+
+End Essential_Surjectivity.
+
+(**
+ A sufficient condition for when a cartesian factorization is an isomorphism
+ *)
+Definition is_z_iso_disp_cartesian_factorisation
+           {C : category}
+           {D : disp_cat C}
+           {w x y : C}
+           {f : w --> x}
+           (Hf : is_z_isomorphism f)
+           (fiso := (f ,, Hf) : z_iso w x)
+           {g : x --> y}
+           (Hg : is_z_isomorphism g)
+           (giso := (g ,, Hg) : z_iso x y)
+           {ww : D w}
+           {xx : D x}
+           {yy : D y}
+           {gg : xx -->[ g ] yy}
+           (Hgg : is_cartesian gg)
+           (hh : ww -->[ f · g ] yy)
+           (Hhh : is_z_iso_disp (z_iso_comp fiso giso) hh)
+  : is_z_iso_disp
+      fiso
+      (cartesian_factorisation Hgg f hh).
+Proof.
+  simple refine (_ ,, _ ,, _).
+  - refine (transportf
+              (λ z, _ -->[ z ] _)
+              _
+              (gg ;; inv_mor_disp_from_z_iso Hhh)%mor_disp).
+    abstract
+      (cbn ;
+       rewrite !assoc ;
+       refine (_ @ id_left _) ;
+       apply maponpaths_2 ;
+       exact (z_iso_inv_after_z_iso giso)).
+  - use (cartesian_factorisation_unique Hgg).
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite !mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite !transport_f_f.
+    rewrite assoc_disp_var.
+    rewrite !mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    etrans ;
+      [ do 2 apply maponpaths ;
+        apply (z_iso_disp_after_inv_mor Hhh)
+      | ].
+    unfold transportb.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite id_right_disp.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite id_left_disp.
+    unfold transportb.
+    rewrite !transport_f_f.
+    apply maponpaths_2.
+    apply homset_property.
+  - cbn.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite assoc_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    refine (maponpaths _ (inv_mor_after_z_iso_disp Hhh) @ _).
+    unfold transportb.
+    rewrite transport_f_f.
+    apply maponpaths_2.
+    apply homset_property.
+Defined.
+
+(**
+ The fiber functor of the identity
+ *)
+Section FiberFunctorCleavingIdenttiy.
+  Context {C : category}
+          {D : disp_cat C}
+          (HD : cleaving D)
+          (x : C).
+
+  Definition fiber_functor_from_cleaving_identity_data
+    : nat_trans_data
+        (functor_identity _)
+        (fiber_functor_from_cleaving D HD (identity x)).
+  Proof.
+    intros xx.
+    refine (cartesian_factorisation
+              (cartesian_lift_is_cartesian _ _ (HD x x (identity x) xx))
+              (identity x)
+              (transportb
+                 (λ z, _ -->[ z ] _)
+                 _
+                 (id_disp _))).
+    abstract (exact (id_left _)).
+  Defined.
+
+  Proposition fiber_functor_from_cleaving_identity_laws
+    : is_nat_trans
+        _ _
+        fiber_functor_from_cleaving_identity_data.
+  Proof.
+    intros xx yy f ; cbn.
+    unfold fiber_functor_from_cleaving_identity_data.
+    use (cartesian_factorisation_unique (HD x x (identity x) yy)).
+    rewrite !mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    unfold transportb.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite !transport_f_f.
+    rewrite id_right_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite !transport_f_f.
+    rewrite assoc_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite transport_f_f.
+    rewrite id_left_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    apply maponpaths_2.
+    apply homset_property.
+  Defined.
+
+  Definition fiber_functor_from_cleaving_identity
+    : functor_identity _
+      ⟹
+      fiber_functor_from_cleaving D HD (identity x).
+  Proof.
+    use make_nat_trans.
+    - exact fiber_functor_from_cleaving_identity_data.
+    - exact fiber_functor_from_cleaving_identity_laws.
+  Defined.
+
+  Definition is_nat_z_iso_fiber_functor_from_cleaving_identity
+    : is_nat_z_iso fiber_functor_from_cleaving_identity.
+  Proof.
+    intros xx ; cbn.
+    use is_z_iso_fiber_from_is_z_iso_disp.
+    use is_z_iso_disp_cartesian_factorisation.
+    {
+      apply is_z_isomorphism_identity.
+    }
+    cbn in x.
+    use (is_z_iso_disp_transportb_fun_eq
+           (identity_z_iso x)
+           (id_disp xx)).
+    apply id_is_z_iso_disp.
+  Defined.
+
+  Definition nat_z_iso_fiber_functor_from_cleaving_identity
+    : nat_z_iso
+        (functor_identity _)
+        (fiber_functor_from_cleaving D HD (identity x)).
+  Proof.
+    use make_nat_z_iso.
+    - exact fiber_functor_from_cleaving_identity.
+    - exact is_nat_z_iso_fiber_functor_from_cleaving_identity.
+  Defined.
+
+End FiberFunctorCleavingIdenttiy.
+
+Arguments fiber_functor_from_cleaving_identity_data {C D} HD x /.
+
+(**
+ The fiber functor of a compositio
+ *)
+Section FiberFunctorCleavingComp.
+  Context {C : category}
+          {D : disp_cat C}
+          (HD : cleaving D)
+          {x y z : C}
+          (f : y --> x)
+          (g : z --> y).
+
+  Definition fiber_functor_from_cleaving_comp_data
+    : nat_trans_data
+        (fiber_functor_from_cleaving D HD f ∙ fiber_functor_from_cleaving D HD g)
+        (fiber_functor_from_cleaving D HD (g · f)).
+  Proof.
+    intros xx.
+    refine (cartesian_factorisation
+              (cartesian_lift_is_cartesian _ _ (HD x z (g · f) xx))
+              _
+              (transportb
+                 (λ z, _ -->[ z ] _)
+                 _
+                 (HD y z g (HD x y f xx) ;; HD x y f xx)%mor_disp)).
+    abstract
+      (exact (id_left _)).
+  Defined.
+
+  Proposition fiber_functor_from_cleaving_comp_laws
+    : is_nat_trans
+        _ _
+        fiber_functor_from_cleaving_comp_data.
+  Proof.
+    intros xx yy gg ; cbn.
+    unfold fiber_functor_from_cleaving_comp_data.
+    use (cartesian_factorisation_unique (HD _ _ _ _)).
+    rewrite !mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite !transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    unfold transportb.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite assoc_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite transport_f_f.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    refine (!_).
+    rewrite assoc_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite transport_f_f.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    apply maponpaths_2.
+    apply homset_property.
+  Qed.
+
+  Definition fiber_functor_from_cleaving_comp
+    : fiber_functor_from_cleaving D HD f ∙ fiber_functor_from_cleaving D HD g
+      ⟹
+      fiber_functor_from_cleaving D HD (g · f).
+  Proof.
+    use make_nat_trans.
+    - exact fiber_functor_from_cleaving_comp_data.
+    - exact fiber_functor_from_cleaving_comp_laws.
+  Defined.
+
+  Definition fiber_functor_from_cleaving_comp_inv
+             (xx : D x)
+    : D[{z}] ⟦ pr1 (HD x z (g · f) xx) , pr1 (HD y z g (HD x y f xx)) ⟧.
+  Proof.
+    refine (cartesian_factorisation
+              (HD y z g (HD x y f xx))
+              _
+              (cartesian_factorisation
+                 (HD x y f xx)
+                 _
+                 (transportf
+                    (λ z, _ -->[ z ] _)
+                    _
+                    (HD x z (g · f) xx)))).
+    abstract
+      (rewrite !assoc' ;
+       rewrite id_left ;
+       apply idpath).
+  Defined.
+
+  Proposition fiber_functor_from_cleaving_comp_inv_left
+              (xx : D x)
+    : fiber_functor_from_cleaving_comp xx · fiber_functor_from_cleaving_comp_inv xx
+      =
+      identity _.
+  Proof.
+    cbn.
+    unfold fiber_functor_from_cleaving_comp_data, fiber_functor_from_cleaving_comp_inv.
+    unfold transportb.
+    use (cartesian_factorisation_unique (HD _ _ _ _)).
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    use (cartesian_factorisation_unique (HD _ _ _ _)).
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite transport_f_f.
+    rewrite id_left_disp.
+    unfold transportb.
+    rewrite mor_disp_transportf_postwhisker.
+    apply maponpaths_2.
+    apply homset_property.
+  Qed.
+
+  Proposition fiber_functor_from_cleaving_comp_inv_right
+              (xx : D x)
+    : fiber_functor_from_cleaving_comp_inv xx · fiber_functor_from_cleaving_comp xx
+      =
+      identity _.
+  Proof.
+    cbn.
+    unfold fiber_functor_from_cleaving_comp_data, fiber_functor_from_cleaving_comp_inv.
+    unfold transportb.
+    use (cartesian_factorisation_unique (HD _ _ _ _)).
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite assoc_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite !cartesian_factorisation_commutes.
+    rewrite transport_f_f.
+    rewrite id_left_disp.
+    unfold transportb.
+    apply maponpaths_2.
+    apply homset_property.
+  Qed.
+
+  Definition is_nat_z_iso_fiber_functor_from_cleaving_comp
+    : is_nat_z_iso fiber_functor_from_cleaving_comp.
+  Proof.
+    intros xx.
+    use make_is_z_isomorphism.
+    - cbn -[fiber_category].
+      exact (fiber_functor_from_cleaving_comp_inv xx).
+    - split.
+      + exact (fiber_functor_from_cleaving_comp_inv_left xx).
+      + exact (fiber_functor_from_cleaving_comp_inv_right xx).
+  Defined.
+
+  Definition fiber_functor_from_cleaving_comp_nat_z_iso
+    : nat_z_iso
+        (fiber_functor_from_cleaving D HD f ∙ fiber_functor_from_cleaving D HD g)
+        (fiber_functor_from_cleaving D HD (g · f)).
+  Proof.
+    use make_nat_z_iso.
+    - exact fiber_functor_from_cleaving_comp.
+    - apply is_nat_z_iso_fiber_functor_from_cleaving_comp.
+  Defined.
+End FiberFunctorCleavingComp.
+
+Arguments fiber_functor_from_cleaving_comp_data {C D} HD {x y z} f g /.
+
+(**
+ The fiber functor of a cartesian functor is natural
+ *)
+Section FiberFunctorNatural.
+  Context {C₁ C₂ : category}
+          {F : C₁ ⟶ C₂}
+          {D₁ : disp_cat C₁}
+          {D₂ : disp_cat C₂}
+          (HD₁ : cleaving D₁)
+          (HD₂ : cleaving D₂)
+          (FF : cartesian_disp_functor F D₁ D₂)
+          {x y : C₁}
+          (f : y --> x).
+
+  Definition fiber_functor_natural_data
+    : nat_trans_data
+        (fiber_functor FF x ∙ fiber_functor_from_cleaving D₂ HD₂ (#F f)%cat)
+        (fiber_functor_from_cleaving D₁ HD₁ f ∙ fiber_functor FF y).
+  Proof.
+    intro xx.
+    refine (cartesian_factorisation
+              (cartesian_disp_functor_on_cartesian FF (HD₁ x y f xx))
+              _
+              (transportf
+                 (λ z, _ -->[ z ] _)
+                 _
+                 (HD₂ _ _ _ (FF x xx)))).
+    abstract
+      (exact (!(id_left _))).
+  Defined.
+
+  Proposition fiber_functor_natural_laws
+    : is_nat_trans
+        _ _
+        fiber_functor_natural_data.
+  Proof.
+    intros xx yy ff.
+    unfold fiber_functor_natural_data ; cbn.
+    use (cartesian_factorisation_unique
+           (cartesian_disp_functor_on_cartesian FF (HD₁ _ _ _ _))).
+    rewrite !mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite !transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite transport_f_f.
+    refine (!_).
+    rewrite assoc_disp_var.
+    rewrite !mor_disp_transportf_prewhisker.
+    rewrite !mor_disp_transportf_postwhisker.
+    rewrite !transport_f_f.
+    etrans.
+    {
+      do 3 apply maponpaths.
+      refine (!_).
+      apply (disp_functor_comp_var FF).
+    }
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite disp_functor_transportf.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite disp_functor_comp.
+    unfold transportb.
+    rewrite !mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite assoc_disp.
+    unfold transportb.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite !transport_f_f.
+    apply maponpaths_2.
+    apply homset_property.
+  Qed.
+
+  Definition fiber_functor_natural
+    : fiber_functor FF x ∙ fiber_functor_from_cleaving D₂ HD₂ (#F f)%cat
+      ⟹
+      fiber_functor_from_cleaving D₁ HD₁ f ∙ fiber_functor FF y.
+  Proof.
+    use make_nat_trans.
+    - exact fiber_functor_natural_data.
+    - exact fiber_functor_natural_laws.
+  Defined.
+
+  Definition fiber_functor_natural_inv
+             (xx : D₁ x)
+    : FF y (HD₁ x y f xx) -->[ identity _ ] pr1 (HD₂ _ _ (#F f)%cat (FF x xx)).
+  Proof.
+    refine (cartesian_factorisation
+              (HD₂ _ _ _ _)
+              _
+              (transportf
+                 (λ z, _ -->[ z ] _)
+                 _
+                 (♯FF (pr12 (HD₁ x y f xx)))))%mor_disp.
+    abstract
+      (exact (!(id_left _))).
+  Defined.
+
+  Proposition fiber_functor_natural_inv_left
+              (xx : D₁ x)
+    : fiber_functor_natural xx · fiber_functor_natural_inv xx
+      =
+      identity _.
+  Proof.
+    cbn.
+    unfold fiber_functor_natural_data, fiber_functor_natural_inv ; cbn.
+    use (cartesian_factorisation_unique (HD₂ _ _ _ _)).
+    rewrite id_left_disp.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite transport_f_f.
+    unfold transportb.
+    apply maponpaths_2.
+    apply homset_property.
+  Qed.
+
+  Proposition fiber_functor_natural_inv_right
+              (xx : D₁ x)
+    : transportf
+        (λ z, _ -->[ z ] _)
+        (id_right _)
+        (fiber_functor_natural_inv xx ;; fiber_functor_natural_data xx)%mor_disp
+      =
+      id_disp _.
+  Proof.
+    cbn.
+    unfold fiber_functor_natural_data, fiber_functor_natural_inv ; cbn.
+    use (cartesian_factorisation_unique
+           (cartesian_disp_functor_on_cartesian FF (HD₁ _ _ _ _))).
+    rewrite id_left_disp.
+    rewrite mor_disp_transportf_postwhisker.
+    rewrite assoc_disp_var.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite mor_disp_transportf_prewhisker.
+    rewrite transport_f_f.
+    rewrite cartesian_factorisation_commutes.
+    rewrite transport_f_f.
+    unfold transportb.
+    apply maponpaths_2.
+    apply homset_property.
+  Qed.
+
+  Definition is_nat_z_iso_fiber_functor_natural
+    : is_nat_z_iso fiber_functor_natural.
+  Proof.
+    intros xx.
+    use make_is_z_isomorphism.
+    - exact (fiber_functor_natural_inv xx).
+    - split.
+      + exact (fiber_functor_natural_inv_left xx).
+      + exact (fiber_functor_natural_inv_right xx).
+  Defined.
+
+  Definition fiber_functor_natural_nat_z_iso
+    : nat_z_iso
+        (fiber_functor FF x ∙ fiber_functor_from_cleaving D₂ HD₂ (#F f)%cat)
+        (fiber_functor_from_cleaving D₁ HD₁ f ∙ fiber_functor FF y).
+  Proof.
+    use make_nat_z_iso.
+    - exact fiber_functor_natural.
+    - exact is_nat_z_iso_fiber_functor_natural.
+  Defined.
+End FiberFunctorNatural.
+
+Definition cartesian_disp_functor_disp_z_iso
+           {C₁ C₂ : category}
+           {F : C₁ ⟶ C₂}
+           {D₁ : disp_cat C₁}
+           {D₂ : disp_cat C₂}
+           (FF : cartesian_disp_functor F D₁ D₂)
+           (HD₁ : cleaving D₁)
+           (HD₂ : cleaving D₂)
+           {x y : C₁}
+           (f : x --> y)
+           (yy : D₁ y)
+  : z_iso_disp
+      (identity_z_iso _)
+      (FF x (HD₁ y x f yy))
+      (HD₂ _ _ (#F f)%cat (FF y yy)).
+Proof.
+  exact (z_iso_disp_from_z_iso_fiber
+           _ _ _ _
+           (z_iso_inv
+              (nat_z_iso_pointwise_z_iso
+                 (fiber_functor_natural_nat_z_iso HD₁ HD₂ FF f)
+                 yy))).
+Defined.
+
+Arguments fiber_functor_natural_data {C₁ C₂ F D₁ D₂} HD₁ HD₂ FF {x y} f /.
+
+Proposition fiber_functor_natural_nat_z_iso_eq
+            {C₁ C₂ : category}
+            {F : C₁ ⟶ C₂}
+            {D₁ : disp_cat C₁} {D₂ : disp_cat C₂}
+            (HD₁ : cleaving D₁) (HD₂ : cleaving D₂)
+            (FF : disp_functor F D₁ D₂)
+            (HFF₁ HFF₂ : is_cartesian_disp_functor FF)
+            {x y : C₁}
+            (f : y --> x)
+  : fiber_functor_natural_nat_z_iso HD₁ HD₂ (FF ,, HFF₁) f
+    =
+    fiber_functor_natural_nat_z_iso HD₁ HD₂ (FF ,, HFF₂) f.
+Proof.
+  use subtypePath.
+  {
+    intro.
+    apply isaprop_is_nat_z_iso.
+  }
+  use nat_trans_eq_alt.
+  intro xx ; cbn.
+  use (cartesian_factorisation_unique (HFF₁ _ _ _ _ _ _ (HD₁ x y f xx))).
+  rewrite !cartesian_factorisation_commutes.
+  apply idpath.
+Qed.
+
+(**
+ Transformations between fiber functors from equalities
+ *)
+Definition fiber_functor_on_eq
+           {C : category}
+           {D : disp_cat C}
+           (HD : cleaving D)
+           {x y : C}
+           {f g : x --> y}
+           (p : f = g)
+  : fiber_functor_from_cleaving D HD f ⟹ fiber_functor_from_cleaving D HD g.
+Proof.
+  use make_nat_trans.
+  - refine (λ _, idtoiso _).
+    exact (maponpaths (λ z, fiber_functor_from_cleaving D HD z _) p).
+  - abstract
+      (intros z₁ z₂ h ;
+       induction p ;
+       exact (id_right _ @ !(id_left _))).
+Defined.
+
+Definition fiber_functor_on_eq_nat_z_iso
+           {C : category}
+           {D : disp_cat C}
+           (HD : cleaving D)
+           {x y : C}
+           {f g : x --> y}
+           (p : f = g)
+  : nat_z_iso
+      (fiber_functor_from_cleaving D HD f)
+      (fiber_functor_from_cleaving D HD g).
+Proof.
+  use make_nat_z_iso.
+  - exact (fiber_functor_on_eq HD p).
+  - intro.
+    apply z_iso_is_z_isomorphism.
+Defined.
+
+(**
+ Lemma for composing `idtoiso` with a cartesian lift
+ *)
+Proposition idtoiso_disp_cartesian_lift
+            {C : category}
+            (D : disp_cat C)
+            (HD : cleaving D)
+            {x y : C}
+            {f g : x --> y}
+            (yy : D y)
+            (p : g = f)
+  : (idtoiso_disp
+       (idpath _)
+       (maponpaths (λ (h : x --> y), pr1 (HD _ _ h _)) p)
+     ;; HD y x f yy
+    =
+    transportf
+      (λ z, _ -->[ z ] _)
+      (p @ !(id_left _))
+      (HD y x g yy))%mor_disp.
+Proof.
+  induction p ; cbn.
+  rewrite id_left_disp.
+  apply idpath.
+Qed.
+
+(**
+ Transporting the object of a cartesian lift
+ *)
+Proposition transportf_object_cartesian_lift
+            {C : category}
+            {D : disp_cat C}
+            (HD : cleaving D)
+            {x : C}
+            (xx : D x)
+            {f g : x --> x}
+            (p : f = g)
+            (ff : xx -->[ identity x ] object_of_cartesian_lift _ _ (HD x x f xx))
+  : transportf
+      (λ (h : x --> x),
+      _ -->[ identity x ] object_of_cartesian_lift _ _ (HD x x h xx))
+      p
+      ff
+    =
+    cartesian_factorisation
+      (HD x x g xx)
+      _
+      (ff ;; transportf (λ z, _ -->[ z ] _) p (HD x x f xx))%mor_disp.
+Proof.
+  induction p ; cbn.
+  use (cartesian_factorisation_unique (HD x x f xx)).
+  rewrite cartesian_factorisation_commutes.
+  apply idpath.
+Qed.
+
+(** Sufficient condition for being a Cartesian functor *)
+Proposition is_cartesian_disp_functor_chosen_lifts
+            {C₁ C₂ : category}
+            {F : C₁ ⟶ C₂}
+            {D₁ : disp_cat C₁}
+            (I₁ : cleaving D₁)
+            {D₂ : disp_cat C₂}
+            {FF : disp_functor F D₁ D₂}
+            (H : ∏ (x y : C₁)
+                   (f : x --> y)
+                   (yy : D₁ y),
+                 is_cartesian (♯FF (cleaving_mor I₁ f yy))%mor_disp)
+  : is_cartesian_disp_functor FF.
+Proof.
+  intros x y f xx yy ff Hff.
+  pose (l := yy ,, ff ,, Hff : cartesian_lift xx f).
+  pose (l' := I₁ x y f xx).
+  pose (disp_functor_on_z_iso_disp FF (cartesian_lifts_iso l l')) as iso.
+  pose (Hff' := H _ _ f xx).
+  simple refine (z_iso_disp_to_is_cartesian _ Hff' iso _).
+  - abstract
+      (cbn ;
+       rewrite <- functor_comp ;
+       rewrite id_left ;
+       apply idpath).
+  - cbn.
+    rewrite <- disp_functor_comp_var.
+    rewrite cartesian_factorisation_commutes'.
+    unfold transportb.
+    rewrite disp_functor_transportf.
+    rewrite transport_f_f.
+    apply maponpaths_2.
+    apply homset_property.
+Qed.

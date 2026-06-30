@@ -13,6 +13,7 @@
 
 Require Import UniMath.Foundations.PartA.
 Require Import UniMath.Foundations.Sets.
+Require Import UniMath.MoreFoundations.PartA.
 Require Import UniMath.MoreFoundations.Tactics.
 
 Require Import UniMath.CategoryTheory.Core.Categories.
@@ -23,12 +24,20 @@ Local Open Scope cat.
 (** ** Univalent categories: [idtoiso] is an equivalence *)
 
 Definition idtoiso {C : precategory} {a b : ob C}:
-      a = b -> iso a b.
+      a = b -> z_iso a b.
 Proof.
   intro H.
   induction H.
-  exact (identity_iso a).
+  exact (identity_z_iso a).
 Defined.
+
+Proposition idtoiso_idpath
+            {C : category}
+            (x : C)
+  : pr1 (idtoiso (idpath x)) = identity x.
+Proof.
+  apply idpath.
+Qed.
 
 (* use eta expanded version to force printing of object arguments *)
 Definition is_univalent (C : category) :=
@@ -73,17 +82,16 @@ Proof.
         (∏ a b : C, isofhlevel 2 (a = b)).
   intros a b.
   apply (isofhlevelweqb _ (tpair _ _ (pr2 C a b))).
-  apply isaset_iso.
-  apply (pr1 C).
+  apply isaset_z_iso.
 Qed.
 
 (** ** Definition of [isotoid] *)
 
 Definition isotoid (C : category) (H : is_univalent C) {a b : ob C}:
-      iso a b -> a = b := invmap (make_weq _ (H a b)).
+      z_iso a b -> a = b := invmap (make_weq _ (H a b)).
 
 Lemma idtoiso_isotoid (C : category) (H : is_univalent C) (a b : ob C)
-    (f : iso a b) : idtoiso (isotoid _ H f) = f.
+    (f : z_iso a b) : idtoiso (isotoid _ H f) = f.
 Proof.
   unfold isotoid.
   set (Hw := homotweqinvweq (make_weq idtoiso (H a b))).
@@ -106,6 +114,44 @@ Definition double_transport {C : precategory_ob_mor} {a a' b b' : ob C}
    (p : a = a') (q : b = b') (f : a --> b) : a' --> b' :=
   transportf (λ c, a' --> c) q (transportf (λ c, c --> b) p f).
 
+Lemma double_transport_transpose
+  {C : precategory_ob_mor}
+  {a a' b b' : C} {f : a --> b} {g : a' --> b'}
+  {px : a' = a} {py : b' = b}
+  : double_transport px py g = f -> g = double_transport (!px) (!py) f.
+Proof.
+  intro H.
+  destruct H.
+  destruct px, py.
+  reflexivity.
+Qed.
+
+Lemma double_transport_transpose'
+  {C : precategory_ob_mor}
+  {a a' b b' : C} {f : a' --> b'} {g : a --> b}
+  {px : a' = a} {py : b' = b}
+  : f = double_transport (!px) (!py) g -> double_transport px py f = g.
+Proof.
+  intro H.
+  destruct (!H).
+  destruct px, py.
+  reflexivity.
+Qed.
+
+Lemma double_transport_compose
+  {C : precategory}
+  {a a' b  b' c c' : C} {f : a --> b} {g : b --> c}
+  {px : a = a'} {py : b = b'} {pz : c = c'}
+  : double_transport px py f
+  · double_transport py pz g =
+  double_transport px pz (f · g).
+Proof.
+  unfold double_transport.
+  destruct px, py, pz.
+  reflexivity.
+Qed.
+
+
 Lemma idtoiso_postcompose (C : precategory) (a b b' : ob C)
   (p : b = b') (f : a --> b) :
       f · idtoiso p = transportf (λ b, a --> b) p f.
@@ -114,12 +160,12 @@ Proof.
   apply id_right.
 Qed.
 
-Lemma idtoiso_postcompose_iso (C : precategory) (hs: has_homsets C) (a b b' : ob C)
-  (p : b = b') (f : iso a b) :
-    iso_comp f (idtoiso p) = transportf (λ b, iso a b) p f.
+Lemma idtoiso_postcompose_iso (C : category) (a b b' : ob C)
+  (p : b = b') (f : z_iso a b) :
+    z_iso_comp f (idtoiso p) = transportf (λ b, z_iso a b) p f.
 Proof.
   destruct p.
-  apply eq_iso.
+  apply z_iso_eq.
   apply id_right.
 Qed.
 
@@ -131,18 +177,18 @@ Proof.
   apply id_left.
 Qed.
 
-Lemma idtoiso_precompose_iso (C : precategory) (hs: has_homsets C) (a a' b : ob C)
-  (p : a = a') (f : iso a b) :
-      iso_comp (idtoiso (!p)) f = transportf (λ a, iso a b) p f.
+Lemma idtoiso_precompose_iso (C : category) (a a' b : ob C)
+  (p : a = a') (f : z_iso a b) :
+      z_iso_comp (idtoiso (!p)) f = transportf (λ a, z_iso a b) p f.
 Proof.
   destruct p.
-  apply eq_iso.
+  apply z_iso_eq.
   apply id_left.
 Qed.
 
 Lemma double_transport_idtoiso (C : precategory) (a a' b b' : ob C)
   (p : a = a') (q : b = b')  (f : a --> b) :
-  double_transport p q f = inv_from_iso (idtoiso p) · f · idtoiso q.
+  double_transport p q f = inv_from_z_iso (idtoiso p) · f · idtoiso q.
 Proof.
   destruct p.
   destruct q.
@@ -151,22 +197,31 @@ Proof.
   - apply pathsinv0; apply id_right.
 Defined.
 
-Lemma idtoiso_inv (C : precategory) (a a' : ob C)
-  (p : a = a') : idtoiso (!p) = iso_inv_from_iso (idtoiso p).
+Lemma idtoiso_inv (C : category) (a a' : ob C)
+  (p : a = a') : idtoiso (!p) = z_iso_inv_from_z_iso (idtoiso p).
 Proof.
   destruct p.
-  simpl. apply eq_iso.
+  simpl. apply z_iso_eq.
   apply idpath.
 Defined.
 
-Lemma idtoiso_concat (C : precategory) (a a' a'' : ob C)
+Lemma idtoiso_concat (C : category) (a a' a'' : ob C)
   (p : a = a') (q : a' = a'') :
-  idtoiso (p @ q) = iso_comp (idtoiso p) (idtoiso q).
+  idtoiso (p @ q) = z_iso_comp (idtoiso p) (idtoiso q).
 Proof.
   destruct p.
   destruct q.
-  apply eq_iso.
+  apply z_iso_eq.
   simpl; apply pathsinv0, id_left.
+Qed.
+
+Definition pr1_idtoiso_concat
+           {C : category}
+           {x y z : C}
+           (f : x = y) (g : y = z)
+  : pr1 (idtoiso (f @ g)) = pr1 (idtoiso f) · pr1 (idtoiso g).
+Proof.
+  exact (maponpaths pr1 (idtoiso_concat _ _ _ _ f g)).
 Qed.
 
 Lemma idtoiso_inj (C : category) (H : is_univalent C) (a a' : ob C)
@@ -178,7 +233,7 @@ Proof.
 Qed.
 
 Lemma isotoid_inj (C : category) (H : is_univalent C) (a a' : ob C)
-   (f f' : iso a a') : isotoid _ H f = isotoid _ H f' -> f = f'.
+   (f f' : z_iso a a') : isotoid _ H f = isotoid _ H f' -> f = f'.
 Proof.
   apply invmaponpathsincl.
   apply isinclweq.
@@ -186,8 +241,8 @@ Proof.
 Qed.
 
 Lemma isotoid_comp (C : category) (H : is_univalent C) (a b c : ob C)
-  (e : iso a b) (f : iso b c) :
-  isotoid _ H (iso_comp e f) = isotoid _ H e @ isotoid _ H f.
+  (e : z_iso a b) (f : z_iso b c) :
+  isotoid _ H (z_iso_comp e f) = isotoid _ H e @ isotoid _ H f.
 Proof.
   apply idtoiso_inj.
     assumption.
@@ -197,7 +252,7 @@ Proof.
 Qed.
 
 Lemma isotoid_identity_iso (C : category) (H : is_univalent C) (a : C) :
-  isotoid _ H (identity_iso a) = idpath _ .
+  isotoid _ H (identity_z_iso a) = idpath _ .
 Proof.
   apply idtoiso_inj; try assumption.
   rewrite idtoiso_isotoid;
@@ -205,7 +260,7 @@ Proof.
 Qed.
 
 Lemma inv_isotoid (C : category) (H : is_univalent C) (a b : C)
-    (f : iso a b) : ! isotoid _ H f = isotoid _ H (iso_inv_from_iso f).
+    (f : z_iso a b) : ! isotoid _ H f = isotoid _ H (z_iso_inv_from_z_iso f).
 Proof.
   apply idtoiso_inj; try assumption.
   rewrite idtoiso_isotoid.
@@ -215,8 +270,8 @@ Proof.
 Qed.
 
 Lemma transportf_isotoid (C : category) (H : is_univalent C)
-   (a a' b : ob C) (p : iso a a') (f : a --> b) :
- transportf (λ a0 : C, a0 --> b) (isotoid C H p) f = inv_from_iso p · f.
+   (a a' b : ob C) (p : z_iso a a') (f : a --> b) :
+ transportf (λ a0 : C, a0 --> b) (isotoid C H p) f = inv_from_z_iso p · f.
 Proof.
   rewrite <- idtoiso_precompose.
   rewrite idtoiso_inv.
@@ -225,13 +280,26 @@ Proof.
 Qed.
 
 Lemma transportf_isotoid' (C : category) (H : is_univalent C)
-   (a b b' : ob C) (p : iso b b') (f : a --> b) :
+   (a b b' : ob C) (p : z_iso b b') (f : a --> b) :
  transportf (λ a0 : C, a --> a0) (isotoid C H p) f = f · p.
 Proof.
   rewrite <- idtoiso_postcompose.
   apply maponpaths.
   rewrite idtoiso_isotoid.
   apply idpath.
+Qed.
+
+Lemma transportb_isotoid (C : category) (H : is_univalent C)
+  (a b b' : ob C) (p : z_iso b b') (f : a --> b') :
+  transportb (λ b0 : C, a --> b0) (isotoid C H p) f = f · inv_from_z_iso p.
+Proof.
+  apply pathsinv0.
+  apply transportb_transpose_right.
+  change (precategory_morphisms a) with (λ b0 : C, a --> b0).
+  rewrite transportf_isotoid'.
+  rewrite <- assoc.
+  rewrite z_iso_after_z_iso_inv.
+  apply id_right.
 Qed.
 
 Lemma transportf_isotoid_dep (C : precategory)
@@ -247,7 +315,7 @@ Proof.
 Qed.
 
 Lemma forall_isotoid (A : category) (a_is : is_univalent A)
-      (a a' : A) (P : iso a a' -> UU) :
+      (a a' : A) (P : z_iso a a' -> UU) :
   (∏ e, P (idtoiso e)) → ∏ i, P i.
 Proof.
   intros H i.

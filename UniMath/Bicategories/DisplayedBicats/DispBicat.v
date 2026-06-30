@@ -14,11 +14,12 @@ Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.CategoryTheory.DisplayedCats.Total.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Univalence.
 
 Local Open Scope cat.
@@ -708,7 +709,7 @@ Proof.
   apply (transportf_transpose_right (P := λ x', _ ==>[x'] _)).
   apply pathsinv0.
   etrans.
-  apply disp_vassocr.
+  { apply disp_vassocr. }
   apply maponpaths_2.
   unfold vassocl.
   apply pathsinv0, pathsinv0inv0.
@@ -821,18 +822,18 @@ Section Display_Invertible_2cell.
     : xx •• yy = transportb (λ x, _ ==>[x] _) q zz.
   Proof.
     set (yy' := (yy,,H) : disp_invertible_2cell _ _ _).
-    etrans. apply maponpaths_2. apply pp.
-    etrans. apply disp_mor_transportf_postwhisker.
-    etrans. apply maponpaths. apply disp_vassocl.
-    etrans. unfold transportb. apply (transport_f_f (λ x' : f ==> h, ff ==>[x'] hh)).
-    etrans. apply maponpaths. apply maponpaths.
-    apply disp_vcomp_linv.
-    etrans. apply maponpaths.
-    apply disp_mor_transportf_prewhisker.
-    etrans. unfold transportb. apply (transport_f_f (λ x' : f ==> h, ff ==>[x'] hh)).
-    etrans. apply maponpaths.
-    apply disp_id2_right.
-    etrans. unfold transportb. apply (transport_f_f (λ x' : f ==> h, ff ==>[x'] hh)).
+    etrans. { apply maponpaths_2. apply pp. }
+    etrans. { apply disp_mor_transportf_postwhisker. }
+    etrans. { apply maponpaths. apply disp_vassocl. }
+    etrans. { unfold transportb. apply (transport_f_f (λ x' : f ==> h, ff ==>[x'] hh)). }
+    etrans. { apply maponpaths. apply maponpaths.
+              apply disp_vcomp_linv. }
+    etrans. { apply maponpaths.
+              apply disp_mor_transportf_prewhisker. }
+    etrans. { unfold transportb. apply (transport_f_f (λ x' : f ==> h, ff ==>[x'] hh)). }
+    etrans. { apply maponpaths.
+              apply disp_id2_right. }
+    etrans. { unfold transportb. apply (transport_f_f (λ x' : f ==> h, ff ==>[x'] hh)). }
     unfold transportb.
     apply maponpaths_2.
     apply cellset_property.
@@ -858,7 +859,7 @@ Section Display_Invertible_2cell.
     : xx •• yy = transportb (λ x, _ ==>[x] _) q zz.
   Proof.
     etrans.
-    use (disp_lhs_right_invert_cell' _ _ _ _ pp).
+    { use (disp_lhs_right_invert_cell' _ _ _ _ pp). }
     apply maponpaths_2.
     apply cellset_property.
   Qed.
@@ -881,20 +882,20 @@ Section Display_Invertible_2cell.
                 (disp_inv_cell ((xx,,inv_xx):disp_invertible_2cell (x,,inv_x) ff gg) •• zz))
     : xx •• yy = transportb (λ x, _ ==>[x] _) q zz.
   Proof.
-    etrans. apply maponpaths. apply pp.
+    etrans. { apply maponpaths. apply pp. }
     etrans.
-    apply disp_mor_transportf_prewhisker.
-    etrans. apply maponpaths.
-    apply disp_vassocr.
-    etrans. apply (transport_f_f (λ x, _ ==>[x] _)).
-    etrans. apply maponpaths.
-    apply maponpaths_2.
-    apply (disp_vcomp_rinv
-             ((xx,,inv_xx):disp_invertible_2cell (x,,inv_x) _ _)).
-    etrans. apply maponpaths. apply disp_mor_transportf_postwhisker.
-    etrans. unfold transportb. apply (transport_f_f (λ x, _ ==>[x] _)).
-    etrans. apply maponpaths. apply disp_id2_left.
-    etrans. unfold transportb. apply (transport_f_f (λ x, _ ==>[x] _)).
+    { apply disp_mor_transportf_prewhisker. }
+    etrans. { apply maponpaths.
+              apply disp_vassocr. }
+    etrans. { apply (transport_f_f (λ x, _ ==>[x] _)). }
+    etrans. { apply maponpaths.
+              apply maponpaths_2.
+              apply (disp_vcomp_rinv
+                       ((xx,,inv_xx):disp_invertible_2cell (x,,inv_x) _ _)). }
+    etrans. { apply maponpaths. apply disp_mor_transportf_postwhisker. }
+    etrans. { unfold transportb. apply (transport_f_f (λ x, _ ==>[x] _)). }
+    etrans. { apply maponpaths. apply disp_id2_left. }
+    etrans. { unfold transportb. apply (transport_f_f (λ x, _ ==>[x] _)). }
     unfold transportb.
     apply maponpaths_2. apply cellset_property.
   Qed.
@@ -956,16 +957,17 @@ Lemma disp_lassociator_to_rassociator_post' {a b c d : C}
   : xx •• disp_rassociator ff gg hh = transportb (λ x, _ ==>[x] _) q (yy).
 Proof.
   etrans.
-  use disp_lhs_right_invert_cell.
-  - exact y.
-  - apply is_invertible_2cell_rassociator.
-  - exact yy.
-  - apply is_disp_invertible_2cell_rassociator.
-  - apply lassociator_to_rassociator_post. exact p.
-  - cbn. etrans. apply pp.
-    apply maponpaths_2.
-    apply cellset_property.
-  - apply maponpaths_2. apply cellset_property.
+  { use disp_lhs_right_invert_cell.
+    - exact y.
+    - apply is_invertible_2cell_rassociator.
+    - exact yy.
+    - apply is_disp_invertible_2cell_rassociator.
+    - apply lassociator_to_rassociator_post. exact p.
+    - cbn. etrans. { apply pp. }
+      apply maponpaths_2.
+      apply cellset_property.
+  }
+  apply maponpaths_2. apply cellset_property.
 Qed.
 
 Lemma disp_lassociator_to_rassociator_post {a b c d : C}
@@ -985,12 +987,13 @@ Lemma disp_lassociator_to_rassociator_post {a b c d : C}
   : xx •• disp_rassociator ff gg hh = transportb (λ x, _ ==>[x] _) q (yy).
 Proof.
   etrans.
-  use disp_lassociator_to_rassociator_post'.
-  - exact y.
-  - exact p.
-  - exact yy.
-  - exact pp.
-  - apply maponpaths_2. apply cellset_property.
+  { use disp_lassociator_to_rassociator_post'.
+    - exact y.
+    - exact p.
+    - exact yy.
+    - exact pp.
+  }
+  apply maponpaths_2. apply cellset_property.
 Qed.
 
 Lemma disp_lassociator_to_rassociator_pre {a b c d : C}
@@ -1010,17 +1013,18 @@ Lemma disp_lassociator_to_rassociator_pre {a b c d : C}
   : disp_rassociator ff gg hh •• xx = transportb (λ x, _ ==>[x] _) q (yy).
 Proof.
   etrans.
-  use disp_lhs_left_invert_cell.
-  - exact y.
-  - apply is_invertible_2cell_rassociator.
-  - exact yy.
-  - apply is_disp_invertible_2cell_rassociator.
-  - apply lassociator_to_rassociator_pre. exact p.
-  - cbn. etrans. apply pp.
-    apply maponpaths_2.
-    apply cellset_property.
-  - apply maponpaths_2.
-    apply cellset_property.
+  { use disp_lhs_left_invert_cell.
+    - exact y.
+    - apply is_invertible_2cell_rassociator.
+    - exact yy.
+    - apply is_disp_invertible_2cell_rassociator.
+    - apply lassociator_to_rassociator_pre. exact p.
+    - cbn. etrans. { apply pp. }
+      apply maponpaths_2.
+      apply cellset_property.
+  }
+  apply maponpaths_2.
+  apply cellset_property.
 Qed.
 
 Lemma disp_lunitor_lwhisker {a b c : C} {f : C⟦a,b⟧} {g : C⟦b,c⟧}
@@ -1032,18 +1036,19 @@ Lemma disp_lunitor_lwhisker {a b c : C} {f : C⟦a,b⟧} {g : C⟦b,c⟧}
                (disp_runitor ff ▹▹ gg).
 Proof.
   etrans.
-  use disp_lassociator_to_rassociator_pre.
-  - exact (runitor f ▹ g).
-  - exact (disp_runitor ff ▹▹ gg).
-  - apply lunitor_lwhisker.
-  - apply pathsinv0.
-    etrans.
-    apply maponpaths. apply disp_runitor_rwhisker.
-    etrans.
-    apply (transport_f_f (λ α, _ ==>[α] _)).
-    apply (transportf_set (λ α, _ ==>[α] _)).
-    apply cellset_property.
-  - apply maponpaths_2, cellset_property.
+  { use disp_lassociator_to_rassociator_pre.
+    - exact (runitor f ▹ g).
+    - exact (disp_runitor ff ▹▹ gg).
+    - apply lunitor_lwhisker.
+    - apply pathsinv0.
+      etrans.
+      { apply maponpaths. apply disp_runitor_rwhisker. }
+      etrans.
+      { apply (transport_f_f (λ α, _ ==>[α] _)). }
+      apply (transportf_set (λ α, _ ==>[α] _)).
+      apply cellset_property.
+  }
+  apply maponpaths_2, cellset_property.
 Qed.
 
 
@@ -1167,6 +1172,45 @@ Proof.
   apply (transportfbinv (λ z, _ ==>[ z ] _) _ _).
 Qed.
 
+Definition disp_vcomp_lcancel
+           {b₁ b₂ : C}
+           {f g h : b₁ --> b₂}
+           {α : f ==> g}
+           {β : g ==> h}
+           (Hα : is_invertible_2cell α)
+           {bb₁ : D b₁}
+           {bb₂ : D b₂}
+           {ff : bb₁ -->[ f ] bb₂}
+           {gg : bb₁ -->[ g ] bb₂}
+           {hh : bb₁ -->[ h ] bb₂}
+           {αα : ff ==>[ α ] gg}
+           {ββ₁ ββ₂ : gg ==>[ β ] hh}
+           (Hαα : is_disp_invertible_2cell Hα αα)
+           (p : αα •• ββ₁ = αα •• ββ₂)
+  : ββ₁ = ββ₂.
+Proof.
+  pose (αα_cell := (αα ,, Hαα) : disp_invertible_2cell (make_invertible_2cell Hα) ff gg).
+  assert (q := maponpaths (λ z, disp_inv_cell αα_cell •• z) p).
+  cbn in q.
+  rewrite !disp_vassocr in q.
+  pose (disp_vcomp_linv αα_cell) as z.
+  cbn in z.
+  rewrite !z in q.
+  unfold transportb in q.
+  rewrite !disp_mor_transportf_postwhisker in q.
+  rewrite !transport_f_f in q.
+  rewrite !disp_id2_left in q.
+  unfold transportb in q.
+  rewrite !transport_f_f in q.
+  pose (q' := @transportb_transpose_right
+                _
+                (λ z, _ ==>[ z ] _)
+                _ _ _ _ _
+                q).
+  rewrite transportbfinv in q'.
+  exact q'.
+Qed.
+
 Definition disp_vcomp_rcancel
            {b₁ b₂ : C}
            {f g h : b₁ --> b₂}
@@ -1202,6 +1246,92 @@ Proof.
                 q).
   rewrite transportbfinv in q'.
   exact q'.
+Qed.
+
+Definition disp_id2_left_alt
+           {x y : C}
+           {f g : x --> y}
+           {η : f ==> g}
+           {xx : D x}
+           {yy : D y}
+           {ff : xx -->[ f ] yy}
+           {gg : xx -->[ g ] yy}
+           (ηη : ff ==>[ η ] gg)
+  : ηη
+    =
+    transportf (λ z, ff ==>[ z ] gg) (id2_left η) (disp_id2 ff •• ηη).
+Proof.
+  exact (!(@transportf_transpose_left
+             _
+             (λ z, _ ==>[ z ] _)
+             _ _
+             _
+             _ _
+             (disp_id2_left ηη))).
+Qed.
+
+Definition disp_rwhisker_rwhisker_rassociator
+           {w x y z : C}
+           {f₁ f₂ : w --> x}
+           {α : f₁ ==> f₂}
+           {g : x --> y}
+           {h : y --> z}
+           {ww : D w}
+           {xx : D x}
+           {yy : D y}
+           {zz : D z}
+           {ff₁ : ww -->[ f₁ ] xx}
+           {ff₂ : ww -->[ f₂ ] xx}
+           (αα : ff₁ ==>[ α ] ff₂)
+           (gg : xx -->[ g ] yy)
+           (hh : yy -->[ h ] zz)
+  : transportb
+      (λ z, _ ==>[ z ] _)
+      (rwhisker_rwhisker_alt h g α)
+      (disp_rassociator ff₁ gg hh •• (αα ▹▹ (gg ;; hh)))
+    =
+    (αα ▹▹ gg ▹▹ hh) •• disp_rassociator ff₂ gg hh.
+Proof.
+  refine (!_).
+  refine (disp_id2_left_alt _ @ _).
+  etrans.
+  {
+    apply maponpaths.
+    apply maponpaths_2.
+    exact (!(@transportf_transpose_left
+               _
+               (λ z, _ ==>[ z ] _)
+               _ _
+               _
+               _ _
+               (disp_rassociator_lassociator _ ff₁ gg hh))).
+  }
+  rewrite disp_mor_transportf_postwhisker.
+  rewrite transport_f_f.
+  rewrite !disp_vassocl.
+  unfold transportb.
+  rewrite transport_f_f.
+  etrans.
+  {
+    do 2 apply maponpaths.
+    rewrite disp_vassocr.
+    rewrite disp_rwhisker_rwhisker.
+    unfold transportb.
+    rewrite disp_mor_transportf_postwhisker.
+    rewrite transport_f_f.
+    rewrite !disp_vassocl.
+    rewrite disp_lassociator_rassociator.
+    unfold transportb.
+    rewrite disp_mor_transportf_prewhisker.
+    rewrite disp_id2_right.
+    unfold transportb.
+    rewrite !transport_f_f.
+    apply idpath.
+  }
+  rewrite disp_mor_transportf_prewhisker.
+  rewrite transport_f_f.
+  apply maponpaths_2.
+  apply cellset_property.
 Qed.
 
 
@@ -1345,9 +1475,9 @@ cbn.
 intros.
 unfold total_prebicat_cell_struct.
 apply isaset_total2.
-apply cellset_property.
-intros.
-apply disp_cellset_property.
+- apply cellset_property.
+- intros.
+  apply disp_cellset_property.
 Qed.
 
 Definition total_bicat (D : disp_bicat) : bicat
@@ -1412,7 +1542,13 @@ Definition disp_2cells_isaprop
            {B : bicat} (D : disp_prebicat_1_id_comp_cells B)
   := ∏ (a b : B) (f g : a --> b) (x : f ==> g)
        (aa : D a) (bb : D b) (ff : aa -->[f] bb) (gg : aa -->[g] bb),
-     isaprop (disp_2cells x ff gg).
+    isaprop (disp_2cells x ff gg).
+
+Definition disp_2cells_iscontr
+           {B : bicat} (D : disp_prebicat_1_id_comp_cells B)
+  := ∏ (a b : B) (f g : a --> b) (x : f ==> g)
+       (aa : D a) (bb : D b) (ff : aa -->[f] bb) (gg : aa -->[g] bb),
+     iscontr (disp_2cells x ff gg).
 
 Definition disp_locally_groupoid
            {B : bicat} (D : disp_bicat B)
@@ -1424,7 +1560,7 @@ Definition disp_locally_sym
            {B : bicat} (D : disp_bicat B)
   := ∏ (a b : B) (f g : a --> b) (x : invertible_2cell f g)
        (aa : D a) (bb : D b) (ff : aa -->[f] bb) (gg : aa -->[g] bb)
-       (xx : disp_2cells x ff gg), disp_2cells (x^-1) gg ff.
+       (xx : disp_2cells x ff gg), disp_2cells x^-1 gg ff.
 
 Definition make_disp_locally_groupoid
            {B : bicat} (D : disp_bicat B)
@@ -1459,6 +1595,25 @@ Proof.
   use (J_2_1 HB).
   exact HD.
 Defined.
+
+Definition disp_2cells_isaprop_from_disp_2cells_iscontr
+  {B : bicat} (D : disp_prebicat_1_id_comp_cells B)
+  : disp_2cells_iscontr D -> disp_2cells_isaprop D.
+Proof.
+  intro c ; intro ; intros.
+  apply isapropifcontr.
+  apply c.
+Qed.
+
+Definition disp_2cells_isgroupoid_from_disp_2cells_iscontr
+  {B : bicat} (D : disp_bicat B)
+  : disp_2cells_iscontr D -> disp_locally_groupoid D.
+Proof.
+  intro c ; intro ; intros.
+  simple refine (_ ,, _).
+  - apply c.
+  - split; apply isapropifcontr, c.
+Qed.
 
 Section HomDisplayedCategory.
   Context {B : bicat}

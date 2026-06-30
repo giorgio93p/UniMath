@@ -121,11 +121,11 @@ Proof.
                              (∏ n : nat, f2 (S n) = IH n (f2 n))).
   { apply weqfibtototal; intro f2. apply weqfibtototal; intro h0.
     apply weqpr1; intro ih2.
-    exact (Nat.Uniqueness.hNatRecursionUniq
+    exact (hNatRecursionUniq
              (λ n, P (negpos (ii1 n)))
              (IH' O (f2 O))
              (λ n, IH' (S n))). }
-  apply Nat.Uniqueness.hNatRecursionUniq.
+  apply hNatRecursionUniq.
 Defined.
 
 Lemma A (P:ℤ->Type) (p0:P zero)
@@ -265,7 +265,7 @@ Proof.
   { intro. apply invweq. unfold H,J,maponsec1. simple refine (weqonsec _ _ w _).
     intro i. simple refine (weqonpaths2 _ _ _).
     { exact (invweq (l0 i)). }
-    { unfold l0. rewrite (k0 i). reflexivity. }
+    { unfold l0. apply eqweqmap_ap'. }
     { unfold IH'. unfold weqcomp; simpl.
       rewrite (homotinvweqweq (l0 i)). reflexivity. } }
   exact (pr2 (ℤBiRecursion_weq IH') (e #' q)).
@@ -640,9 +640,3 @@ Definition affine_line_value {T:Torsor ℤ} {Y} (f:T->Y) (s:target_paths f) : Y.
 Proof.
   exact (affine_line_map s (affine_line_point (T:=T))).
 Defined.
-
-(*
-Local Variables:
-compile-command: "make -C ../.. UniMath/SyntheticHomotopyTheory/AffineLine.vo"
-End:
-*)

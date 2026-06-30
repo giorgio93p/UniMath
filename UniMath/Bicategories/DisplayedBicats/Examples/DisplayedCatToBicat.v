@@ -6,8 +6,8 @@
 (* ----------------------------------------------------------------------------------- *)
 Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.PartA.
+Require Import UniMath.MoreFoundations.Propositions.
 Require Import UniMath.CategoryTheory.Core.Categories.
-Require Import UniMath.CategoryTheory.DisplayedCats.Auxiliary.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
 Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
@@ -21,24 +21,6 @@ Require Import UniMath.Bicategories.DisplayedBicats.DispUnivalence.
 
 Local Open Scope cat.
 Local Open Scope mor_disp_scope.
-
-Definition is_chaotic
-           {C : bicat}
-           (D : disp_bicat C)
-  : UU
-  := ∏ (a b : C) (f g : a --> b) (α : f ==> g)
-       (aa : D a) (bb : D b)
-       (ff : aa -->[ f ] bb) (gg : aa -->[ g ] bb),
-     iscontr (ff ==>[ α ] gg).
-
-Definition isaprop_is_chaotic
-           {C : bicat}
-           (D : disp_bicat C)
-  : isaprop (is_chaotic D).
-Proof.
-  repeat (apply impred ; intro).
-  apply isapropiscontr.
-Qed.
 
 Section Disp_Prebicat_Cells_Unit.
   Context {C : bicat} (D : disp_cat_data C).
@@ -262,10 +244,10 @@ Section Disp_Prebicat_Cells_Unit.
   Defined.
 End Disp_Prebicat_Cells_Unit.
 
-Definition is_chaotic_disp_bicat_cells_unit
+Definition disp_2cells_iscontr_disp_bicat_cells_unit
            {C : bicat}
            (D : disp_cat_data C)
-  : is_chaotic (disp_cell_unit_bicat D).
+  : disp_2cells_iscontr (disp_cell_unit_bicat D).
 Proof.
   intro ; intros.
   apply iscontrunit.
@@ -278,7 +260,7 @@ Definition disp_2cells_isaprop_cell_unit_bicat
 Proof.
   intro; intros.
   apply isapropifcontr.
-  apply (is_chaotic_disp_bicat_cells_unit D).
+  apply (disp_2cells_iscontr_disp_bicat_cells_unit D).
 Qed.
 
 Definition disp_locally_groupoid_cell_unit_bicat
@@ -289,4 +271,82 @@ Proof.
   use make_disp_locally_groupoid.
   - intro; intros; exact tt.
   - exact (disp_2cells_isaprop_cell_unit_bicat D).
+Qed.
+
+Lemma isaprop_disp_left_adjoint_data_cell_unit_bicat
+      {C : bicat}
+      {D : disp_cat_data C}
+      {a b : C} {f : C⟦ a, b ⟧}
+      (l : left_adjoint_data f)
+      {aa : (disp_cell_unit_bicat D) a} {bb : (disp_cell_unit_bicat D) b}
+      (ff : aa -->[ f] bb)
+  : isaprop (bb -->[ left_adjoint_right_adjoint l] aa)
+    -> isaprop (disp_left_adjoint_data l ff).
+Proof.
+  intro p.
+  use isaproptotal2.
+  - intro ; apply isapropdirprod ; apply isapropunit.
+  - intro ; intros ; apply p.
+Qed.
+
+Lemma isaprop_disp_left_adjoint_axioms_cell_unit_bicat
+  {C : bicat}
+  {D : disp_cat_data C}
+  {a b : C} {f : C⟦ a, b ⟧}
+  (j : left_adjoint f)
+  {aa : (disp_cell_unit_bicat D) a} {bb : (disp_cell_unit_bicat D) b}
+  {ff : aa -->[ f] bb}
+  (jj : disp_left_adjoint_data j ff)
+  : isaprop (disp_left_adjoint_axioms j jj).
+Proof.
+  apply isapropdirprod ; apply isasetaprop, isapropunit.
+Qed.
+
+(* To be moved more upstream *)
+Lemma isaprop_disp_left_equivalence_axioms
+  {C : bicat}
+  {D : disp_cat_data C}
+  {a b : C}
+  {aa : (disp_cell_unit_bicat D) a} {bb : (disp_cell_unit_bicat D) b}
+  {f : C⟦ a, b ⟧}
+  {j : left_equivalence f}
+  {ff : aa -->[ f] bb}
+  (jj : disp_left_adjoint_data j ff)
+    : isaprop (disp_left_equivalence_axioms j jj).
+  Proof.
+    apply isapropdirprod ; apply isaprop_is_disp_invertible_2cell.
+  Qed.
+
+Lemma isaprop_disp_left_adjoint_equivalence_cell_unit_bicat
+  {C : bicat}
+  {D : disp_cat_data C}
+  {a b : C}
+  {aa : (disp_cell_unit_bicat D) a} {bb : (disp_cell_unit_bicat D) b}
+  (f : adjoint_equivalence a b)
+  (ff : aa -->[ f ] bb)
+  : isaprop (bb -->[ left_adjoint_right_adjoint f] aa)
+    -> isaprop (disp_left_adjoint_equivalence f ff).
+Proof.
+  intro p.
+  use isaproptotal2.
+  - intro.
+    apply isapropdirprod.
+    + apply isaprop_disp_left_adjoint_axioms_cell_unit_bicat.
+    + apply isaprop_disp_left_equivalence_axioms.
+  - do 4 intro.
+    apply isaprop_disp_left_adjoint_data_cell_unit_bicat, p.
+Qed.
+
+Lemma isaprop_disp_adjoint_equivalence_cell_unit_bicat
+  {C : bicat}
+  {D : disp_cat_data C}
+  {a b : C}
+  {aa : (disp_cell_unit_bicat D) a} {bb : (disp_cell_unit_bicat D) b}
+  {f : adjoint_equivalence a b}
+  (ff : aa -->[ f ] bb)
+  : isaprop (bb -->[left_adjoint_right_adjoint f] aa)
+    -> isaprop (aa -->[ f] bb)
+    -> isaprop (disp_adjoint_equivalence f aa bb).
+Proof.
+  exact (λ p q, isaprop_total2 (_,,q) (λ _ , _ ,, isaprop_disp_left_adjoint_equivalence_cell_unit_bicat _ _ p)).
 Qed.

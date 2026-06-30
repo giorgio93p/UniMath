@@ -7,7 +7,6 @@
 Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
-Require Import UniMath.CategoryTheory.DisplayedCats.Auxiliary.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
 Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
@@ -80,27 +79,27 @@ Section Trivial_Displayed.
   Lemma trivial_disp_prebicat_laws : disp_prebicat_laws trivial_displayed_data.
   Proof.
     repeat apply make_dirprod; red; cbn; intros.
-    - etrans. apply id2_left. apply transportf_trivial.
-    - etrans. apply id2_right. apply transportf_trivial.
-    - etrans. apply vassocr. apply transportf_trivial.
-    - etrans. apply lwhisker_id2. apply transportf_trivial.
-    - etrans. apply id2_rwhisker. apply transportf_trivial.
-    - etrans. apply lwhisker_vcomp. apply transportf_trivial.
-    - etrans. apply rwhisker_vcomp. apply transportf_trivial.
-    - etrans. apply vcomp_lunitor. apply transportf_trivial.
-    - etrans. apply vcomp_runitor. apply transportf_trivial.
-    - etrans. apply lwhisker_lwhisker. apply transportf_trivial.
-    - etrans. apply rwhisker_lwhisker. apply transportf_trivial.
-    - etrans. apply rwhisker_rwhisker. apply transportf_trivial.
-    - etrans. apply vcomp_whisker. apply transportf_trivial.
-    - etrans. apply lunitor_linvunitor. apply transportf_trivial.
-    - etrans. apply linvunitor_lunitor. apply transportf_trivial.
-    - etrans. apply runitor_rinvunitor. apply transportf_trivial.
-    - etrans. apply rinvunitor_runitor. apply transportf_trivial.
-    - etrans. apply lassociator_rassociator. apply transportf_trivial.
-    - etrans. apply rassociator_lassociator. apply transportf_trivial.
-    - etrans. apply runitor_rwhisker. apply transportf_trivial.
-    - etrans. apply lassociator_lassociator. apply transportf_trivial.
+    - etrans. { apply id2_left. } apply transportf_trivial.
+    - etrans. { apply id2_right. } apply transportf_trivial.
+    - etrans. { apply vassocr. } apply transportf_trivial.
+    - etrans. { apply lwhisker_id2. } apply transportf_trivial.
+    - etrans. { apply id2_rwhisker. } apply transportf_trivial.
+    - etrans. { apply lwhisker_vcomp. } apply transportf_trivial.
+    - etrans. { apply rwhisker_vcomp. } apply transportf_trivial.
+    - etrans. { apply vcomp_lunitor. } apply transportf_trivial.
+    - etrans. { apply vcomp_runitor. } apply transportf_trivial.
+    - etrans. { apply lwhisker_lwhisker. } apply transportf_trivial.
+    - etrans. { apply rwhisker_lwhisker. } apply transportf_trivial.
+    - etrans. { apply rwhisker_rwhisker. } apply transportf_trivial.
+    - etrans. { apply vcomp_whisker. } apply transportf_trivial.
+    - etrans. { apply lunitor_linvunitor. } apply transportf_trivial.
+    - etrans. { apply linvunitor_lunitor. } apply transportf_trivial.
+    - etrans. { apply runitor_rinvunitor. } apply transportf_trivial.
+    - etrans. { apply rinvunitor_runitor. } apply transportf_trivial.
+    - etrans. { apply lassociator_rassociator. } apply transportf_trivial.
+    - etrans. { apply rassociator_lassociator. } apply transportf_trivial.
+    - etrans. { apply runitor_rwhisker. } apply transportf_trivial.
+    - etrans. { apply lassociator_lassociator. } apply transportf_trivial.
   Qed.
 
   Definition trivial_displayed_prebicat : disp_prebicat B
@@ -154,7 +153,7 @@ Definition trivial_is_invertible_2cell_to_is_disp_invertible
   : is_disp_invertible_2cell Hα β.
 Proof.
   simple refine (_ ,, (_ ,, _)).
-  - exact (Hβ^-1).
+  - exact Hβ^-1.
   - abstract
       (unfold transportb ; cbn ;
        rewrite transportf_const ;
@@ -276,7 +275,7 @@ Definition trivial_invertible_2cell_weq_disp_invertible
 Proof.
   use make_weq.
   - exact trivial_invertible_2cell_to_disp_invertible.
-  - use gradth.
+  - use isweq_iso.
     + exact trivial_disp_invertible_to_invertible_2cell.
     + exact trivial_invertible_to_disp_invertible_to_invertible.
     + exact trivial_disp_invertible_to_invertible_to_disp_invertible.
@@ -420,7 +419,7 @@ Definition trivial_adj_equiv_weq_disp_adj_equiv
 Proof.
   use make_weq.
   - exact trivial_adj_equiv_to_disp_adj_equiv.
-  - use gradth.
+  - use isweq_iso.
     + exact trivial_disp_adj_equiv_to_adj_equiv.
     + exact (trivial_adj_equiv_to_disp_to_adj HC_2_1).
     + exact (trivial_disp_adj_equiv_to_adj_to_disp HB_2_1 HC_2_1).

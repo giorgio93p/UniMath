@@ -16,13 +16,15 @@ Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
+Require Import UniMath.CategoryTheory.Equivalences.FullyFaithful.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
 Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.Bicategories.Core.Examples.BicatOfUnivCats.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.Core.BicategoryLaws.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
+Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
 Require Import UniMath.Bicategories.DisplayedBicats.DispBicat.
 Require Import UniMath.Bicategories.PseudoFunctors.Display.Base.
 Require Import UniMath.Bicategories.PseudoFunctors.Display.Map1Cells.
@@ -170,11 +172,24 @@ Definition psfunctor_is_iso
   : is_invertible_2cell (##F α).
 Proof.
   use tpair.
-  - exact (##F (α^-1)).
+  - exact (##F α^-1).
   - split ; cbn
     ; rewrite <- psfunctor_vcomp, <- psfunctor_id2 ; apply maponpaths.
     + apply vcomp_rinv.
     + apply vcomp_linv.
+Defined.
+
+Definition psfunctor_inv2cell
+           {C D : bicat}
+           (F : psfunctor C D)
+           {a b : C}
+           {f g : a --> b}
+           (α : invertible_2cell f g)
+  : invertible_2cell (#F f) (#F g).
+Proof.
+  use make_invertible_2cell.
+  - exact (##F α).
+  - apply psfunctor_is_iso.
 Defined.
 
 Section PseudoFunctorDerivedLaws.
@@ -204,6 +219,21 @@ Section PseudoFunctorDerivedLaws.
     rewrite psfunctor_lunitor ; cbn.
     rewrite <- !vassocr.
     reflexivity.
+  Qed.
+
+  Definition psfunctor_F_linvunitor
+             {a b : C}
+             (f : a --> b)
+    : (linvunitor (#F f))
+      =
+      ##F (linvunitor f)
+      • (psfunctor_comp F _ _)^-1
+      • ((psfunctor_id F a)^-1 ▹ #F f).
+  Proof.
+    use vcomp_move_L_Mp ; [ is_iso | ].
+    use vcomp_move_L_Mp ; [ is_iso | ].
+    refine (!_).
+    apply psfunctor_linvunitor.
   Qed.
 
   Definition psfunctor_rinvunitor
@@ -336,6 +366,27 @@ Section PseudoFunctorDerivedLaws.
   Qed.
 End PseudoFunctorDerivedLaws.
 
+Definition psfunctor_lassociator_alt'
+           {B₁ B₂ : bicat}
+           (F : psfunctor B₁ B₂)
+           {a b c d : B₁}
+           (f : a --> b)
+           (g : b --> c)
+           (h : c --> d)
+  : ##F (lassociator f g h)
+    • (psfunctor_comp F _ _)^-1
+    • ((psfunctor_comp F _ _)^-1 ▹ #F h)
+    • rassociator _ _ _
+    =
+    (psfunctor_comp F _ _)^-1
+    • (_ ◃ (psfunctor_comp F _ _)^-1).
+Proof.
+  use vcomp_move_L_pM ; [ is_iso | ].
+  cbn.
+  rewrite !vassocr.
+  apply psfunctor_lassociator_alt.
+Qed.
+
 Section PseudoFunctorLocalFunctor.
   Context {B C : bicat}.
   Variable (F : psfunctor B C)
@@ -411,43 +462,73 @@ Definition psfunctor_preserves_adjequiv
   := J_2_0 HC
            (λ a b f, left_adjoint_equivalence (#F (pr1 f)))
            (λ a0,
-            left_adjequiv_invertible_2cell HD _ _
-                                           (psfunctor_id F a0)
-                                           (pr2 (internal_adjoint_equivalence_identity (F a0))))
+            left_adjequiv_invertible_2cell
+              HD _ _
+              (psfunctor_id F a0)
+              (pr2 (internal_adjoint_equivalence_identity (F a0))))
            f.
 
-Definition local_equivalence
-           {B₁ B₂ : bicat}
-           (B₁_is_univalent_2_1 : is_univalent_2_1 B₁)
-           (B₂_is_univalent_2_1 : is_univalent_2_1 B₂)
-           (F : psfunctor B₁ B₂)
-  : UU
-  := ∏ (x y : B₁),
-     @left_adjoint_equivalence
-       bicat_of_univ_cats
-       _ _
-       (Fmor_univ
-          F x y
-          B₁_is_univalent_2_1
-          B₂_is_univalent_2_1).
+Definition psfunctor_preserves_adjequiv'
+           {C D : bicat}
+           (F : psfunctor C D)
+           {a b : C}
+           {f : a --> b}
+           (Hf : left_adjoint_equivalence f)
+  : left_adjoint_equivalence (#F f).
+Proof.
+  use equiv_to_adjequiv.
+  simple refine ((_ ,, (_ ,, _)) ,, (_ ,, _)).
+  - exact (#F (left_adjoint_right_adjoint Hf)).
+  - exact (psfunctor_id F _
+           • ##F (left_equivalence_unit_iso Hf)
+           • (psfunctor_comp F _ _)^-1).
+  - exact (psfunctor_comp F _ _
+           • ##F (left_adjoint_counit Hf)
+           • (psfunctor_id F _)^-1).
+  - cbn.
+    is_iso.
+    + apply psfunctor_id.
+    + exact (psfunctor_is_iso F (left_equivalence_unit_iso Hf)).
+  - cbn.
+    is_iso.
+    + apply psfunctor_comp.
+    + exact (psfunctor_is_iso F (left_equivalence_counit_iso Hf)).
+Defined.
 
-Definition essentially_surjective
-           {B₁ B₂ : bicat}
-           (F : psfunctor B₁ B₂)
-  : hProp
-  := ∀ (y : B₂), ∃ (x : B₁), adjoint_equivalence (F x) y.
+Lemma psfunctor_preserve_adj_equiv
+      {C D : bicat}
+      (F : psfunctor C D) (x y : C)
+  : adjoint_equivalence x y -> adjoint_equivalence (pr111 F x) (pr111 F y).
+Proof.
+  intro a.
+  exists (pr211 F _ _ (pr1 a)).
+  use psfunctor_preserves_adjequiv'.
+  exact (pr2 a).
+Defined.
 
-Definition weak_equivalence
+(**
+ `idtoiso_2_1` for pseudofunctors
+ *)
+Definition idtoiso_2_1_psfunctor
            {B₁ B₂ : bicat}
-           (B₁_is_univalent_2_1 : is_univalent_2_1 B₁)
-           (B₂_is_univalent_2_1 : is_univalent_2_1 B₂)
            (F : psfunctor B₁ B₂)
-  : UU
-  := local_equivalence
-       B₁_is_univalent_2_1
-       B₂_is_univalent_2_1
-       F
-     × essentially_surjective F.
+           {x y : B₁}
+           {f g : x --> y}
+           (p : f = g)
+  : idtoiso_2_1 _ _ (maponpaths #F p)
+    =
+    ##F (idtoiso_2_1 _ _ p) ,, psfunctor_is_iso _ _.
+Proof.
+  induction p ; cbn.
+  use subtypePath.
+  {
+    intro.
+    apply isaprop_is_invertible_2cell.
+  }
+  cbn.
+  rewrite psfunctor_id2.
+  apply idpath.
+Qed.
 
 Module Notations.
   Notation "'##'" := (psfunctor_on_cells).

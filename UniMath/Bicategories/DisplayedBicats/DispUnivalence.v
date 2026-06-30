@@ -8,10 +8,13 @@
 Require Import UniMath.Foundations.All.
 Require Import UniMath.MoreFoundations.All.
 Require Import UniMath.CategoryTheory.Core.Categories.
-Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
+Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.CategoryTheory.DisplayedCats.Isos.
+Require Import UniMath.CategoryTheory.DisplayedCats.Univalence.
+Require Import UniMath.Bicategories.Core.Bicat. Import Bicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 (* For showing that the being a displayed adjoint equivalence is a proposition *)
 Require Import UniMath.Bicategories.Core.AdjointUnique.
 Require Export UniMath.Bicategories.Core.Univalence.
@@ -309,6 +312,132 @@ Proof.
   exact (HD a aa bb).
 Defined.
 
+Definition disp_isotoid_2_0
+           {B : bicat}
+           {D : disp_bicat B}
+           (HD_2_0 : disp_univalent_2_0 D)
+           {x : B}
+           {xx yy : D x}
+           (ee : disp_adjoint_equivalence
+                   (internal_adjoint_equivalence_identity x)
+                   xx
+                   yy)
+  : xx = yy
+  := invmap
+       (make_weq _ (HD_2_0 x x (idpath _) xx yy))
+       ee.
+
+Definition disp_idtoiso_2_0_isotoid_2_0
+           {B : bicat}
+           {D : disp_bicat B}
+           (HD_2_0 : disp_univalent_2_0 D)
+           {x : B}
+           {xx yy : D x}
+           (ee : disp_adjoint_equivalence
+                   (internal_adjoint_equivalence_identity x)
+                   xx
+                   yy)
+  : disp_idtoiso_2_0 D (idpath _) xx yy (disp_isotoid_2_0 HD_2_0 ee)
+    =
+    ee.
+Proof.
+  exact (homotweqinvweq (make_weq _ (HD_2_0 x x (idpath _) xx yy)) ee).
+Defined.
+
+Definition disp_isotoid_2_0_idtoiso_2_0
+           {B : bicat}
+           {D : disp_bicat B}
+           (HD_2_0 : disp_univalent_2_0 D)
+           {x : B}
+           {xx yy : D x}
+           (p : xx = yy)
+  : disp_isotoid_2_0 HD_2_0 (disp_idtoiso_2_0 _ (idpath _) xx yy p) = p.
+Proof.
+  exact (homotinvweqweq (make_weq _ (HD_2_0 x x (idpath _) xx yy)) p).
+Defined.
+
+Definition disp_J_2_0_help_on_paths
+           {B : bicat}
+           {D : disp_bicat B}
+           (P : ∏ (x y : B)
+                  (f : adjoint_equivalence x y)
+                  (xx : D x) (yy : D y),
+                disp_adjoint_equivalence f xx yy → UU)
+           (P_id : ∏ (x : B)
+                     (xx : D x),
+                   P x x
+                     (internal_adjoint_equivalence_identity x)
+                     xx xx
+                     (disp_identity_adjoint_equivalence xx))
+           {x : B}
+           {xx : D x} {yy : D x}
+           (p : xx = yy)
+  : P x x
+      (internal_adjoint_equivalence_identity x)
+      xx yy
+      (disp_idtoiso_2_0 D (idpath x) xx yy p).
+Proof.
+  induction p.
+  apply P_id.
+Defined.
+
+Definition disp_J_2_0_help
+           {B : bicat}
+           {D : disp_bicat B}
+           (HD_2_0 : disp_univalent_2_0 D)
+           (P : ∏ (x y : B)
+                  (f : adjoint_equivalence x y)
+                  (xx : D x) (yy : D y),
+                disp_adjoint_equivalence f xx yy → UU)
+           (P_id : ∏ (x : B)
+                     (xx : D x),
+                   P x x
+                     (internal_adjoint_equivalence_identity x)
+                     xx xx
+                     (disp_identity_adjoint_equivalence xx))
+           {x : B}
+           {xx : D x} {yy : D x}
+           (ff : disp_adjoint_equivalence
+                   (internal_adjoint_equivalence_identity x)
+                   xx
+                   yy)
+  : P x x (internal_adjoint_equivalence_identity x) xx yy ff.
+Proof.
+  pose (disp_J_2_0_help_on_paths P P_id (disp_isotoid_2_0 HD_2_0 ff)).
+  refine (transportf
+            (P x x _ xx yy)
+            _
+            (disp_J_2_0_help_on_paths P P_id (disp_isotoid_2_0 HD_2_0 ff))).
+  apply disp_idtoiso_2_0_isotoid_2_0.
+Defined.
+
+Definition disp_J_2_0
+           {B : bicat}
+           {D : disp_bicat B}
+           (HB_2_0 : is_univalent_2_0 B)
+           (HD_2_0 : disp_univalent_2_0 D)
+           (P : ∏ (x y : B)
+                  (f : adjoint_equivalence x y)
+                  (xx : D x) (yy : D y),
+                disp_adjoint_equivalence f xx yy → UU)
+           (P_id : ∏ (x : B)
+                     (xx : D x),
+                   P x x
+                     (internal_adjoint_equivalence_identity x)
+                     xx xx
+                     (disp_identity_adjoint_equivalence xx))
+           {x y : B}
+           {f : adjoint_equivalence x y}
+           {xx : D x} {yy : D y}
+           (ff : disp_adjoint_equivalence f xx yy)
+  : P x y f xx yy ff.
+Proof.
+  revert x y f xx yy ff.
+  use (J_2_0 HB_2_0).
+  intros x xx yy ff.
+  exact (disp_J_2_0_help HD_2_0 P P_id ff).
+Defined.
+
 Section Total_Category_Globally_Univalent.
   Context {C : bicat}.
   Variable (D : disp_bicat C)
@@ -394,7 +523,7 @@ Section Disp_Univalent_2.
     : disp_univalent_2_1 D
     := pr2 univ_2.
 
-  End Disp_Univalent_2.
+End Disp_Univalent_2.
 
 Lemma total_is_univalent_2
       {C : bicat}
@@ -405,8 +534,100 @@ Lemma total_is_univalent_2
 Proof.
   intros UD UC.
   split.
-  - apply total_is_univalent_2_0. apply UC.
+  - apply total_is_univalent_2_0. { apply UC. }
     apply disp_univalent_2_0_of_2. assumption.
-  - apply total_is_univalent_2_1. apply UC.
+  - apply total_is_univalent_2_1. { apply UC. }
     apply disp_univalent_2_1_of_2. assumption.
+Defined.
+
+(** Displayed local univalence corresponds with the expected local condition *)
+Section DispLocallyUnivalent.
+  Context {B : bicat}
+          (D : disp_bicat B)
+          {x y : B}
+          {f : x --> y}
+          {xx : D x}
+          {yy : D y}
+          (ff₁ ff₂ : xx -->[ f ] yy).
+
+  Definition disp_inv2cell_to_disp_z_iso
+    : disp_invertible_2cell (id2_invertible_2cell f) ff₁ ff₂
+      →
+      @z_iso_disp _ (disp_hom xx yy) _ _ (identity_z_iso _) ff₁ ff₂.
+  Proof.
+    intro α.
+    simple refine (@make_z_iso_disp _ (disp_hom xx yy) _ _ _ _ _ _ _).
+    - exact (pr1 α).
+    - simple refine (_ ,, _ ,, _).
+      + exact (disp_inv_cell α).
+      + abstract
+          (refine (disp_vcomp_linv α @ _) ; cbn ;
+           apply maponpaths_2 ;
+           apply cellset_property).
+      + abstract
+          (refine (disp_vcomp_rinv α @ _) ; cbn ;
+           apply maponpaths_2 ;
+           apply cellset_property).
+  Defined.
+
+  Definition disp_z_iso_to_disp_inv2cell
+    : @z_iso_disp _ (disp_hom xx yy) _ _ (identity_z_iso _) ff₁ ff₂
+      →
+      disp_invertible_2cell (id2_invertible_2cell f) ff₁ ff₂.
+  Proof.
+    intro α.
+    simple refine (_ ,, _ ,, _ ,, _).
+    - exact (pr1 α).
+    - exact (inv_mor_disp_from_z_iso α).
+    - abstract
+        (cbn ;
+         refine (pr222 α @ _) ;
+         apply maponpaths_2 ;
+         apply cellset_property).
+    - abstract
+        (cbn ;
+         refine (pr122 α @ _) ;
+         apply maponpaths_2 ;
+         apply cellset_property).
+  Defined.
+
+  Definition disp_inv2cell_weq_disp_z_iso
+    : disp_invertible_2cell (id2_invertible_2cell f) ff₁ ff₂
+      ≃
+      @z_iso_disp _ (disp_hom xx yy) _ _ (identity_z_iso _) ff₁ ff₂.
+  Proof.
+    use make_weq.
+    - exact disp_inv2cell_to_disp_z_iso.
+    - use isweq_iso.
+      + exact disp_z_iso_to_disp_inv2cell.
+      + abstract
+          (intro α ;
+           use subtypePath ; [ intro ; apply isaprop_is_disp_invertible_2cell | ] ;
+           apply idpath).
+      + abstract
+          (intro α ;
+           use subtypePath ; [ intro ; apply isaprop_is_z_iso_disp | ] ;
+           apply idpath).
+  Defined.
+End DispLocallyUnivalent.
+
+Definition is_univalent_disp_disp_hom
+           {B : bicat}
+           (D : disp_bicat B)
+           (HD : disp_univalent_2_1 D)
+           {x y : B}
+           (xx : D x)
+           (yy : D y)
+  : is_univalent_disp (disp_hom xx yy).
+Proof.
+  intros f g p ff gg.
+  induction p.
+  use weqhomot.
+  - exact (disp_inv2cell_weq_disp_z_iso D _ _
+           ∘ make_weq _ (HD x y f f (idpath _) xx yy ff gg))%weq.
+  - abstract
+      (intro p ;
+       induction p ;
+       use subtypePath ; [ intro ; apply isaprop_is_z_iso_disp | ] ;
+       apply idpath).
 Defined.

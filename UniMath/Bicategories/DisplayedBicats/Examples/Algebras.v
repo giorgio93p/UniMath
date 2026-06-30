@@ -17,7 +17,7 @@ Import PseudoFunctor.Notations.
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
 Require Import UniMath.Bicategories.DisplayedBicats.DispBicat. Import DispBicat.Notations.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.DisplayedBicats.DispAdjunctions.
 Require Import UniMath.Bicategories.DisplayedBicats.DispUnivalence.
@@ -573,7 +573,7 @@ Section Algebra.
       rewrite <- lwhisker_hcomp.
       rewrite !(maponpaths (λ z, (_ • z) ▹ _) (vassocl _ _ _)).
       rewrite <- vcomp_whisker.
-      rewrite <- (runitor_natural _ _ _ _ (x^-1)).
+      rewrite <- (runitor_natural _ _ _ _ x^-1).
       rewrite <- rwhisker_hcomp.
       rewrite <- !lwhisker_vcomp, <- !rwhisker_vcomp.
       rewrite !vassocl.

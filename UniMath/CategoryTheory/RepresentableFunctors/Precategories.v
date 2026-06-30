@@ -1,5 +1,3 @@
-(* -*- coding: utf-8 -*- *)
-
 Require Export UniMath.CategoryTheory.Core.Categories. (* export its coercions, especially *)
 Require Export UniMath.CategoryTheory.Core.Isos. (* export its coercions, especially *)
 Require Export UniMath.CategoryTheory.Core.Functors.
@@ -7,7 +5,8 @@ Require Export UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Export UniMath.CategoryTheory.Core.Univalence.
 Require Export UniMath.CategoryTheory.opp_precat
                UniMath.CategoryTheory.yoneda
-               UniMath.CategoryTheory.categories.HSET.Core.
+               UniMath.CategoryTheory.Categories.HSET.Core
+               UniMath.CategoryTheory.Categories.HSET.MonoEpiIso.
 Require Export UniMath.Foundations.Preamble.
 Require Export UniMath.Foundations.Sets.
 Require Import UniMath.MoreFoundations.Tactics.
@@ -62,7 +61,7 @@ Proof.
   exact (λ a b, pr2 C b a).
 Defined.
 
-Notation "C '^op'" := (oppositecategory C) (at level 3, format "C ^op") : cat. (* this overwrites the previous definition *)
+Notation "C '^op'" := (oppositecategory C) (at level 1, format "C ^op") : cat. (* this overwrites the previous definition *)
 
 
 Definition precategory_obmor (C:precategory) : precategory_ob_mor :=
@@ -77,16 +76,6 @@ Definition Functor_compose {C D} (F:functor C D) := @functor_comp _ _ F.
 
 
 Definition theUnivalenceProperty (C: univalent_category) := pr2 C : is_univalent C.
-
-Lemma category_eq (C D : category) :
-  (C:precategory_data) = (D:precategory_data) -> C=D.
-Proof.
-  intro e. apply subtypePath. intro. apply isaprop_has_homsets.
-  apply subtypePath'.
-  { assumption. }
-  apply isaprop_is_precategory.
-  apply homset_property.
-Defined.
 
 (** embeddings and isomorphism of categories  *)
 
@@ -126,8 +115,6 @@ Definition makecategory_data
     : precategory_data
   := make_precategory_data (makecategory_ob_mor obj mor) identity compose.
 
-
-Local Open Scope cat_deprecated.
 
 Definition makeFunctor {C D:category}
            (obj : C -> D)
@@ -194,7 +181,7 @@ Definition nattrans_naturality {B C:category} {F F':[B, C]} {b b':B}
   := nat_trans_ax p _ _ f.
 
 Definition comp_func_on_mor {A B C:category} (F:[A,B]) (G:[B,C]) {a a':A} (f:a-->a') :
-  G □ F ▭ f = G ▭ (F ▭ f).
+  F ∙ G ▭ f = G ▭ (F ▭ f).
 Proof.
   reflexivity.
 Defined.
@@ -215,7 +202,7 @@ Definition nattrans_nattrans_arrow_assoc {C:category} {c:C} {X X' X'':[C^op,HSET
 
 Definition nattrans_nattrans_object_assoc {A B C:category}
            (F:[A,B]) (G:[B, C]) {a a' : A} (f : a --> a') :
-  G □ F ▭ f = G ▭ (F ▭ f)
+  F ∙ G ▭ f = G ▭ (F ▭ f)
   := idpath _.
 
 Lemma functor_on_id {B C:category} (F:[B,C]) (b:B) : F ▭ identity b = identity (F ◾ b).
@@ -233,7 +220,7 @@ Defined.
 
 (** natural transformations and isomorphisms *)
 
-Definition nat_iso {B C:category} (F G:[B,C]) := iso F G.
+Definition nat_iso {B C:category} (F G:[B,C]) := z_iso F G.
 
 Definition makeNattrans {C D:category} {F G:[C,D]}
            (mor : ∏ x : C, F ◾ x --> G ◾ x)
@@ -248,19 +235,19 @@ Definition makeNattrans_op {C D:category} {F G:[C^op,D]}
   := (mor,,eqn).
 
 Definition makeNatiso {C D:category} {F G:[C,D]}
-           (mor : ∏ x : C, iso (F ◾ x) (G ◾ x))
+           (mor : ∏ x : C, z_iso (F ◾ x) (G ◾ x))
            (eqn : ∏ c c' f, mor c' ∘ F ▭ f = G ▭ f ∘ mor c) :
   nat_iso F G.
 Proof.
-  refine (makeNattrans mor eqn,,_). apply functor_iso_if_pointwise_iso; intro c. apply pr2.
+  refine (makeNattrans mor eqn,,_). apply nat_trafo_z_iso_if_pointwise_z_iso; intro c. apply pr2.
 Defined.
 
 Definition makeNatiso_op {C D:category} {F G:[C^op,D]}
-           (mor : ∏ x : C, iso (F ◾ x) (G ◾ x))
+           (mor : ∏ x : C, z_iso (F ◾ x) (G ◾ x))
            (eqn : ∏ c c' f, mor c' ∘ F ▭ f = G ▭ f ∘ mor c) :
   nat_iso F G.
 Proof.
-  refine (makeNattrans_op mor eqn,,_). apply functor_iso_if_pointwise_iso; intro c. apply pr2.
+  refine (makeNattrans_op mor eqn,,_). apply nat_trafo_z_iso_if_pointwise_z_iso; intro c. apply pr2.
 Defined.
 
 Lemma move_inv {C:category} {a a' b' b:C} {f : a --> b} {f' : a' --> b'}
@@ -273,22 +260,23 @@ Proof.
   rewrite assoc. rewrite (pr2 I). rewrite id_left. reflexivity.
 Defined.
 
-Lemma weq_iff_iso_SET {X Y:HSET} (f:X-->Y) : is_iso f <-> isweq f.
+Lemma weq_iff_z_iso_SET {X Y:HSET} (f:X-->Y) : is_z_isomorphism f <-> isweq f.
 Proof.
   split.
-  - intro i. set (F := make_iso f i).
-    refine (isweq_iso f (inv_from_iso F)
-                   (λ x, eqtohomot (iso_inv_after_iso F) x)
-                   (λ y, eqtohomot (iso_after_iso_inv F) y)).
-  - exact (λ i Z, weqproperty (weqbfun (Z:hSet) (make_weq f i))).
+  - intro i. set (F := make_z_iso' f i).
+    refine (isweq_iso f (inv_from_z_iso F)
+                   (λ x, eqtohomot (z_iso_inv_after_z_iso F) x)
+                   (λ y, eqtohomot (z_iso_after_z_iso_inv F) y)).
+  - intro i.
+    apply (hset_equiv_is_z_iso X Y (_,,i)).
 Defined.
 
-Lemma weq_to_iso_SET {X Y:HSET} : iso X Y ≃ ((X:hSet) ≃ (Y:hSet)).
-(* same as hset_iso_equiv_weq *)
+Lemma weq_to_iso_SET {X Y:HSET} : z_iso X Y ≃ ((X:hSet) ≃ (Y:hSet)).
+(* same as hset_iso_equiv_weq? -- this identifier does no longer exist *)
 Proof.
   intros. apply weqfibtototal; intro f. apply weqiff.
-  - apply weq_iff_iso_SET.
-  - apply isaprop_is_iso.
+  - apply weq_iff_z_iso_SET.
+  - apply isaprop_is_z_isomorphism.
   - apply isapropisweq.
 Defined.
 
@@ -509,9 +497,9 @@ Definition functor_composite_functor {A B C:category} (F:A⟶B) :
   [B,C] ⟶ [A,C].
 Proof.
   unshelve refine (makeFunctor _ _ _ _).
-  - exact (λ G, G □ F).
+  - exact (λ G, F ∙ G).
   - intros G G' p; simpl.
-    unshelve refine (@makeNattrans A C (G □ F) (G' □ F) (λ a, p ◽ (F ◾ a)) _).
+    unshelve refine (@makeNattrans A C (F ∙ G) (F ∙ G') (λ a, p ◽ (F ◾ a)) _).
     abstract (
         intros a a' f; rewrite 2? nattrans_nattrans_object_assoc;
         exact (nattrans_naturality p (F ▭ f))) using _L_.
@@ -529,7 +517,7 @@ Definition ZeroMaps (C:category) :=
     ×
     (∏ a b c, ∏ f:c --> b, zero b a ∘ f = zero c a).
 
-Definition is {C:category} (zero: ZeroMaps C) {a b:C} (f:a-->b)
+Definition isc {C:category} (zero: ZeroMaps C) {a b:C} (f:a-->b)
   := f = pr1 zero _ _.
 
 Definition ZeroMaps_opp (C:category) : ZeroMaps C -> ZeroMaps C^op

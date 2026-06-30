@@ -22,7 +22,7 @@ Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Import UniMath.CategoryTheory.Core.NaturalTransformations.
 Require Import UniMath.CategoryTheory.FunctorCategory.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
 Require Import UniMath.CategoryTheory.opp_precat.
 Require Import UniMath.CategoryTheory.Presheaf.
 
@@ -202,9 +202,7 @@ Defined.
 Lemma reflects_isos_cat_of_elems_forgetful : reflects_isos cat_of_elems_forgetful.
 Proof.
 intros [c x] [d y] f Hf.
-apply is_iso_from_is_z_iso.
-assert (H := is_z_iso_from_is_iso _ Hf); clear Hf.
-destruct f as [f i]; destruct H as [f' j].
+destruct f as [f i]; destruct Hf as [f' j].
 assert (i' : y = #X f' x).
 { intermediate_path (#X (identity d) y).
   - exact (eqtohomot (!functor_id X d) y).

@@ -10,12 +10,12 @@ Require Import UniMath.Foundations.PartD.
 Require Import UniMath.Foundations.Propositions.
 Require Import UniMath.Foundations.Sets.
 
-Require Import UniMath.CategoryTheory.limits.zero.
-Require Import UniMath.CategoryTheory.limits.pushouts.
-Require Import UniMath.CategoryTheory.limits.pullbacks.
-Require Import UniMath.CategoryTheory.limits.equalizers.
-Require Import UniMath.CategoryTheory.limits.coequalizers.
-Require Import UniMath.CategoryTheory.limits.Opp.
+Require Import UniMath.CategoryTheory.Limits.Zero.
+Require Import UniMath.CategoryTheory.Limits.Pushouts.
+Require Import UniMath.CategoryTheory.Limits.Pullbacks.
+Require Import UniMath.CategoryTheory.Limits.Equalizers.
+Require Import UniMath.CategoryTheory.Limits.Coequalizers.
+Require Import UniMath.CategoryTheory.Limits.Opp.
 
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.opp_precat.
@@ -30,9 +30,9 @@ Require Import UniMath.CategoryTheory.Additive.
 Require Import UniMath.CategoryTheory.Abelian.
 Require Import UniMath.CategoryTheory.AbelianToAdditive.
 
-Require Import UniMath.CategoryTheory.limits.kernels.
-Require Import UniMath.CategoryTheory.limits.cokernels.
-Require Import UniMath.CategoryTheory.limits.BinDirectSums.
+Require Import UniMath.CategoryTheory.Limits.Kernels.
+Require Import UniMath.CategoryTheory.Limits.Cokernels.
+Require Import UniMath.CategoryTheory.Limits.BinDirectSums.
 
 
 (** ** Introduction
@@ -62,7 +62,7 @@ If f is an Epi, then pr2 is an Epi, [AbelianPushoutEpi2], and if g is an Epi, th
 Section pushout_monic_pullback_epi.
 
   Context {A : AbelianPreCat}.
-  Let hs : has_homsets A := homset_property A.
+  (* Let hs : has_homsets A := homset_property A. *)
 
   Local Opaque Abelian.Equalizer.
   Local Opaque Abelian.Coequalizer.
@@ -83,7 +83,7 @@ Section pushout_monic_pullback_epi.
                      (f · (to_In1 DS))
                      (g · (to_In2 DS)))).
     (* Transform the statement to a statement about other pushout *)
-    set (iso := iso_from_Pushout_to_Pushout Po Po').
+    set (iso := z_iso_from_Pushout_to_Pushout Po Po').
     apply (isMonic_postcomp
              A _ (PushoutArrow Po Po' (PushoutIn1 Po') (PushoutIn2 Po')
                                (PushoutSqrCommutes Po'))).
@@ -172,13 +172,11 @@ Section pushout_monic_pullback_epi.
                      A
                      (f · (to_In1 DS))
                      (g · (to_In2 DS)))).
-    set (i := iso_from_Pushout_to_Pushout Po Po').
-    use isPullback_up_to_iso.
-    - exact hs.
+    set (i := z_iso_from_Pushout_to_Pushout Po Po').
+    use isPullback_up_to_z_iso.
     - exact Po'.
     - exact i.
     - use isPullback_mor_paths.
-      + exact hs.
       + exact (PushoutIn1 Po').
       + exact (PushoutIn2 Po').
       + exact f.
@@ -210,9 +208,7 @@ Section pushout_monic_pullback_epi.
              cbn. rewrite <- assoc. rewrite <- assoc. apply cancel_precomposition.
              rewrite assoc. rewrite assoc. apply pathsinv0.
              use CoequalizerEqAr.
-        * intros y0. apply isapropdirprod.
-          -- apply hs.
-          -- apply hs.
+        * intros y0. apply isapropdirprod; apply (homset_property A).
         * intros y0 X. cbn in X.
           use (KernelArrowisMonic (to_Zero A) K). rewrite KernelCommutes. exact (dirprod_pr1 X).
   Qed.
@@ -222,7 +218,6 @@ Section pushout_monic_pullback_epi.
   Proof.
     set (Po' := make_Pushout _ _ _ _ _ _ (is_symmetric_isPushout _ (isPushout_Pushout Po))).
     use is_symmetric_isPullback.
-    - exact hs.
     - exact (! (PushoutSqrCommutes _ )).
     - exact (AbelianPushoutMonicisPullback1 g f Po').
   Qed.
@@ -240,7 +235,7 @@ Section pushout_monic_pullback_epi.
                      ((to_Pr1 DS) · f)
                      ((to_Pr2 DS) · g))).
     (* Transform the statement to a statement about other pullback *)
-    set (iso := iso_from_Pullback_to_Pullback Pb Pb').
+    set (iso := z_iso_from_Pullback_to_Pullback Pb Pb').
     apply (isEpi_precomp
              A (PullbackArrow Pb Pb' (PullbackPr1 Pb') (PullbackPr2 Pb')
                               (PullbackSqrCommutes Pb'))).
@@ -286,7 +281,7 @@ Section pushout_monic_pullback_epi.
   Lemma AbelianPullbackEpi1 {x y z : A} (f : x --> z) (g : Epi A y z) (Pb : Pullback f g) :
     Epis.isEpi (PullbackPr1 Pb).
   Proof.
-    set (Pb' := make_Pullback _ (is_symmetric_isPullback hs _ (isPullback_Pullback Pb))).
+    set (Pb' := make_Pullback _ (is_symmetric_isPullback _ (isPullback_Pullback Pb))).
     use (AbelianPullbackEpi2 g f Pb').
   Qed.
 
@@ -325,8 +320,8 @@ Section pushout_monic_pullback_epi.
     set (Pb' := Pullback_from_Equalizer_BinProduct
                   A _ _ _ f g (BinDirectSum_BinProduct _ DS)
                   (Abelian.Equalizer A ((to_Pr1 DS) · f) ((to_Pr2 DS) · g))).
-    set (i := iso_from_Pullback_to_Pullback Pb' Pb).
-    use isPushout_up_to_iso.
+    set (i := z_iso_from_Pullback_to_Pullback Pb' Pb).
+    use isPushout_up_to_z_iso.
     - exact Pb'.
     - exact i.
     - use isPushout_mor_paths.
@@ -361,9 +356,7 @@ Section pushout_monic_pullback_epi.
              cbn. rewrite assoc. rewrite assoc. apply cancel_postcomposition.
              rewrite <- assoc. rewrite <- assoc. apply pathsinv0.
              use EqualizerEqAr.
-        * intros y0. apply isapropdirprod.
-          -- apply hs.
-          -- apply hs.
+        * intros y0. apply isapropdirprod; apply (homset_property A).
         * intros y0 X. cbn in X.
           use (CokernelArrowisEpi (to_Zero A) CK). rewrite CokernelCommutes. exact (dirprod_pr1 X).
   Qed.
@@ -371,7 +364,7 @@ Section pushout_monic_pullback_epi.
   Lemma AbelianPullbackEpiisPushout2 {x y z : A} (f : x --> z) (g : Epi A y z) (Pb : Pullback f g) :
     isPushout (PullbackPr1 Pb) (PullbackPr2 Pb) f g (PullbackSqrCommutes Pb).
   Proof.
-    set (Pb' := make_Pullback  _ (is_symmetric_isPullback hs _ (isPullback_Pullback Pb))).
+    set (Pb' := make_Pullback  _ (is_symmetric_isPullback _ (isPullback_Pullback Pb))).
     use is_symmetric_isPushout.
     - exact (! (PullbackSqrCommutes _ )).
     - exact (AbelianPullbackEpiisPushout1 g f Pb').

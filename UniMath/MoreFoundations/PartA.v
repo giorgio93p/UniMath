@@ -16,6 +16,7 @@ Definition maponpaths_1 {X A : UU} (f : X -> A) {x x'} (e : x = x')
   : f x = f x'
 := maponpaths f e.
 
+
 Definition maponpaths_2 {Y X A : UU} (f : Y -> X -> A)
     {y y'} (e_y : y = y') x
   : f y x = f y' x
@@ -176,6 +177,29 @@ Proof.
 Qed.
 
 
+Lemma transportf_bind {X : UU} {P : X → UU}
+  {x x' x'' : X} (e : x' = x) (e' : x = x'')
+  y y'
+: y = transportf P e y' -> transportf _ e' y = transportf _ (e @ e') y'.
+Proof.
+  intro H; destruct e, e'; exact H.
+Defined.
+
+Lemma pathscomp0_dep {X : UU} {P : X → UU}
+  {x x' x'' : X} {e : x' = x} {e' : x'' = x'}
+  {y} {y'} {y''}
+: (y = transportf P e y') -> (y' = transportf _ e' y'')
+  -> y = transportf _ (e' @ e) y''.
+Proof.
+  intros ee ee'.
+  etrans. apply ee.
+  apply transportf_bind, ee'.
+Defined.
+
+Tactic Notation "etrans_dep" := eapply @pathscomp0_dep.
+
+
+
 Lemma transportf_set {A : UU} (B : A → UU)
       {a : A} (e : a = a) (b : B a)
       (X : isaset A)
@@ -217,9 +241,26 @@ Proof.
   apply (transport_map (λ a, pr1 (P := P a))).
 Defined.
 
+Lemma pr1_transportb {A : UU} {B : A -> UU} {P : ∏ a, B a -> UU}
+   {a a' : A} (e : a = a') (xs : ∑ b : B a', P _ b):
+   pr1 (transportb (λ x, ∑ b : B x, P _ b) e xs) =
+     transportb (λ x, B x) e (pr1 xs).
+Proof.
+  apply pathsinv0.
+  apply (transport_map (λ a, pr1 (P := P a))).
+Defined.
+
 Lemma pr2_transportf {A} {B1 B2 : A → UU}
     {a a' : A} (e : a = a') (xs : B1 a × B2 a)
   : pr2 (transportf (λ a, B1 a × B2 a) e xs) = transportf _ e (pr2 xs).
+Proof.
+  apply pathsinv0.
+  apply (transport_map (λ a, pr2 (P := λ _, B2 a))).
+Defined.
+
+Lemma pr2_transportb {A} {B1 B2 : A → UU}
+    {a a' : A} (e : a = a') (xs : B1 a' × B2 a')
+  : pr2 (transportb (λ a, B1 a × B2 a) e xs) = transportb _ e (pr2 xs).
 Proof.
   apply pathsinv0.
   apply (transport_map (λ a, pr2 (P := λ _, B2 a))).
@@ -280,6 +321,32 @@ Defined.
 Definition flipsec_weq {A B : UU} {C : A -> B -> UU} :
   (∏ a b, C a b) ≃ (∏ b a, C a b) := make_weq flipsec isweq_flipsec.
 
+(** hlevel of empty type *)
+Definition empty_hlevel
+           (n : nat)
+  : isofhlevel (n + 1) ∅.
+Proof.
+  induction n.
+  - exact isapropempty.
+  - exact (λ x, fromempty x).
+Defined.
+
+Definition empty_HLevel
+           (n : nat)
+  : HLevel (n + 1)
+  := empty ,, empty_hlevel n.
+
+Definition HLevel_fun
+           {n : nat}
+           (X Y : HLevel n)
+  : HLevel n.
+Proof.
+  simple refine (_ ,, _).
+  - exact (pr1 X → pr1 Y).
+  - apply impredfun.
+    exact (pr2 Y).
+Defined.
+
 (** The subtypes of a type of hlevel S n are also of hlevel S n.
     This doesn't work for types of hlevel 0: a subtype of a contractible
     type might be empty, not contractible! *)
@@ -305,6 +372,33 @@ Proof.
   exact (twooutof3c _ _ (isweqfibtototal P (Q ∘ f) e) (pr2 (weqfp f Q))).
 Defined.
 
+Lemma weq_subtypes'
+    {X Y : UU} (w : X ≃ Y)
+    {S : X -> UU} {T : Y -> UU}
+    (HS : isPredicate S)
+    (HT : isPredicate T)
+    (HST : ∏ x : X, S x <-> T (w x))
+  : (∑ x, S x) ≃ (∑ y, T y).
+Proof.
+  apply (weqbandf w).
+  intros. apply weqiff.
+  - apply HST.
+  - apply HS.
+  - apply HT.
+Defined.
+
+(* Specialisation of [weq_subtypes'] *)
+Lemma weq_subtypes_iff
+    {X : UU} {S T : X -> UU}
+    (HS : isPredicate S)
+    (HT : isPredicate T)
+    (HST : ∏ x, S x <-> T x)
+  : (∑ x, S x) ≃ (∑ x, T x).
+Proof.
+  apply (weq_subtypes' (idweq X)); assumption.
+Defined.
+
+
 Lemma hlevel_total2 n {A : UU} {B : A → UU} :
   isofhlevel n (∑ (x :A), B x) → isofhlevel (S n) A → ∏ (x : A), isofhlevel n (B x).
 Proof.
@@ -323,6 +417,12 @@ Proof.
   intros.
   apply HB.
 Defined.
+
+Lemma iscontr_prod (X Y : UU)
+  : iscontr X -> iscontr Y -> iscontr (X × Y).
+Proof.
+  exact (isofhleveldirprod 0 _ _).
+Qed.
 
 (** ** Pointed types *)
 
@@ -375,14 +475,14 @@ Definition path_type {X} {x x':X} (p:x = x') := X.
 Definition path_start {X} {x x':X} (p:x = x') := x.
 Definition path_end {X} {x x':X} (p:x = x') := x'.
 
-Definition uniqueness {T} (i:iscontr T) (t:T) : t = iscontrpr1 i.
+Definition uniqueness {T} (isc:iscontr T) (t:T) : t = iscontrpr1 isc.
 Proof.
-  intros. exact (pr2 i t).
+  intros. exact (pr2 isc t).
 Defined.
 
-Definition uniqueness' {T} (i:iscontr T) (t:T) : iscontrpr1 i = t.
+Definition uniqueness' {T} (isc:iscontr T) (t:T) : iscontrpr1 isc = t.
 Proof.
-  intros. exact (! (pr2 i t)).
+  intros. exact (! (pr2 isc t)).
 Defined.
 
 Definition path_inverse_to_right {X} {x y:X} (p q:x = y) : p = q -> !q@p = idpath _.
@@ -480,7 +580,7 @@ Defined.
 Definition pair_path_props {X} {P:X->Type} {x y:X} {p:P x} {q:P y} :
   x = y -> (∏ z, isaprop (P z)) -> x,,p = y,,q.
 Proof.
-  intros e is. now apply subtypePairEquality.
+  intros e isp. now apply subtypePairEquality.
 Abort.
 
 Local Open Scope transport.
@@ -517,6 +617,73 @@ Defined.
 Definition from_total2 {X} {P:X->Type} {Y} : (∏ x, P x->Y) -> total2 P -> Y.
 Proof.
   intros f [x p]. exact (f x p).
+Defined.
+
+
+(** ** Paths in coproducts *)
+
+Definition inv_equality_by_case_equality_by_case
+           {A B : UU}
+           {x y : A ⨿ B}
+           (p : x = y)
+  : @inv_equality_by_case A B x y (equality_by_case p) = p.
+Proof.
+  induction x, y, p ; apply idpath.
+Defined.
+
+Definition equality_by_case_inv_equality_by_case
+           {A B : UU}
+           {x y : A ⨿ B}
+           (p : equality_cases x y)
+  : equality_by_case (inv_equality_by_case p) = p.
+Proof.
+  induction x, y, p; apply idpath.
+Defined.
+
+Lemma equality_by_case_equiv {A B} (t u : A ⨿ B) : (t = u) ≃ equality_cases t u.
+Proof.
+  use weq_iso.
+  - apply equality_by_case.
+  - apply inv_equality_by_case.
+  - apply inv_equality_by_case_equality_by_case.
+  - apply equality_by_case_inv_equality_by_case.
+Defined.
+
+Definition paths_inl_inl_equiv {A B : UU} (a a' : A)
+  : @inl A B a = inl a' ≃ a = a'.
+Proof.
+  apply @equality_by_case_equiv.
+Defined.
+
+Definition paths_inl_inr_equiv {A B : UU} (a : A) (b : B)
+  : inl a = inr b ≃ empty.
+Proof.
+  apply @equality_by_case_equiv.
+Defined.
+
+Definition paths_inr_inr_equiv {A B : UU} (b b' : B)
+  : @inr A B b = inr b' ≃ b = b'.
+Proof.
+  apply @equality_by_case_equiv.
+Defined.
+
+Definition paths_inr_inl_equiv {A B : UU} (a : A) (b : B)
+  : inr b = inl a ≃ empty.
+Proof.
+  apply @equality_by_case_equiv.
+Defined.
+
+(* Note: the following lemmas are near-duplicates of [isinclii1], [isinclii2] provided in [Foundations]. *)
+Lemma isInjective_inl {A B : UU} : isInjective (@inl A B).
+Proof.
+  intros ? ?.
+  refine (isweqinvmap (@paths_inl_inl_equiv _ _ _ _)).
+Defined.
+
+Lemma isInjective_inr {A B : UU} : isInjective (@inr A B).
+Proof.
+  intros ? ?.
+  refine (isweqinvmap (@paths_inr_inr_equiv _ _ _ _)).
 Defined.
 
 (** ** Sections and functions *)
@@ -714,7 +881,7 @@ Defined.
 
 Goal ∏ (X:Type) (x y:X) (p q:x = y), isaset X -> p = q.
 Proof.
-  intros * is. apply is.
+  intros * iss. apply iss.
 Defined.
 
 Definition funset X (Y:hSet) : hSet
@@ -742,8 +909,8 @@ Lemma total2_reassoc_paths {A} {B : A → UU} {C : (∑ a, B a) -> UU}
     (ec : transportf C (two_arg_paths_f (*was total2_paths2*) ea eb) (pr2 bc1) = pr2 bc2)
   : transportf _ ea bc1 = bc2.
 Proof.
-  destruct ea, bc1 as [b1 c1], bc2 as [b2 c2].
-  cbn in *; destruct eb, ec.
+  destruct bc1 as [b1 c1], bc2 as [b2 c2]; simpl in *.
+  destruct ea. destruct eb. simpl in *. destruct ec.
   apply idpath.
 Defined.
 
@@ -754,11 +921,41 @@ Lemma total2_reassoc_paths' {A} {B : A → UU} {C : (∑ a, B a) -> UU}
     (ea : a1 = a2)
     (eb : pr1 bc1 = transportb _ ea (pr1 bc2))
     (ec : pr2 bc1 = transportb C (total2_paths2_b ea eb) (pr2 bc2))
-  : bc1 = transportb _ ea bc2.
+  : bc1 = transportb BC ea bc2.
 Proof.
   destruct ea, bc1 as [b1 c1], bc2 as [b2 c2].
   cbn in eb; destruct eb; cbn in ec; destruct ec.
   apply idpath.
+Defined.
+
+(* could also have better names, but I'm staying consistent with [total2asstor] from Foundations/PartA.v *)
+
+Definition total2asstor_path
+  {A : UU}
+  {B : A -> UU}
+  {C : (∑ a : A, B a) -> UU}
+  {x y :  (∑ z : (∑ a : A, B a), C z)} :
+  total2asstor _ _ x = total2asstor _ _ y -> x = y.
+Proof.
+  intros d.
+  use invmaponpathsweq.
+  - exact (∑ a : A, ∑ b : B a, C (a ,, b)).
+  - use weqtotal2asstor.
+  - exact d.
+Defined.
+
+Definition total2asstol_path
+  {A : UU}
+  {B : A -> UU}
+  {C : (∑ a : A, B a) -> UU}
+  {x y :  ∑ a : A, ∑ b : B a, C (a ,, b)} :
+  total2asstol _ _ x = total2asstol _ _ y -> x = y.
+Proof.
+  intros d.
+  use invmaponpathsweq.
+  - exact (∑ z : (∑ a : A, B a), C z).
+  - use weqtotal2asstol.
+  - exact d.
 Defined.
 
 Section InvRot.
@@ -1167,3 +1364,170 @@ Proof.
   induction p.
   apply idpath.
 Defined.
+
+Definition paths_pathsdirprod
+           {X Y : UU}
+           {x₁ x₂ : X}
+           {y₁ y₂ : Y}
+           {p₁ p₂ : x₁ = x₂}
+           {q₁ q₂ : y₁ = y₂}
+           (r₁ : p₁ = p₂)
+           (r₂ : q₁ = q₂)
+  : pathsdirprod p₁ q₁
+    =
+    pathsdirprod p₂ q₂.
+Proof.
+  induction r₁, r₂.
+  apply idpath.
+Defined.
+
+(** Paths on functions *)
+Definition app_fun
+           {X Y : UU}
+  : (X → Y) × X → Y
+  := λ fx, pr1 fx (pr2 fx).
+
+Definition app_homot
+           {X Y₁ Y₂ : UU}
+           {f g : Y₁ → X → Y₂}
+           (p : ∏ (z : Y₁ × X), f (pr1 z) (pr2 z) = g (pr1 z) (pr2 z))
+           (y : Y₁)
+  : f y = g y
+  := funextsec _ _ _ (λ x, p (y ,, x)).
+
+Definition maponpaths_app_fun
+           {X Y : UU}
+           {fx gx : (X → Y) × X}
+           (p : fx = gx)
+  : maponpaths (λ (fx : (X → Y) × X), app_fun fx) p
+    =
+    maponpaths (λ z, z (pr2 fx)) (maponpaths dirprod_pr1 p)
+    @
+    maponpaths (pr1 gx) (maponpaths dirprod_pr2 p).
+Proof.
+  induction p.
+  apply idpath.
+Defined.
+
+
+
+(** Product of a propositions with itself *)
+Definition dirprod_with_prop (A : UU) (isa : isaprop A) : A × A ≃ A.
+Proof.
+  apply weqpr1, iscontraprop1; assumption.
+Defined.
+
+(** A variation on the above theme *)
+Definition dirprod_with_prop' (A B : UU) (isa : isaprop A) : A × B × A ≃ B × A.
+Proof.
+  intermediate_weq ((A × B) × A).
+  apply invweq, weqtotal2asstor.
+  intermediate_weq (A × (A × B)).
+  apply weqdirprodcomm.
+  intermediate_weq ((A × A) × B).
+  apply invweq, weqtotal2asstor.
+  intermediate_weq (A × B).
+  apply weqdirprodf.
+  - apply dirprod_with_prop; assumption.
+  - apply idweq.
+  - apply weqdirprodcomm.
+Defined.
+
+(** ** Surjectivity *)
+
+Section surjectivity.
+  Lemma issurjective_idfun (X : UU) : issurjective (idfun X).
+  Proof.
+    exact(λ (x : X), hinhpr (x ,, idpath x)).
+  Qed.
+
+  Lemma issurjective_to_contr {X Y : UU}
+    (x : X)
+    (f : X → Y)
+    (isc : iscontr Y) : issurjective f.
+  Proof.
+    intro; apply hinhpr.
+    apply(make_hfiber f x).
+    apply proofirrelevancecontr, isc.
+  Qed.
+
+  Lemma issurjective_tounit {X : UU} : X -> issurjective (@tounit X).
+  Proof.
+    intro x.
+    apply(issurjective_to_contr x).
+    apply iscontrunit.
+  Qed.
+
+  Lemma issurjective_coprodf {X Y W Z : UU}
+    {f : X → W}
+    {g : Y → Z}
+    (fsurjective : issurjective f)
+    (gsurjective : issurjective g)
+    : issurjective (coprodf f g).
+  Proof.
+    red; apply coprod_rect.
+    - intro w.
+      apply(hinhfun (weqhfibercoprodf1 f g w)).
+      exact(fsurjective w).
+    - intro z.
+      apply(hinhfun (weqhfibercoprodf2 f g z)).
+      exact(gsurjective z).
+  Qed.
+
+  Lemma issurjective_dirprodf {X Y U W}
+    {f : X → U}
+    {g : Y → W}
+    (fsurjective : issurjective f)
+    (gsurjective : issurjective g)
+    : issurjective (dirprodf f g).
+  Proof.
+    intros [u w].
+    use(hinhfun2 _ (fsurjective u) (gsurjective w)).
+    intros ffiber gfiber.
+    use make_hfiber.
+    - exact(hfiberpr1 f u ffiber
+              ,, hfiberpr1 g w gfiber).
+    - apply dirprodeq
+      ; apply hfiberpr2.
+  Qed.
+
+  Lemma issurjective_totalfun
+    {X : UU}
+    (P Q : X → UU)
+    (f : ∏ (x : X), P x → Q x)
+    (fsurjective : ∏ (x : X), issurjective (f x))
+    : issurjective (totalfun P Q f).
+  Proof.
+    intros [x qx].
+    use(hinhfun _ (fsurjective x qx)).
+
+    intros [px pathpx]. (* pathpx : f x px = qx, in (Q x) *)
+    use make_hfiber.
+    - exact(x ,, px).
+    - exact(pair_path_in2 Q pathpx).
+  Qed.
+
+  Lemma issurjective_sumofmaps_1 {X A B : UU}
+    (f : A -> X)
+    (g : B -> X)
+    (fsurjective : issurjective f)
+    : issurjective (sumofmaps f g).
+  Proof.
+    intro x.
+    use(hinhfun _ (fsurjective x)).
+    intro ffiber; apply coprodofhfiberstohfiber.
+    exact(inl ffiber).
+  Qed.
+
+  Lemma issurjective_sumofmaps_2 {X A B : UU}
+    (f : A -> X)
+    (g : B -> X)
+    (gsurjective : issurjective g)
+    : issurjective (sumofmaps f g).
+  Proof.
+    intro x.
+    use(hinhfun _ (gsurjective x)).
+    intro gfiber; apply coprodofhfiberstohfiber.
+    exact(inr gfiber).
+  Qed.
+End surjectivity.

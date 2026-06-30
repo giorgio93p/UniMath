@@ -10,15 +10,14 @@ Require Import UniMath.Foundations.Preamble.
 Require Import UniMath.Foundations.PartA.
 Require Import UniMath.Foundations.PartD.
 Require Import UniMath.Foundations.UnivalenceAxiom.
+Require Import UniMath.MoreFoundations.Nat.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Functors.
-Require Import UniMath.CategoryTheory.categories.Type.Core.
-Require Import UniMath.CategoryTheory.FunctorAlgebras.
+Require Import UniMath.CategoryTheory.Categories.Type.Core.
+Require Import UniMath.Induction.FunctorAlgebras_legacy.
 Require Import UniMath.Induction.PolynomialFunctors.
 Require Import UniMath.Induction.W.Core.
 Require Import UniMath.Induction.W.Fibered.
-
-Local Notation ℕ := nat.
 
 (** The signature for the nat functor is (bool, [true ↦ empty; false ↦ unit])
     since the naturals have two constructors: one for zero and one for successor.
@@ -32,7 +31,7 @@ Lemma eqfromempty {X : UU} (f : empty -> X) : f = fromempty.
 Proof. apply proofirrelevancecontr, iscontrfunfromempty. Defined.
 
 Lemma eta_unit {X : UU} (f : unit -> X) : f = λ _, f tt.
-Proof. apply funextfun; intros ?; induction _; reflexivity. Defined.
+Proof. apply funextfun; intro; induction _; reflexivity. Defined.
 
 (** Simplifying the action of the functor on arrows *)
 
@@ -125,7 +124,7 @@ Proof.
     refine (pr1 p @ _).
     apply (maponpaths (pr2 Y)), maponpaths.
     reflexivity.
-  + intros ?; apply (eqtohomot (pr2 p)).
+  + intro; apply (eqtohomot (pr2 p)).
 Defined.
 
 (** Define the unique algebra morphism out of ℕ *)
@@ -175,7 +174,7 @@ Lemma sec_fromempty {X : UU} {Y : X -> UU}
       (f : ∅ -> X)
       (t : ∏ z : ∅, Y (f z)) : t = λ e, fromempty e.
 Proof.
-  apply funextsec; intros ?; induction _.
+  apply funextsec; intro; induction _.
 Defined.
 
 (** A fibered algebra over ℕ consists of a family ℕ → UU, a point x0 : X 0,

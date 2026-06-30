@@ -35,17 +35,16 @@ Require Import UniMath.CategoryTheory.Monads.Monads.
 Require Import UniMath.CategoryTheory.whiskering.
 
 Require Import UniMath.SubstitutionSystems.MonadsFromSubstitutionSystems.
-Require Import UniMath.CategoryTheory.UnitorsAndAssociatorsForEndofunctors.
 Require Import UniMath.CategoryTheory.HorizontalComposition.
 
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.limits.bincoproducts.
-Require Import UniMath.CategoryTheory.limits.graphs.colimits.
+Require Import UniMath.CategoryTheory.Limits.BinCoproducts.
+Require Import UniMath.CategoryTheory.Limits.Graphs.Colimits.
 Require Import UniMath.CategoryTheory.Chains.All.
 Require Import UniMath.CategoryTheory.Presheaf.
 Require Import UniMath.SubstitutionSystems.LiftingInitial_alt.
 Require Import UniMath.SubstitutionSystems.GenMendlerIteration_alt.
-Require Import UniMath.CategoryTheory.limits.initial.
+Require Import UniMath.CategoryTheory.Limits.Initial.
 
 (** A monad is a pointed endofunctor *)
 Definition ptd_from_mon {C:category} (T:Monad C) : category_Ptd C :=
@@ -78,7 +77,7 @@ Local Notation "'Ptd'" := (category_Ptd C).
 (** The category of endofunctors on [C] *)
 Local Notation "'EndC'":= ([C, C]) .
 
-Variables (T : Monad C) (M : LModule T C).
+Context (T : Monad C) (M : LModule T C).
 
 Local Notation Mf := (M : functor _ _).
 Local Notation "'p' T" := (ptd_from_mon T) (at level 3).
@@ -220,25 +219,20 @@ Section InitialRep.
 
 (** ** Some variables and assumptions *)
 
-(** Assume having a precategory [C] whose hom-types are sets *)
-Variable C : category.
-Variable CP : BinCoproducts C.
+Context (C : category) (CP : BinCoproducts C).
 
 Local Notation "'EndC'":= ([C, C]) .
 Let CPEndC : BinCoproducts EndC := BinCoproducts_functor_precat _ _ CP.
 
 
 (** Assume having a signature on [C] *)
-Variable H : Signature C C C.
+Context (H : Signature C C C).
 Let θ := theta H.
 
 Local Notation θ_nat_2_pw := (θ_nat_2_pointwise _ _ _ H (theta H)).
 Local Notation θ_nat_1_pw := (θ_nat_1_pointwise _ _ _ H (theta H)).
 
-Let Id_H : functor EndC EndC
-  := BinCoproduct_of_functors _ _ CPEndC
-                              (constant_functor _ _ (functor_identity _ : EndC))
-                              H.
+Let Id_H : functor EndC EndC := Id_H C CP H.
 
 Let Alg : category := FunctorAlg Id_H.
 
@@ -254,7 +248,7 @@ Local Notation η := @eta_from_alg.
 
 Section TauModuleMorphism.
 
-Variable T : hss CP H.
+Context (T : hss CP H).
 Local Notation T_mon := (Monad_from_hss _ _ _ T).
 Local Notation T_mod := (tautological_LModule T_mon).
 Local Notation HT_mod := (lift_lmodule H _ T_mod).
@@ -286,9 +280,9 @@ In other words, T is the initial representation in the sense of H&M
 *)
 
 
-Variables (IC : Initial C)
-          (CC : Colims_of_shape nat_graph C)
-          (HH : is_omega_cocont H).
+Context (IC : Initial C)
+        (CC : Colims_of_shape nat_graph C)
+        (HH : is_omega_cocont H).
 
 Let T := InitHSS _ CP IC CC H HH.
 
@@ -301,18 +295,18 @@ Local Notation T_hss := (T:hss _ _).
 Section fix_a_representation.
 
 
-Variables (M : Monad C).
+Context (M : Monad C).
 Local Notation M_mod := (tautological_LModule M).
 Local Notation HM_mod := (lift_lmodule H _ M_mod).
 
-Variable (τ_M: LModule_Mor M HM_mod M_mod).
+Context (τ_M: LModule_Mor M HM_mod M_mod).
 
 Local Definition M_alg : Alg.
 Proof.
   apply (tpair (λ x, EndC ⟦ Id_H x, x ⟧) (M:functor _ _)).
   apply BinCoproductArrow.
-  apply Monads.η.
-  apply τ_M.
+  - apply Monads.η.
+  - apply τ_M.
 Defined.
 
 (** j : T --> M is the initial Id+H-algebra morphism *)
@@ -326,13 +320,13 @@ Defined.
 
 Let Colims_of_shape_nat_graph_EndC : Colims_of_shape nat_graph EndC.
 Proof.
-  apply colimits.ColimsFunctorCategory_of_shape, CC.
+  apply Colimits.ColimsFunctorCategory_of_shape, CC.
 Defined.
 
 
 Let is_omega_cocont_Id_H' := LiftingInitial_alt.is_omega_cocont_Id_H C CP H HH.
 
-Local Notation j_mor := ((mor_from_algebra_mor _ _ _ j):nat_trans _ _).
+Local Notation j_mor := ((mor_from_algebra_mor _ j):nat_trans _ _).
 
 (**
   Following Ralph's proof : we want to prove the square diagram for the
@@ -404,8 +398,8 @@ Proof.
     apply cancel_postcomposition.
     etrans; [ apply assoc |].
     etrans.
-    apply cancel_postcomposition.
-    apply (θ_nat_1_pw _ _ a (p T_alg)).
+    { apply cancel_postcomposition.
+      apply (θ_nat_1_pw _ _ a (p T_alg)). }
     rewrite <- assoc.
     apply cancel_precomposition.
     etrans; revgoals.
@@ -418,7 +412,7 @@ Proof.
     intro c'.
     etrans; [| apply id_right ].
     apply cancel_precomposition.
-    apply (functor_id   x).
+    apply (functor_id x).
 Qed.
 
 Local Definition ψ  : (PreShv EndC)⟦ψ_source(D:=[C,C]) X L , ψ_target(D:=[C,C]) Id_H X L⟧ :=
@@ -613,7 +607,7 @@ Proof.
     apply id_left.
 Qed.
 
-Lemma j_mon_laws : Monad_Mor_laws (T:=T_mon) (T':=M) (mor_from_algebra_mor _ _ _ j).
+Lemma j_mon_laws : Monad_Mor_laws (T:=T_mon) (T':=M) (mor_from_algebra_mor _ j).
 Proof.
   split.
   - apply (nat_trans_eq_pointwise (a:= compose (C:=EndC)  (μ T_mon) j_mor)

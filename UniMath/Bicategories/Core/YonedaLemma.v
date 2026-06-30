@@ -19,13 +19,15 @@ Require Import UniMath.Bicategories.Core.Examples.OpMorBicat.
 Require Import UniMath.Bicategories.Core.Examples.BicatOfUnivCats.
 Require Import UniMath.Bicategories.Core.EquivToAdjequiv.
 Require Import UniMath.Bicategories.Core.Unitors.
-Require Import UniMath.Bicategories.Core.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Adjunctions.
+Require Import UniMath.Bicategories.Morphisms.Properties.
 Require Import UniMath.Bicategories.Core.Invertible_2cells.
 Require Import UniMath.Bicategories.Core.Univalence.
 Require Import UniMath.Bicategories.Core.UnivalenceOp.
 Require Import UniMath.Bicategories.PseudoFunctors.Display.PseudoFunctorBicat.
 Require Import UniMath.Bicategories.PseudoFunctors.PseudoFunctor.
 Import PseudoFunctor.Notations.
+Require Import UniMath.Bicategories.PseudoFunctors.Properties.
 Require Import UniMath.Bicategories.Transformations.PseudoTransformation.
 Require Import UniMath.Bicategories.Modifications.Modification.
 Require Import UniMath.Bicategories.PseudoFunctors.Yoneda.
@@ -190,16 +192,16 @@ Section YonedaLemma.
       - exact (presheaf_to_yoneda_ob_pstrans_is_nat_trans Y₁ Y₂ f).
     Defined.
 
-    Definition presheaf_to_yoneda_ob_pstrans_is_nat_iso
+    Definition presheaf_to_yoneda_ob_pstrans_is_nat_z_iso
                (Y₁ Y₂ : op1_bicat B)
                (f : B ⟦ Y₂ , Y₁ ⟧)
-      : is_nat_iso (presheaf_to_yoneda_ob_pstrans_nat_trans Y₁ Y₂ f).
+      : is_nat_z_iso (pr1 (presheaf_to_yoneda_ob_pstrans_nat_trans Y₁ Y₂ f)).
     Proof.
       intro g ; cbn in g.
       unfold presheaf_to_yoneda_ob_pstrans_nat_trans.
       simpl.
       unfold presheaf_to_yoneda_ob_pstrans_nat_trans_data.
-      pose (is_invertible_2cell_to_is_nat_iso (psfunctor_comp F g f)) as i.
+      pose (is_invertible_2cell_to_is_nat_z_iso (psfunctor_comp F g f)) as i.
       apply i.
       exact (psfunctor_comp F g f).
     Defined.
@@ -213,8 +215,8 @@ Section YonedaLemma.
       - intros Y₁ Y₂ f.
         use make_invertible_2cell.
         + exact (presheaf_to_yoneda_ob_pstrans_nat_trans Y₁ Y₂ f).
-        + apply is_nat_iso_to_is_invertible_2cell.
-          exact (presheaf_to_yoneda_ob_pstrans_is_nat_iso Y₁ Y₂ f).
+        + apply is_nat_z_iso_to_is_invertible_2cell.
+          exact (presheaf_to_yoneda_ob_pstrans_is_nat_z_iso Y₁ Y₂ f).
     Defined.
 
     Lemma presheaf_to_yoneda_ob_pstrans_is_pstrans
@@ -490,11 +492,6 @@ Section YonedaLemma.
     etrans.
     {
       apply maponpaths_2.
-      etrans.
-      {
-        do 2 apply maponpaths.
-        apply id2_right.
-      }
       refine (!(assoc _ _ _) @ _).
       apply maponpaths.
       etrans.
@@ -623,13 +620,13 @@ Section YonedaLemma.
       exact (nat_trans_eq_pointwise (vcomp_rinv (psnaturality_of g Y)) (id₁ X)).
   Qed.
 
-  Definition yoneda_unit_iso
+  Definition yoneda_unit_z_iso
              (g : pstrans (representable B_is_univalent_2_1 X) F)
              (Z : B)
              (Y : Z --> X)
-    : is_iso (# (g Z : _ ⟶ _) (rinvunitor Y) · pr1 ((psnaturality_of g Y) ^-1) (id₁ X)).
+    : is_z_isomorphism (# (g Z : _ ⟶ _) (rinvunitor Y) · pr1 ((psnaturality_of g Y) ^-1) (id₁ X)).
   Proof.
-    use is_iso_qinv.
+    use tpair.
     - exact (pr11 (psnaturality_of g Y) (id₁ X) · #(g Z : _ ⟶ _) (runitor Y)).
     - exact (yoneda_unit_is_inverses g Z Y).
   Defined.
@@ -671,24 +668,23 @@ Section YonedaLemma.
         * exact yoneda_counit.
     - split.
       + cbn.
-        apply is_nat_iso_to_is_invertible_2cell.
+        apply is_nat_z_iso_to_is_invertible_2cell.
         intro g.
-        apply is_inv2cell_to_is_iso.
+        apply is_inv2cell_to_is_z_iso.
         apply make_is_invertible_modification.
         intro Z.
-        apply is_nat_iso_to_is_invertible_2cell.
+        apply is_nat_z_iso_to_is_invertible_2cell.
         intros Y.
-        exact (yoneda_unit_iso g Z Y).
-      + apply is_nat_iso_to_is_invertible_2cell.
+        exact (yoneda_unit_z_iso g Z Y).
+      + apply is_nat_z_iso_to_is_invertible_2cell.
         intros Z ; cbn.
         unfold yoneda_counit_component.
-        use is_iso_qinv.
-        * exact (pr1 (pr1 (psfunctor_id F X)) Z).
-        * split.
-          ** abstract (exact (nat_trans_eq_pointwise
-                                (vcomp_linv (psfunctor_id F X)) Z)).
-          ** abstract (exact (nat_trans_eq_pointwise
-                                (vcomp_rinv (psfunctor_id F X)) Z)).
+        exists (pr1 (pr1 (psfunctor_id F X)) Z).
+        split.
+        * abstract (exact (nat_trans_eq_pointwise
+                             (vcomp_linv (psfunctor_id F X)) Z)).
+        * abstract (exact (nat_trans_eq_pointwise
+                             (vcomp_rinv (psfunctor_id F X)) Z)).
   Defined.
 
   Definition bicategorical_yoneda_lemma_inv
@@ -810,16 +806,16 @@ Section YonedaLocalEquivalence.
         (Fmor_univ (y B_is_univalent_2_1) X Y _ _ : _ ⟶ _)
         _ (yoneda_to_presheaf_representable).
   Proof.
-    apply is_nat_iso_to_is_invertible_2cell.
+    apply is_nat_z_iso_to_is_invertible_2cell.
     intro g.
-    apply is_inv2cell_to_is_iso.
+    apply is_inv2cell_to_is_z_iso.
     apply make_is_invertible_modification.
     intro Z.
-    apply is_nat_iso_to_is_invertible_2cell.
+    apply is_nat_z_iso_to_is_invertible_2cell.
     intros h.
     cbn in *.
     unfold yoneda_to_presheaf_representable_component_mod_component_nat.
-    apply is_inv2cell_to_is_iso.
+    apply is_inv2cell_to_is_z_iso.
     is_iso.
   Defined.
 
@@ -836,7 +832,7 @@ Section YonedaLocalEquivalence.
               univalent_cat_is_univalent_2_1)).
   Proof.
     apply equiv_to_isadjequiv.
-    exact (@iso_equiv
+    exact (@left_equivalence_invertible
             bicat_of_univ_cats
             _
             _

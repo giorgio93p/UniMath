@@ -8,8 +8,13 @@ Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.Core.Functors.
+Require Import UniMath.CategoryTheory.Core.Setcategories.
 Local Open Scope cat.
 Require Import UniMath.CategoryTheory.whiskering.
+
+Require Import UniMath.CategoryTheory.Adjunctions.Core.
+Require Import UniMath.CategoryTheory.Equivalences.Core.
+Require Import UniMath.CategoryTheory.Equivalences.FullyFaithful.
 
 (******************************************************************************)
 (** * Isomorphism of (pre)categories *)
@@ -462,16 +467,38 @@ Proof.
     apply (catiso_to_precategory_comp_path F).
 Defined.
 
-Lemma catiso_to_precategory_path {A B : precategory}
+(** If either precategory has homsets, then an isomorphism between them
+    becomes a path. This is essentially one half of univalence for categories.
+ *)
+Lemma catiso_to_precategory_path_f {A B : precategory}
   (hs : has_homsets A)
   (F : catiso A B)
   : A = B.
 Proof.
-  eapply total2_paths_b. Unshelve.
-  2: { simpl. exact (catiso_to_precategory_data_path F). }
-  apply proofirrelevance.
-  apply isaprop_is_precategory.
-  apply hs.
+  use total2_paths_b.
+  - exact (catiso_to_precategory_data_path F).
+  - apply proofirrelevance, isaprop_is_precategory.
+    apply hs.
+Defined.
+
+Lemma catiso_to_precategory_path_b {A B : precategory}
+  (hs : has_homsets B)
+  (F : catiso A B)
+  : A = B.
+Proof.
+  use total2_paths_f.
+  - exact (catiso_to_precategory_data_path F).
+  - apply proofirrelevance, isaprop_is_precategory.
+    apply hs.
+Defined.
+
+(** A special case is that they both have homsets *)
+Corollary catiso_to_category_path {A B : category}
+  (F : catiso A B) : A = B.
+Proof.
+  apply category_eq.
+  apply catiso_to_precategory_data_path.
+  assumption.
 Defined.
 
 Definition inv_catiso
@@ -528,6 +555,154 @@ Proof.
       repeat (apply (maponpaths (λ z, z · _))).
       rewrite idtoiso_inv.
       cbn.
-      rewrite iso_after_iso_inv.
+      rewrite z_iso_after_z_iso_inv.
       reflexivity.
 Defined.
+
+(* Any adjoint equivalence between univalent categories is an isomorphism of categories *)
+Definition adj_equivalence_of_cats_to_cat_iso
+      {C D : category}
+      {F : functor C D}
+      (Fa : adj_equivalence_of_cats F)
+      (Cuniv : is_univalent C) (Duniv : is_univalent D)
+  : catiso C D.
+Proof.
+  exists F.
+  split.
+  - apply fully_faithful_from_equivalence, Fa.
+  - apply(weq_on_objects_from_adj_equiv_of_cats C D Cuniv Duniv F Fa).
+Defined.
+
+(** More operations on isomorphisms of categories *)
+Section CatIso.
+  Context {C D : setcategory}
+          (F : catiso C D).
+
+  Definition catiso_to_fully_faithful
+    : fully_faithful F.
+  Proof.
+    intros x y.
+    apply F.
+  Qed.
+
+  Definition catiso_inv_ob
+             (y : D)
+    : C
+    := invmap (catiso_ob_weq F) y.
+
+  Proposition catiso_catiso_inv_ob
+              (y : D)
+    : F (catiso_inv_ob y) = y.
+  Proof.
+    apply (homotweqinvweq (catiso_ob_weq F) y).
+  Defined.
+
+  Proposition catiso_inv_ob_catiso
+              (x : C)
+    : catiso_inv_ob (F x) = x.
+  Proof.
+    apply (homotinvweqweq (catiso_ob_weq F) x).
+  Defined.
+
+  Proposition catiso_reflect_ob_eq
+              {x y : C}
+              (p : F x = F y)
+    : x = y.
+  Proof.
+    refine (!(catiso_inv_ob_catiso x) @ _ @ catiso_inv_ob_catiso y).
+    apply maponpaths.
+    exact p.
+  Qed.
+
+  Proposition catiso_inv_hom_idtoiso
+              {x y : C}
+              (p : F x = F y)
+    : fully_faithful_inv_hom catiso_to_fully_faithful x y (idtoiso p)
+      =
+      idtoiso (catiso_reflect_ob_eq p).
+  Proof.
+    refine (!_ @ fully_faithful_inv_hom_is_inv catiso_to_fully_faithful _).
+    apply maponpaths.
+    refine (!(pr1_maponpaths_idtoiso F (catiso_reflect_ob_eq p)) @ _).
+    apply setcategory_eq_idtoiso.
+  Qed.
+
+  Definition catiso_inv_mor
+             {y₁ y₂ : D}
+             (f : y₁ --> y₂)
+    : catiso_inv_ob y₁ --> catiso_inv_ob y₂
+    := fully_faithful_inv_hom
+         catiso_to_fully_faithful
+         _ _
+         (idtoiso (catiso_catiso_inv_ob y₁)
+          · f
+          · idtoiso (!(catiso_catiso_inv_ob y₂))).
+
+  Proposition catiso_inv_mor_cat_iso
+              {x₁ x₂ : C}
+              (f : x₁ --> x₂)
+    : catiso_inv_mor (#F f)
+      =
+      idtoiso (catiso_inv_ob_catiso x₁)
+      · f
+      · idtoiso (!(catiso_inv_ob_catiso x₂)).
+  Proof.
+    unfold catiso_inv_mor.
+    rewrite !fully_faithful_inv_comp.
+    rewrite fully_faithful_inv_hom_is_inv.
+    rewrite !catiso_inv_hom_idtoiso.
+    apply setcategory_eq_idtoiso_comp.
+  Qed.
+
+  Proposition catiso_catiso_inv_mor
+              {y₁ y₂ : D}
+              (f : y₁ --> y₂)
+    : #F (catiso_inv_mor f)
+      =
+      idtoiso (catiso_catiso_inv_ob y₁)
+      · f
+      · idtoiso (!(catiso_catiso_inv_ob y₂)).
+  Proof.
+    apply functor_on_fully_faithful_inv_hom.
+  Qed.
+
+  Proposition catiso_inv_mor_eq
+              {y₁ y₂ : D}
+              (f : y₁ --> y₂)
+              (g : catiso_inv_ob y₁ --> catiso_inv_ob y₂)
+              (p : f
+                   =
+                   idtoiso (!(catiso_catiso_inv_ob y₁))
+                   · #F g
+                   · idtoiso (catiso_catiso_inv_ob y₂))
+    : catiso_inv_mor f = g.
+  Proof.
+    use (invmaponpathsweq
+           (weq_from_fully_faithful catiso_to_fully_faithful _ _)).
+    cbn -[catiso_inv_mor].
+    rewrite catiso_catiso_inv_mor.
+    rewrite p.
+    rewrite !assoc.
+    etrans.
+    {
+      etrans.
+      {
+        do 3 apply maponpaths_2.
+        refine (!_).
+        apply pr1_idtoiso_concat.
+      }
+      rewrite pathsinv0r ; cbn.
+      rewrite id_left.
+      rewrite !assoc'.
+      etrans.
+      {
+        apply maponpaths.
+        refine (!_).
+        apply (pr1_idtoiso_concat (catiso_catiso_inv_ob y₂)).
+      }
+      rewrite pathsinv0r ; cbn.
+      apply id_right.
+    }
+    apply idpath.
+  Qed.
+End CatIso.

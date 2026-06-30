@@ -15,7 +15,7 @@ Require Import UniMath.Topology.Topology.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Functors.
 Require Export UniMath.CategoryTheory.opp_precat.
-Require Import UniMath.CategoryTheory.categories.commrings.
+Require Import UniMath.CategoryTheory.Categories.Commring.
 Require Import UniMath.AlgebraicGeometry.Topology.
 Require Import UniMath.AlgebraicGeometry.SheavesOfRings.
 
@@ -114,7 +114,7 @@ Section spec.
   Defined.
 
   Definition Spec : TopologicalSpace :=
-    mkTopologicalSpace (make_hSet (prime_ideal R) isaset_prime_ideal)
+    make_TopologicalSpace (make_hSet (prime_ideal R) isaset_prime_ideal)
                        zariski_topology
                        zariski_topology_union
                        zariski_topology_htrue

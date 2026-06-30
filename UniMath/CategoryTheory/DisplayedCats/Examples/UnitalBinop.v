@@ -23,13 +23,18 @@ Require Import UniMath.CategoryTheory.Core.Isos.
 Require Import UniMath.CategoryTheory.Core.Univalence.
 Require Import UniMath.CategoryTheory.PrecategoryBinProduct.
 Require Import UniMath.CategoryTheory.FunctorAlgebras.
-Require Import UniMath.CategoryTheory.categories.HSET.Core.
-Require Import UniMath.CategoryTheory.categories.HSET.Limits.
-Require Import UniMath.CategoryTheory.categories.HSET.Univalence.
+Require Import UniMath.CategoryTheory.Categories.HSET.Core.
+Require Import UniMath.CategoryTheory.Categories.HSET.Limits.
+Require Import UniMath.CategoryTheory.Categories.HSET.Univalence.
+Require Import UniMath.CategoryTheory.Limits.BinProducts.
+
 Require Import UniMath.CategoryTheory.DisplayedCats.Core.
+Require Import UniMath.CategoryTheory.DisplayedCats.Total.
+Require Import UniMath.CategoryTheory.DisplayedCats.Isos.
+Require Import UniMath.CategoryTheory.DisplayedCats.Univalence.
 Require Import UniMath.CategoryTheory.DisplayedCats.Constructions.
 Require Import UniMath.CategoryTheory.DisplayedCats.Projection.
-Require Import UniMath.CategoryTheory.limits.binproducts.
+Require Import UniMath.CategoryTheory.DisplayedCats.Examples.Sigma.
 
 Local Open Scope cat.
 
@@ -203,7 +208,7 @@ Definition point_disp_cat_disp_univalent
 Proof.
   use is_univalent_disp_from_fibers.
   intros X x y.
-  use gradth.
+  use isweq_iso.
   - intros f.
     exact (pr1 f).
   - intros e.
@@ -211,7 +216,7 @@ Proof.
     apply idpath.
   - intros e.
     use subtypePath.
-    { intro ; apply isaprop_is_iso_disp. }
+    { intro ; apply isaprop_is_z_iso_disp. }
     cbn.
     induction (pr1 e).
     apply idpath.
@@ -293,7 +298,7 @@ Proof.
     + use invproofirrelevance.
       intros f g.
       use subtypePath.
-      { intro ; apply isaprop_is_iso_disp. }
+      { intro ; apply isaprop_is_z_iso_disp. }
       use subtypePath.
       { intro ; apply isapropunit. }
       apply setproperty.
